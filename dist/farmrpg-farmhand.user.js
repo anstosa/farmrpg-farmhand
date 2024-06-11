@@ -39,8 +39,8 @@ exports.SETTING_BANKER = {
     id: "banker",
     title: "Banker",
     description: `
-    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)
-    * Adds an option *Deposit Target Balance* which deposits up to your target balance
+    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br />
+    * Adds an option *Deposit Target Balance* which deposits up to your target balance<br />
     * Adds an option to *Withdraw Interest* which withdraws any earnings on top of your target balance
   `,
     type: "boolean",
@@ -257,6 +257,158 @@ exports.buddyFarm = {
 
 /***/ }),
 
+/***/ 223:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.compressChat = exports.SETTING_CHAT_COMPRESS = void 0;
+exports.SETTING_CHAT_COMPRESS = {
+    id: "compressChat",
+    title: "Compress chat",
+    description: "Compress chat messages to make more visible at once",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.compressChat = {
+    settings: [exports.SETTING_CHAT_COMPRESS],
+    onInitialize: (settings) => {
+        // move spacing from panel margin to message padding regardless of setting
+        document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        #mobilechatpanel .content-block,
+        #desktopchatpanel .content-block {
+          padding: 0 !important;
+        }
+        #mobilechatpanel .card,
+        #desktopchatpanel .card {
+          margin: 0 !important;
+        }
+        .chat-txt {
+          margin: 0 !important;
+          padding: 8px !important
+        }
+      <style>
+    `);
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_CHAT_COMPRESS.id].value) {
+            return;
+        }
+        document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        /* Reduce chat spacing */
+        .chat-txt {
+          margin: 0 !important;
+          padding: 4px !important
+        }
+
+        /* Hide timestamp */
+        .chat-txt span:first-of-type,
+        .chat-txt br:first-of-type {
+          display: none !important;
+        }
+      <style>
+    `);
+    },
+};
+
+
+/***/ }),
+
+/***/ 164:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.dismissableChatBanners = exports.SETTING_CHAT_DISMISSABLE_BANNERS = void 0;
+exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
+    id: "dismissableChatBanners",
+    title: "Dismissable Chat Banners",
+    description: `
+    Adds × in chat banners to dismiss them<br />
+    Disable this to show dismissed banners again
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+// https://stackoverflow.com/a/7616484/714282
+const hashBanner = (banner) => {
+    var _a, _b;
+    const string = (_a = banner.textContent) !== null && _a !== void 0 ? _a : "";
+    let hash = 0;
+    if (string.length === 0) {
+        return hash;
+    }
+    for (let index = 0; index < string.length; index++) {
+        const code = (_b = string.codePointAt(index)) !== null && _b !== void 0 ? _b : 0;
+        hash = (hash << 5) - hash + code;
+        hash = Math.trunc(hash);
+    }
+    return hash;
+};
+exports.dismissableChatBanners = {
+    settings: [exports.SETTING_CHAT_DISMISSABLE_BANNERS],
+    onInitialize: (settings) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_CHAT_DISMISSABLE_BANNERS.id].value) {
+            return;
+        }
+        const chatWatcher = new MutationObserver(() => __awaiter(void 0, void 0, void 0, function* () {
+            const banners = document.querySelectorAll("#desktopchatpanel .card, #mobilechatpanel .card");
+            for (const banner of banners) {
+                const bannerKey = `${exports.SETTING_CHAT_DISMISSABLE_BANNERS.id}_${hashBanner(banner)}`;
+                // hide banner if dismissed
+                const isDismissed = yield GM.getValue(bannerKey, false);
+                if (isDismissed) {
+                    banner.remove();
+                    continue;
+                }
+                // skip adding close button if it already exists
+                if (banner.querySelector(".fh-close")) {
+                    continue;
+                }
+                // add close button
+                const closeButton = document.createElement("div");
+                closeButton.classList.add("fh-close");
+                closeButton.textContent = "×";
+                closeButton.style.position = "absolute";
+                closeButton.style.top = "2px";
+                closeButton.style.right = "2px";
+                closeButton.style.cursor = "pointer";
+                closeButton.addEventListener("click", () => {
+                    banner.remove();
+                    GM.setValue(bannerKey, true);
+                });
+                banner.append(closeButton);
+            }
+        }));
+        const mobileChat = document.querySelector("#mobilechatpanel");
+        if (!mobileChat) {
+            console.error("Could not find mobile panel");
+            return;
+        }
+        const desktopChat = document.querySelector("#desktopchatpanel");
+        if (!desktopChat) {
+            console.error("Could not find desktop panel");
+            return;
+        }
+        chatWatcher.observe(mobileChat, { childList: true, subtree: true });
+        chatWatcher.observe(desktopChat, { childList: true, subtree: true });
+    },
+};
+
+
+/***/ }),
+
 /***/ 973:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -433,7 +585,7 @@ exports.farmhandSettings = {
                   ${setting.title}
               </label>
               <br>
-              <span style="font-size: 11px">${setting.description}</span>
+              <div style="font-size: 11px">${setting.description}</div>
             </div>
             ${getField(setting)}
             `)}
@@ -460,6 +612,65 @@ exports.farmhandSettings = {
 
 /***/ }),
 
+/***/ 454:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.highlightSelfInChat = exports.SETTING_CHAT_HIGHLIGHT_SELF = void 0;
+const theme_1 = __webpack_require__(178);
+exports.SETTING_CHAT_HIGHLIGHT_SELF = {
+    id: "highlightSelfInChat",
+    title: "Highlight self in chat",
+    description: "Highlight messages in chat where you are @mentioned",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.highlightSelfInChat = {
+    settings: [exports.SETTING_CHAT_HIGHLIGHT_SELF],
+    onInitialize: (settings) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
+            return;
+        }
+        const username = "Crimson";
+        // const username = document.querySelector("#logged_in_username")?.textContent;
+        if (!username) {
+            console.error("Could not find username");
+            return;
+        }
+        const chatWatcher = new MutationObserver(() => {
+            var _a;
+            const tags = document.querySelectorAll(`span a[href='profile.php?user_name=${username}']`);
+            for (const tag of tags) {
+                tag.style.color = theme_1.YELLOW_WARNING;
+                const message = (_a = tag.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement;
+                if (!message) {
+                    console.error("Could not find message");
+                    continue;
+                }
+                message.style.backgroundColor = theme_1.YELLOW_ALERT;
+                message.style.border = `1px solid ${theme_1.YELLOW_ALERT_BORDER}`;
+            }
+        });
+        const mobileChat = document.querySelector("#mobilechatpanel");
+        if (!mobileChat) {
+            console.error("Could not find mobile panel");
+            return;
+        }
+        const desktopChat = document.querySelector("#desktopchatpanel");
+        if (!desktopChat) {
+            console.error("Could not find desktop panel");
+            return;
+        }
+        chatWatcher.observe(mobileChat, { childList: true, subtree: true });
+        chatWatcher.observe(desktopChat, { childList: true, subtree: true });
+    },
+};
+
+
+/***/ }),
+
 /***/ 217:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -476,9 +687,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const banker_1 = __webpack_require__(92);
 const buddyfarm_1 = __webpack_require__(273);
+const compressChat_1 = __webpack_require__(223);
+const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
 const page_1 = __webpack_require__(952);
-const FEATURES = [buddyfarm_1.buddyFarm, farmhandSettings_1.farmhandSettings, banker_1.banker];
+const highlightSelfInChat_1 = __webpack_require__(454);
+const FEATURES = [
+    banker_1.banker,
+    buddyfarm_1.buddyFarm,
+    compressChat_1.compressChat,
+    dismissableChatBanners_1.dismissableChatBanners,
+    farmhandSettings_1.farmhandSettings,
+    highlightSelfInChat_1.highlightSelfInChat,
+];
 const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, function* () {
     const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
     for (const { onPageChange } of FEATURES) {
@@ -487,24 +708,34 @@ const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, fun
         }
     }
 });
+// eslint-disable-next-line unicorn/prefer-top-level-await
 (function () {
-    // eslint-disable-next-line unicorn/prefer-module
-    "use strict";
-    console.info("STARTING Farmhand by Ansel Santosa");
-    // listen for location changes
-    let oldHref = document.location.href;
-    const { body } = document;
-    const observer = new MutationObserver(() => {
-        if (oldHref !== document.location.href) {
-            oldHref = document.location.href;
-            const [page, parameters] = (0, page_1.getPage)();
-            console.debug("Page Change", page, parameters);
-            onPageChange(page, parameters);
+    return __awaiter(this, void 0, void 0, function* () {
+        // eslint-disable-next-line unicorn/prefer-module
+        "use strict";
+        console.info("STARTING Farmhand by Ansel Santosa");
+        // initialize
+        const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
+        for (const { onInitialize } of FEATURES) {
+            if (onInitialize) {
+                onInitialize(settings);
+            }
         }
+        // listen for location changes
+        let oldHref = document.location.href;
+        const { body } = document;
+        const observer = new MutationObserver(() => {
+            if (oldHref !== document.location.href) {
+                oldHref = document.location.href;
+                const [page, parameters] = (0, page_1.getPage)();
+                console.debug("Page Change", page, parameters);
+                onPageChange(page, parameters);
+            }
+        });
+        observer.observe(body, { childList: true, subtree: true });
+        // process first page
+        setTimeout(() => onPageChange(...(0, page_1.getPage)()));
     });
-    observer.observe(body, { childList: true, subtree: true });
-    // process first page
-    setTimeout(() => onPageChange(...(0, page_1.getPage)()));
 })();
 
 

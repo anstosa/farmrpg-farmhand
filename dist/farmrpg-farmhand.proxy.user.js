@@ -9,5 +9,5 @@
 // @icon https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com
 // @license MIT
 // @namespace https://github.com/anstosa/farmrpg-farmhand
-// @require http://localhost:3000/farmrpg-farmhand.user.js
+// @require http://localhost:3333/farmrpg-farmhand.user.js
 // ==/UserScript==

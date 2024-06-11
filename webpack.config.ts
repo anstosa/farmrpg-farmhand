@@ -18,7 +18,7 @@ const mode: webpack.Configuration["mode"] =
 const isProduction = mode === "production";
 const isDevelopment = process.env.NODE_ENV === "development";
 
-const PORT = 3000;
+const PORT = 3333;
 
 console.log(`BUILDING IN ${mode} MODE`);
 

@@ -14,8 +14,8 @@ export const SETTING_BANKER: FeatureSetting = {
   id: "banker",
   title: "Banker",
   description: `
-    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)
-    * Adds an option *Deposit Target Balance* which deposits up to your target balance
+    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br />
+    * Adds an option *Deposit Target Balance* which deposits up to your target balance<br />
     * Adds an option to *Withdraw Interest* which withdraws any earnings on top of your target balance
   `,
   type: "boolean",

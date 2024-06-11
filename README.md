@@ -24,6 +24,12 @@ Adds shortcut in all items to view page in [Buddy's Almanac](https://buddy.farm)
 * Adds an option *Deposit Target Balance* which deposits up to your target balance
 * Adds an option to *Withdraw Interest* which withdraws any earnings on top of your target balance
 
+### Chat
+
+* Compress chat view so more messages are visible
+* Dismissable chat banners
+* Highlight messages tagging you in chat
+
 ## Tip
 
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)

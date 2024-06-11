@@ -32,6 +32,7 @@ export type FeatureSetting =
 export type Settings = Record<BaseFeatureSetting["id"], FeatureSetting>;
 
 export interface Feature {
+  onInitialize?: (settings: Settings) => void;
   onPageChange?: (
     settings: Settings,
     page: Page | undefined,

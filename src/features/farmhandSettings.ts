@@ -184,7 +184,7 @@ export const farmhandSettings: Feature = {
                   ${setting.title}
               </label>
               <br>
-              <span style="font-size: 11px">${setting.description}</span>
+              <div style="font-size: 11px">${setting.description}</div>
             </div>
             ${getField(setting)}
             `

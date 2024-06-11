@@ -7,4 +7,6 @@
 // @grant GM.getValue
 // @grant GM.setValue
 // @icon https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com
+// @license MIT
+// @namespace https://github.com/anstosa/farmrpg-farmhand
 // ==/UserScript==

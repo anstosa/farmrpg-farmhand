@@ -87,22 +87,12 @@ const config: Configuration = {
     path: path.resolve(__dirname, "dist/"),
     filename: "farmrpg-farmhand.user.js",
   },
-  optimization: isProduction
-    ? {
-        minimize: true,
-        splitChunks: {
-          chunks: "all",
-          name: false,
-        },
-        removeAvailableModules: true,
-        removeEmptyChunks: false,
-      }
-    : {
-        minimize: false,
-        splitChunks: false,
-        removeAvailableModules: false,
-        removeEmptyChunks: false,
-      },
+  optimization: {
+    minimize: false,
+    splitChunks: false,
+    removeAvailableModules: true,
+    removeEmptyChunks: false,
+  },
   resolve: {
     extensions: [".js", ".ts", ".css", ".scss"],
     symlinks: false,
@@ -181,10 +171,12 @@ const config: Configuration = {
       new UserscriptPlugin({
         headers(original) {
           const overrides: HeadersProps = {
-            name: "Farm RPG Farmhand",
-            icon: "https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com",
-            match: "https://farmrpg.com/*",
             grant: ["GM.getValue", "GM.setValue"],
+            icon: "https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com",
+            license: "MIT",
+            match: "https://farmrpg.com/*",
+            name: "Farm RPG Farmhand",
+            namespace: "https://github.com/anstosa/farmrpg-farmhand",
             // from package.json
             //   description
             //   version

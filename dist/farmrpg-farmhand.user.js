@@ -629,12 +629,12 @@ exports.SETTING_CHAT_HIGHLIGHT_SELF = {
 exports.highlightSelfInChat = {
     settings: [exports.SETTING_CHAT_HIGHLIGHT_SELF],
     onInitialize: (settings) => {
+        var _a;
         // make sure setting is enabled
         if (!settings[exports.SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
             return;
         }
-        const username = "Crimson";
-        // const username = document.querySelector("#logged_in_username")?.textContent;
+        const username = (_a = document.querySelector("#logged_in_username")) === null || _a === void 0 ? void 0 : _a.textContent;
         if (!username) {
             console.error("Could not find username");
             return;

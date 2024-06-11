@@ -21,8 +21,7 @@ export const highlightSelfInChat: Feature = {
       return;
     }
 
-    const username = "Crimson";
-    // const username = document.querySelector("#logged_in_username")?.textContent;
+    const username = document.querySelector("#logged_in_username")?.textContent;
     if (!username) {
       console.error("Could not find username");
       return;

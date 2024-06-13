@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.2
+// @version 1.0.3
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @grant GM.getValue
@@ -15,6 +15,107 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
+
+/***/ 477:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.autocompleteItems = exports.SETTING_AUTOCOMPLETE_ITEMS = void 0;
+const buddyfarmApi_1 = __webpack_require__(651);
+const autocomplete_1 = __webpack_require__(67);
+exports.SETTING_AUTOCOMPLETE_ITEMS = {
+    id: "autocompleteItems",
+    title: "Chat Autocomplete: Items",
+    description: "Auto-complete item names in chat",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.autocompleteItems = {
+    settings: [exports.SETTING_AUTOCOMPLETE_ITEMS],
+    onInitialize: (settings) => __awaiter(void 0, void 0, void 0, function* () {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_AUTOCOMPLETE_ITEMS.id].value) {
+            return;
+        }
+        const items = yield (0, buddyfarmApi_1.getBasicItems)();
+        (0, autocomplete_1.registerAutocomplete)({
+            trigger: /\(\(([^]+)/,
+            getItems: () => __awaiter(void 0, void 0, void 0, function* () { return yield items; }),
+            prefix: "((",
+            suffix: "))",
+            bail: (text) => { var _a, _b; return ((_b = (_a = text.match(/(\(\(|\)\))/g)) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) % 2 === 0; },
+        });
+    }),
+};
+
+
+/***/ }),
+
+/***/ 881:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.autocompleteUsers = exports.getUsers = exports.SETTING_AUTOCOMPLETE_USERS = void 0;
+const autocomplete_1 = __webpack_require__(67);
+exports.SETTING_AUTOCOMPLETE_USERS = {
+    id: "autocompleteUsers",
+    title: "Chat Autocomplete: Users",
+    description: "Auto-complete usernames in chat",
+    type: "boolean",
+    defaultValue: true,
+};
+const getUsers = () => {
+    var _a, _b, _c;
+    const users = {};
+    const messages = document.querySelectorAll(".chat-txt");
+    for (const message of messages) {
+        const image = (_b = (_a = message.querySelector(".chip-media img")) === null || _a === void 0 ? void 0 : _a.src) !== null && _b !== void 0 ? _b : "";
+        const username = (_c = message.querySelector(".chip-label a")) === null || _c === void 0 ? void 0 : _c.textContent;
+        if (username && !users[username]) {
+            users[username] = { name: username, image };
+        }
+    }
+    return Object.values(users);
+};
+exports.getUsers = getUsers;
+exports.autocompleteUsers = {
+    settings: [exports.SETTING_AUTOCOMPLETE_USERS],
+    onInitialize: (settings) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_AUTOCOMPLETE_USERS.id].value) {
+            return;
+        }
+        (0, autocomplete_1.registerAutocomplete)({
+            trigger: /@([^]+)/,
+            getItems: () => __awaiter(void 0, void 0, void 0, function* () { return yield (0, exports.getUsers)(); }),
+            prefix: "@",
+            suffix: ":",
+        });
+    },
+};
+
+
+/***/ }),
 
 /***/ 92:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
@@ -31,7 +132,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.banker = exports.SETTING_BANKER = void 0;
-const api_1 = __webpack_require__(903);
+const farmrpgApi_1 = __webpack_require__(626);
 const page_1 = __webpack_require__(952);
 const confirmation_1 = __webpack_require__(906);
 const popup_1 = __webpack_require__(469);
@@ -123,7 +224,7 @@ exports.banker = {
                 return;
             }
             (0, confirmation_1.showConfirmation)(`Deposit ${formatter.format(missingFromTarget)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
-                yield (0, api_1.depositSilver)(missingFromTarget);
+                yield (0, farmrpgApi_1.depositSilver)(missingFromTarget);
                 yield (0, popup_1.showPopup)("Success!", "You deposited Silver!");
                 window.location.reload();
             }));
@@ -156,7 +257,7 @@ exports.banker = {
                 return;
             }
             (0, confirmation_1.showConfirmation)(`Withdraw ${formatter.format(availableInterest)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
-                yield (0, api_1.withdrawSilver)(availableInterest);
+                yield (0, farmrpgApi_1.withdrawSilver)(availableInterest);
                 yield (0, popup_1.showPopup)("Success!", "You withdrew Silver!");
                 window.location.reload();
             }));
@@ -177,6 +278,7 @@ exports.banker = {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.buddyFarm = exports.SETTING_BUDDY_FARM = void 0;
 const page_1 = __webpack_require__(952);
+const buddyfarmApi_1 = __webpack_require__(651);
 exports.SETTING_BUDDY_FARM = {
     id: "buddyFarm",
     title: "Buddy's Almanac",
@@ -209,9 +311,7 @@ exports.buddyFarm = {
         }
         // get name and link for item
         const itemName = (_a = itemHeader.textContent) !== null && _a !== void 0 ? _a : "";
-        const itemLink = `https://buddy.farm/i/${itemName
-            .toLowerCase()
-            .replaceAll(/[\s']/g, "-")}`;
+        const itemLink = `https://buddy.farm/i/${(0, buddyfarmApi_1.nameToSlug)(itemName)}`;
         // use title to find item details section
         const titles = currentPage.querySelectorAll(".content-block-title");
         const itemDetailsTitle = [...titles].find((title) => title.textContent === "Item Details");
@@ -321,7 +421,7 @@ exports.compressChat = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.compressNavigation = exports.SETTING_NAVIGATION_HIDE_LOGO = exports.SETTING_NAVIGATION_COMPRESS = void 0;
+exports.navigationStyle = exports.SETTINGS_NAVIGATION_ADD_MENU = exports.SETTING_NAVIGATION_ALIGN_BOTTOM = exports.SETTING_NAVIGATION_HIDE_LOGO = exports.SETTING_NAVIGATION_COMPRESS = void 0;
 exports.SETTING_NAVIGATION_COMPRESS = {
     id: "compressNav",
     title: "Compress Navigation",
@@ -336,9 +436,45 @@ exports.SETTING_NAVIGATION_HIDE_LOGO = {
     type: "boolean",
     defaultValue: true,
 };
-exports.compressNavigation = {
-    settings: [exports.SETTING_NAVIGATION_COMPRESS, exports.SETTING_NAVIGATION_HIDE_LOGO],
+exports.SETTING_NAVIGATION_ALIGN_BOTTOM = {
+    id: "alignBottomNav",
+    title: "Align Navigation to Bottom",
+    description: `Aligns Navigation menu to bottom of screen for easier reach on mobile`,
+    type: "boolean",
+    defaultValue: false,
+};
+exports.SETTINGS_NAVIGATION_ADD_MENU = {
+    id: "bottomMenu",
+    title: "Add Bottom Menu Shortcut",
+    description: `Adds navigation menu shortcut to bottom bar for easier reach on mobile`,
+    type: "boolean",
+    defaultValue: true,
+};
+exports.navigationStyle = {
+    settings: [
+        exports.SETTING_NAVIGATION_COMPRESS,
+        exports.SETTING_NAVIGATION_HIDE_LOGO,
+        exports.SETTINGS_NAVIGATION_ADD_MENU,
+        exports.SETTING_NAVIGATION_ALIGN_BOTTOM,
+    ],
     onInitialize: (settings) => {
+        var _a;
+        // align toolbar more consistently
+        document.head.insertAdjacentHTML("beforeend", `
+          <style>
+            .toolbar-inner {
+              display: flex !important;
+              justify-content: end !important;
+              gap: 10px !important;
+            }
+
+            @media (min-width: 768px) {
+              .fh-menu {
+                display: none !important;
+              }
+            }
+          <style>
+        `);
         if (settings[exports.SETTING_NAVIGATION_COMPRESS.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
@@ -369,6 +505,43 @@ exports.compressNavigation = {
             }
           <style>
         `);
+        }
+        if (settings[exports.SETTING_NAVIGATION_ALIGN_BOTTOM.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+          <style>
+            /* Align nav down */
+            .panel-left .page-content .list-block {
+              margin-top: 24px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: end !important;
+              height: 100% !important;
+            }
+          <style>
+        `);
+        }
+        if (settings[exports.SETTINGS_NAVIGATION_ADD_MENU.id].value) {
+            const homeButton = document.querySelector("#homebtn");
+            if (!homeButton) {
+                console.error("Home button not found");
+                return;
+            }
+            const menuButton = document.createElement("a");
+            menuButton.dataset.panel = "left";
+            menuButton.classList.add("fh-menu");
+            menuButton.classList.add("button");
+            menuButton.classList.add("open-panel");
+            menuButton.style.fontSize = "12px";
+            menuButton.style.paddingLeft = "5px";
+            menuButton.style.paddingRight = "8px";
+            menuButton.style.display = "flex";
+            menuButton.style.alignItems = "center";
+            menuButton.style.gap = "2px";
+            menuButton.innerHTML = `
+        <i class="fa fa-fw fa-bars"></i>
+        Menu
+      `;
+            (_a = homeButton.parentElement) === null || _a === void 0 ? void 0 : _a.insertBefore(menuButton, homeButton);
         }
     },
 };
@@ -902,18 +1075,23 @@ const getSetting = (setting) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getSetting = getSetting;
 const getData = (setting, defaultValue) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    if (!setting.dataKey) {
+    const key = typeof setting === "string" ? setting : setting.dataKey;
+    if (!key) {
         return defaultValue;
     }
-    return ((_b = JSON.parse(yield GM.getValue(setting.dataKey, ""))) !== null && _b !== void 0 ? _b : defaultValue);
+    const rawData = yield GM.getValue(key, "");
+    if (!rawData) {
+        return defaultValue;
+    }
+    return JSON.parse(rawData);
 });
 exports.getData = getData;
 const setData = (setting, data) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!setting.dataKey) {
+    const key = typeof setting === "string" ? setting : setting.dataKey;
+    if (!key) {
         return;
     }
-    yield GM.setValue(setting.dataKey, JSON.stringify(data));
+    yield GM.setValue(key, JSON.stringify(data));
 });
 exports.setData = setData;
 const setSetting = (setting) => { var _a; return GM.setValue(setting.id, (_a = setting.value) !== null && _a !== void 0 ? _a : ""); };
@@ -1061,8 +1239,8 @@ exports.SETTING_IMPORT = {
     placeholder: "Paste Here",
     buttonText: "Import",
     buttonAction: (settings, settingWrapper) => __awaiter(void 0, void 0, void 0, function* () {
-        var _c;
-        const input = (_c = settingWrapper.querySelector(".fh-input")) === null || _c === void 0 ? void 0 : _c.value;
+        var _b;
+        const input = (_b = settingWrapper.querySelector(".fh-input")) === null || _b === void 0 ? void 0 : _b.value;
         const importedSettings = JSON.parse(input !== null && input !== void 0 ? input : "[]");
         for (const setting of importedSettings) {
             yield (0, exports.setSetting)(setting);
@@ -1237,16 +1415,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const autocomplete_1 = __webpack_require__(67);
+const autocompleteItems_1 = __webpack_require__(477);
+const autocompleteUsers_1 = __webpack_require__(881);
 const banker_1 = __webpack_require__(92);
 const buddyfarm_1 = __webpack_require__(273);
 const compressChat_1 = __webpack_require__(223);
-const compressNavigation_1 = __webpack_require__(827);
 const customNavigation_1 = __webpack_require__(224);
 const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
 const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
+const compressNavigation_1 = __webpack_require__(827);
+const notifications_1 = __webpack_require__(783);
 const FEATURES = [
+    // internal
+    notifications_1.notifications,
+    autocomplete_1.autocomplete,
     // almanac
     buddyfarm_1.buddyFarm,
     // bank
@@ -1255,8 +1440,10 @@ const FEATURES = [
     compressChat_1.compressChat,
     dismissableChatBanners_1.dismissableChatBanners,
     highlightSelfInChat_1.highlightSelfInChat,
+    autocompleteItems_1.autocompleteItems,
+    autocompleteUsers_1.autocompleteUsers,
     // nav
-    compressNavigation_1.compressNavigation,
+    compressNavigation_1.navigationStyle,
     customNavigation_1.customNavigation,
     // settings
     farmhandSettings_1.farmhandSettings,
@@ -1302,7 +1489,217 @@ const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, fun
 
 /***/ }),
 
-/***/ 903:
+/***/ 67:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.autocomplete = exports.registerInputListeners = exports.registerAutocomplete = void 0;
+const theme_1 = __webpack_require__(178);
+const state = {
+    currentIndex: 0,
+    autocompletes: [],
+};
+const processInput = (input) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    let activeAutocomplete;
+    const text = input.value;
+    const processedInput = { text };
+    for (const autocomplete of state.autocompletes) {
+        // "@anstosa: LF ((or"
+        if ((_a = autocomplete === null || autocomplete === void 0 ? void 0 : autocomplete.bail) === null || _a === void 0 ? void 0 : _a.call(autocomplete, text)) {
+            continue;
+        }
+        // "@anstosa: LF ((or"
+        const match = text.match(autocomplete.trigger);
+        // "or"
+        if (!match || match.length < 2) {
+            continue;
+        }
+        const search = match[1];
+        const items = yield autocomplete.getItems();
+        const filteredItems = items.filter(({ name }) => { var _a; return name.toLowerCase().includes((_a = search.toLowerCase()) !== null && _a !== void 0 ? _a : ""); });
+        activeAutocomplete = autocomplete;
+        processedInput.search = search;
+        processedInput.match = match;
+        processedInput.items = items;
+        processedInput.filteredItems = filteredItems;
+    }
+    state.activeAutocomplete = activeAutocomplete;
+    return processedInput;
+});
+const applyInput = (input, item) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    const { filteredItems, search, match, text } = yield processInput(input);
+    if (!state.activeAutocomplete) {
+        return;
+    }
+    const { prefix, suffix } = state.activeAutocomplete;
+    if (!search || !match || !filteredItems) {
+        return;
+    }
+    // eslint-disable-next-line require-atomic-updates
+    input.value = [
+        text.slice(0, match.index),
+        prefix,
+        item.name,
+        suffix,
+        text.slice(((_b = match.index) !== null && _b !== void 0 ? _b : 0) + match[0].length),
+    ].join("");
+    closeAutocomplete();
+});
+const autocompleteSearchControlHandler = (event) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!event.target) {
+        return;
+    }
+    if (!["Enter", "ArrowDown", "ArrowUp"].includes(event.key)) {
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const input = event.target;
+    const { filteredItems, search, match } = yield processInput(input);
+    if (!search || !match || !filteredItems) {
+        closeAutocomplete();
+        return;
+    }
+    // eslint-disable-next-line unicorn/prefer-switch
+    if (event.key === "Enter") {
+        closeAutocomplete();
+        yield applyInput(input, filteredItems[state.currentIndex]);
+    }
+    else if (event.key === "ArrowDown") {
+        state.currentIndex = Math.min(state.currentIndex + 1, filteredItems.length - 1);
+        renderAutocomplete(input, filteredItems);
+    }
+    else if (event.key === "ArrowUp") {
+        state.currentIndex = Math.max(state.currentIndex - 1, 0);
+        renderAutocomplete(input, filteredItems);
+    }
+    else if (event.key === "Escape") {
+        closeAutocomplete();
+    }
+});
+const autocompleteSearchItemHandler = (event) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!event.target) {
+        return;
+    }
+    const input = event.target;
+    const { filteredItems, match } = yield processInput(input);
+    if (!match || !filteredItems) {
+        closeAutocomplete();
+        return;
+    }
+    renderAutocomplete(input, filteredItems);
+});
+const closeAutocomplete = () => {
+    var _a;
+    (_a = document.querySelector(".fh-autocomplete")) === null || _a === void 0 ? void 0 : _a.remove();
+};
+const renderAutocomplete = (input, items) => {
+    closeAutocomplete();
+    const offset = input.getBoundingClientRect();
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("fh-autocomplete");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = `${offset.top + offset.height}px`;
+    wrapper.style.left = `${offset.left}px`;
+    wrapper.style.width = `${offset.width}px`;
+    wrapper.style.maxHeight = `${window.innerHeight - offset.top - offset.height}px`;
+    wrapper.style.zIndex = "99999";
+    wrapper.innerHTML = `
+    ${items
+        .map(({ name, image }, index) => `
+          <div
+            class="fh-autocomplete-item"
+            data-index="${index}"
+            style="
+              display: flex;
+              align-items: center;
+              color: white;
+              gap: 5px;
+              width: 100%;
+              cursor: pointer;
+              padding: 8px;
+              background-color: ${index === state.currentIndex
+        ? theme_1.BUTTON_BLUE_BACKGROUND
+        : theme_1.BACKGROUND_DARK};
+            "
+          >
+            <img
+              src="${image}"
+              style="
+                width: 25px;
+                height: 25px;
+              ">
+            ${name}
+          </div>
+        `)
+        .join("")}
+  `;
+    for (const item of wrapper.querySelectorAll(".fh-autocomplete-item")) {
+        wrapper.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+            closeAutocomplete();
+            yield applyInput(input, items[Number(item.dataset.index)]);
+        }));
+    }
+    document.body.append(wrapper);
+};
+const registerAutocomplete = (autocomplete) => {
+    state.autocompletes.push(autocomplete);
+};
+exports.registerAutocomplete = registerAutocomplete;
+const registerInputListeners = (input) => {
+    input.addEventListener("keypress", autocompleteSearchItemHandler);
+    input.addEventListener("keydown", autocompleteSearchControlHandler);
+};
+exports.registerInputListeners = registerInputListeners;
+exports.autocomplete = {
+    onInitialize: () => {
+        document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        .fh-autocomplete-item:hover {
+          background-color: ${theme_1.BUTTON_BLUE_BACKGROUND};
+        }
+      <style>
+    `);
+        const mobileChat = document.querySelector("#mobilechatpanel");
+        if (!mobileChat) {
+            console.error("Could not find mobile panel");
+            return;
+        }
+        const desktopChat = document.querySelector("#desktopchatpanel");
+        if (!desktopChat) {
+            console.error("Could not find desktop panel");
+            return;
+        }
+        const chatWatcher = new MutationObserver(() => {
+            for (const chat of [mobileChat, desktopChat]) {
+                const input = chat.querySelector("input[type='text']");
+                if (!input) {
+                    continue;
+                }
+                (0, exports.registerInputListeners)(input);
+            }
+        });
+        chatWatcher.observe(mobileChat, { childList: true, subtree: true });
+        chatWatcher.observe(desktopChat, { childList: true, subtree: true });
+    },
+};
+
+
+/***/ }),
+
+/***/ 651:
 /***/ (function(__unused_webpack_module, exports) {
 
 
@@ -1316,38 +1713,72 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.withdrawSilver = exports.depositSilver = exports.getStats = exports.sendRequest = void 0;
-const sendRequest = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch(`https://farmrpg.com/worker.php?${query.toString()}`, {
-        method: "POST",
-        mode: "cors",
-        credentials: "include",
-    });
-    if (!response.ok) {
-        throw new Error(response.statusText);
+exports.getBasicItems = exports.getItemData = exports.getPageData = exports.nameToSlug = void 0;
+const state = {
+    itemData: {},
+};
+const nameToSlug = (name) => name.toLowerCase().replaceAll(/[\s']/g, "-");
+exports.nameToSlug = nameToSlug;
+const getPageData = () => __awaiter(void 0, void 0, void 0, function* () {
+    if (state.pageData) {
+        return state.pageData;
     }
-    const htmlString = yield response.text();
-    return new DOMParser().parseFromString(htmlString, "text/html");
+    state.pageData = {
+        townsfolk: [],
+        questlines: [],
+        quizzes: [],
+        quests: [],
+        items: [],
+        pages: [],
+    };
+    const response = yield fetch("https://buddy.farm/search.json");
+    const data = (yield response.json());
+    for (const page of data) {
+        // eslint-disable-next-line unicorn/prefer-switch
+        if (page.type === "Townsfolk") {
+            state.pageData.townsfolk.push(page);
+        }
+        else if (page.type === "Questline") {
+            state.pageData.questlines.push(page);
+        }
+        else if (page.type === "Schoolhouse Quiz") {
+            state.pageData.quizzes.push(page);
+        }
+        else if (page.href.startsWith("/q/")) {
+            state.pageData.quests.push(page);
+        }
+        else if (page.href.startsWith("/i/")) {
+            state.pageData.items.push(page);
+        }
+        else {
+            state.pageData.pages.push(page);
+        }
+    }
+    return state.pageData;
 });
-exports.sendRequest = sendRequest;
-const getStats = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
-    const response = yield (0, exports.sendRequest)(new URLSearchParams({ go: "getstats" }));
-    const parameters = response.querySelectorAll("span");
-    const silver = Number((_b = (_a = parameters[0].textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", "")) !== null && _b !== void 0 ? _b : "0");
-    const gold = Number((_d = (_c = parameters[1].textContent) === null || _c === void 0 ? void 0 : _c.trim().replaceAll(",", "")) !== null && _d !== void 0 ? _d : "0");
-    const ancientCoins = Number((_f = (_e = parameters[2].textContent) === null || _e === void 0 ? void 0 : _e.trim().replaceAll(",", "")) !== null && _f !== void 0 ? _f : "0");
-    return { silver, gold, ancientCoins };
+exports.getPageData = getPageData;
+const getItemData = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    if (state.itemData[itemName]) {
+        return state.itemData[itemName];
+    }
+    const response = yield fetch(`https://buddy.farm/page-data/i/${(0, exports.nameToSlug)(itemName)}/page-data.json`);
+    const data = (yield response.json());
+    const item = (_d = (_c = (_b = (_a = data === null || data === void 0 ? void 0 : data.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.farmrpg) === null || _c === void 0 ? void 0 : _c.items) === null || _d === void 0 ? void 0 : _d[0];
+    if (!item) {
+        console.error(`Item ${itemName} not found`);
+        return;
+    }
+    // eslint-disable-next-line require-atomic-updates
+    state.itemData[itemName] = item;
+    return item;
 });
-exports.getStats = getStats;
-const depositSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendRequest)(new URLSearchParams({ go: "depositsilver", amt: amount.toString() }));
+exports.getItemData = getItemData;
+const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
+    const { items } = yield (0, exports.getPageData)();
+    return items.map(({ name, image }) => ({ name, image }));
 });
-exports.depositSilver = depositSilver;
-const withdrawSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendRequest)(new URLSearchParams({ go: "withdrawalsilver", amt: amount.toString() }));
-});
-exports.withdrawSilver = withdrawSilver;
+exports.getBasicItems = getBasicItems;
 
 
 /***/ }),
@@ -1393,6 +1824,178 @@ exports.showConfirmation = showConfirmation;
 
 /***/ }),
 
+/***/ 626:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.collectMailbox = exports.getMailboxContents = exports.getMailboxCount = exports.withdrawSilver = exports.depositSilver = exports.getStats = exports.sendRequest = void 0;
+const page_1 = __webpack_require__(952);
+const sendRequest = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield fetch(`https://farmrpg.com/worker.php?${query === null || query === void 0 ? void 0 : query.toString()}`, {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+    });
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    }
+    const htmlString = yield response.text();
+    return new DOMParser().parseFromString(htmlString, "text/html");
+});
+exports.sendRequest = sendRequest;
+const getStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
+    const response = yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "getstats" }));
+    const parameters = response.querySelectorAll("span");
+    const silver = Number((_b = (_a = parameters[0].textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", "")) !== null && _b !== void 0 ? _b : "0");
+    const gold = Number((_d = (_c = parameters[1].textContent) === null || _c === void 0 ? void 0 : _c.trim().replaceAll(",", "")) !== null && _d !== void 0 ? _d : "0");
+    const ancientCoins = Number((_f = (_e = parameters[2].textContent) === null || _e === void 0 ? void 0 : _e.trim().replaceAll(",", "")) !== null && _f !== void 0 ? _f : "0");
+    return { silver, gold, ancientCoins };
+});
+exports.getStats = getStats;
+const depositSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "depositsilver", amt: amount.toString() }));
+});
+exports.depositSilver = depositSilver;
+const withdrawSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "withdrawalsilver", amt: amount.toString() }));
+});
+exports.withdrawSilver = withdrawSilver;
+const getMailboxCount = () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "mbcount" }));
+    return Number(response.body.textContent);
+});
+exports.getMailboxCount = getMailboxCount;
+const getMailboxContents = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _g, _h, _j, _k, _l, _m, _o, _p;
+    const response = yield (0, exports.sendRequest)(page_1.Page.POST_OFFICE);
+    const mailboxList = (0, page_1.getListByTitle)("Your Mailbox", response.body);
+    const itemWrappers = (_g = mailboxList === null || mailboxList === void 0 ? void 0 : mailboxList.querySelectorAll(".collectbtnnc")) !== null && _g !== void 0 ? _g : [];
+    const mailboxContents = [];
+    for (const itemWrapper of itemWrappers) {
+        const from = (_j = (_h = itemWrapper.querySelector("span")) === null || _h === void 0 ? void 0 : _h.textContent) !== null && _j !== void 0 ? _j : "";
+        const item = (_l = (_k = itemWrapper.querySelector("b")) === null || _k === void 0 ? void 0 : _k.textContent) !== null && _l !== void 0 ? _l : "";
+        const count = Number((_p = (_o = (_m = itemWrapper.querySelector("font")) === null || _m === void 0 ? void 0 : _m.textContent) === null || _o === void 0 ? void 0 : _o.replaceAll(",", "")) !== null && _p !== void 0 ? _p : "0");
+        mailboxContents.push({ from, item, count });
+    }
+    return mailboxContents;
+});
+exports.getMailboxContents = getMailboxContents;
+const collectMailbox = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "collectallmailitems" }));
+});
+exports.collectMailbox = collectMailbox;
+
+
+/***/ }),
+
+/***/ 783:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = void 0;
+const page_1 = __webpack_require__(952);
+const farmhandSettings_1 = __webpack_require__(973);
+const KEY_NOTIFICATIONS = "notifications";
+const state = {
+    notifications: [],
+};
+const notificationHandlers = new Map();
+const registerNotificationHandler = (handlerName, handler) => {
+    notificationHandlers.set(handlerName, handler);
+};
+exports.registerNotificationHandler = registerNotificationHandler;
+const sendNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
+    state.notifications = [
+        ...state.notifications.filter(({ id }) => id !== notification.id),
+        notification,
+    ];
+    yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
+});
+exports.sendNotification = sendNotification;
+const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
+    state.notifications = state.notifications.filter(({ id }) => id !== notification.id);
+    yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
+});
+exports.removeNotification = removeNotification;
+const renderNotifications = () => {
+    var _a, _b, _c;
+    const pageContent = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".page-content");
+    if (!pageContent) {
+        console.error("Page content not found");
+        return;
+    }
+    // remove existing notifications
+    const notifications = document.querySelectorAll(".fh-notification");
+    if (notifications.length === state.notifications.length) {
+        return;
+    }
+    for (const notification of notifications) {
+        notification.remove();
+    }
+    // add new notifications
+    for (const notification of state.notifications) {
+        if (notification.replacesHref) {
+            (_c = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(`a[href="${notification.replacesHref}"]`)) === null || _c === void 0 ? void 0 : _c.remove();
+        }
+        const notificationElement = document.createElement("a");
+        notificationElement.classList.add("fh-notification");
+        notificationElement.classList.add("button");
+        notificationElement.classList.add(notification.class);
+        notificationElement.textContent = notification.text;
+        notificationElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            const handler = notificationHandlers.get(notification.handlerName);
+            if (handler) {
+                yield handler(notification);
+            }
+            else {
+                console.error(`Handler not found: ${notification.handlerName}`);
+            }
+            (0, exports.removeNotification)(notification);
+            renderNotifications();
+        }));
+        pageContent.insertBefore(notificationElement, pageContent.children[1]);
+    }
+};
+exports.notifications = {
+    onInitialize: () => __awaiter(void 0, void 0, void 0, function* () {
+        const savedNotifications = yield (0, farmhandSettings_1.getData)(KEY_NOTIFICATIONS, []);
+        state.notifications = savedNotifications;
+        const observer = new MutationObserver(renderNotifications);
+        const pages = document.querySelector(".view-main .pages");
+        if (!pages) {
+            console.error("Pages not found");
+            return;
+        }
+        observer.observe(pages, { childList: true, subtree: true });
+    }),
+};
+
+
+/***/ }),
+
 /***/ 952:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -1405,6 +2008,8 @@ var Page;
     Page["BANK"] = "bank";
     Page["SETTINGS"] = "settings";
     Page["SETTINGS_OPTIONS"] = "settings_options";
+    Page["POST_OFFICE"] = "postoffice";
+    Page["WORKER"] = "worker";
 })(Page || (exports.Page = Page = {}));
 // get page and parameters if any
 const getPage = () => {
@@ -1435,8 +2040,8 @@ const setTitle = (title) => {
     text.textContent = title;
 };
 exports.setTitle = setTitle;
-const getCardByTitle = (searchTitle) => {
-    const currentPage = (0, exports.getCurrentPage)();
+const getCardByTitle = (searchTitle, root) => {
+    const currentPage = root !== null && root !== void 0 ? root : (0, exports.getCurrentPage)();
     if (!currentPage) {
         console.error("Current page not found");
         return null;
@@ -1450,8 +2055,8 @@ const getCardByTitle = (searchTitle) => {
     return targetTitle.nextElementSibling;
 };
 exports.getCardByTitle = getCardByTitle;
-const getListByTitle = (searchTitle) => {
-    const targetCard = (0, exports.getCardByTitle)(searchTitle);
+const getListByTitle = (searchTitle, root) => {
+    const targetCard = (0, exports.getCardByTitle)(searchTitle, root);
     if (!targetCard) {
         console.error(`${searchTitle} card not found`);
         return null;
@@ -1506,7 +2111,7 @@ exports.showPopup = showPopup;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.BORDER_GRAY = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = void 0;
+exports.BACKGROUND_DARK = exports.BACKGROUND_BLACK = exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.BORDER_GRAY = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = void 0;
 // links
 exports.LINK_GREEN = "#90EE90";
 exports.LINK_RED = "#ED143D";
@@ -1528,6 +2133,8 @@ exports.BUTTON_ORANGE_BACKGROUND = "#351C04";
 exports.BUTTON_ORANGE_BORDER = "#41260D";
 exports.BUTTON_BLUE_BACKGROUND = "#000040";
 exports.BUTTON_BLUE_BORDER = "#00007F";
+exports.BACKGROUND_BLACK = "#111111";
+exports.BACKGROUND_DARK = "#161718";
 
 
 /***/ })

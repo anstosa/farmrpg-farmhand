@@ -1,5 +1,6 @@
 import { Feature, FeatureSetting } from "./feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import { nameToSlug } from "~/utils/buddyfarmApi";
 
 export const SETTING_BUDDY_FARM: FeatureSetting = {
   id: "buddyFarm",
@@ -37,9 +38,7 @@ export const buddyFarm: Feature = {
 
     // get name and link for item
     const itemName = itemHeader.textContent ?? "";
-    const itemLink = `https://buddy.farm/i/${itemName
-      .toLowerCase()
-      .replaceAll(/[\s']/g, "-")}`;
+    const itemLink = `https://buddy.farm/i/${nameToSlug(itemName)}`;
 
     // use title to find item details section
     const titles = currentPage.querySelectorAll(".content-block-title");

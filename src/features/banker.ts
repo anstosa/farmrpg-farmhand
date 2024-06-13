@@ -1,4 +1,4 @@
-import { depositSilver, withdrawSilver } from "~/utils/api";
+import { depositSilver, withdrawSilver } from "~/utils/farmrpgApi";
 import { Feature, FeatureSetting } from "./feature";
 import {
   getCardByTitle,

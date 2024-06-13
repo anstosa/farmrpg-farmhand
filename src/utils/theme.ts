@@ -23,3 +23,6 @@ export const BUTTON_ORANGE_BACKGROUND = "#351C04";
 export const BUTTON_ORANGE_BORDER = "#41260D";
 export const BUTTON_BLUE_BACKGROUND = "#000040";
 export const BUTTON_BLUE_BORDER = "#00007F";
+
+export const BACKGROUND_BLACK = "#111111";
+export const BACKGROUND_DARK = "#161718";

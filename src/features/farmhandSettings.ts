@@ -24,26 +24,29 @@ export const getSetting = async (
 });
 
 export const getData = async <T>(
-  setting: FeatureSetting,
+  setting: FeatureSetting | string,
   defaultValue: T
 ): Promise<T> => {
-  if (!setting.dataKey) {
+  const key = typeof setting === "string" ? setting : setting.dataKey;
+  if (!key) {
     return defaultValue;
   }
-  return (
-    (JSON.parse(await GM.getValue<string>(setting.dataKey, "")) as T) ??
-    defaultValue
-  );
+  const rawData = await GM.getValue<string>(key, "");
+  if (!rawData) {
+    return defaultValue;
+  }
+  return JSON.parse(rawData) as T;
 };
 
-export const setData = async (
-  setting: FeatureSetting,
-  data: any
+export const setData = async <T>(
+  setting: FeatureSetting | string,
+  data: T
 ): Promise<void> => {
-  if (!setting.dataKey) {
+  const key = typeof setting === "string" ? setting : setting.dataKey;
+  if (!key) {
     return;
   }
-  await GM.setValue(setting.dataKey, JSON.stringify(data));
+  await GM.setValue(key, JSON.stringify(data));
 };
 
 export const setSetting = (setting: FeatureSetting): Promise<void> =>

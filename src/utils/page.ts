@@ -3,6 +3,8 @@ export enum Page {
   BANK = "bank",
   SETTINGS = "settings",
   SETTINGS_OPTIONS = "settings_options",
+  POST_OFFICE = "postoffice",
+  WORKER = "worker",
 }
 
 // get page and parameters if any
@@ -36,8 +38,11 @@ export const setTitle = (title: string): void => {
   text.textContent = title;
 };
 
-export const getCardByTitle = (searchTitle: string): Element | null => {
-  const currentPage = getCurrentPage();
+export const getCardByTitle = (
+  searchTitle: string,
+  root?: HTMLElement
+): Element | null => {
+  const currentPage = root ?? getCurrentPage();
   if (!currentPage) {
     console.error("Current page not found");
     return null;
@@ -53,8 +58,11 @@ export const getCardByTitle = (searchTitle: string): Element | null => {
   return targetTitle.nextElementSibling;
 };
 
-export const getListByTitle = (searchTitle: string): HTMLElement | null => {
-  const targetCard = getCardByTitle(searchTitle);
+export const getListByTitle = (
+  searchTitle: string,
+  root?: HTMLElement
+): HTMLElement | null => {
+  const targetCard = getCardByTitle(searchTitle, root);
   if (!targetCard) {
     console.error(`${searchTitle} card not found`);
     return null;

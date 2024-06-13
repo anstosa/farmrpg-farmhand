@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.1
+// @version 1.0.2
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @grant GM.getValue
 // @grant GM.setValue
+// @grant GM.setClipboard
 // @icon https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com
 // @license MIT
 // @namespace https://github.com/anstosa/farmrpg-farmhand
@@ -32,15 +33,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.banker = exports.SETTING_BANKER = void 0;
 const api_1 = __webpack_require__(903);
 const page_1 = __webpack_require__(952);
-const theme_1 = __webpack_require__(178);
 const confirmation_1 = __webpack_require__(906);
 const popup_1 = __webpack_require__(469);
+const theme_1 = __webpack_require__(178);
 exports.SETTING_BANKER = {
     id: "banker",
     title: "Banker",
     description: `
-    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br />
-    * Adds an option *Deposit Target Balance* which deposits up to your target balance<br />
+    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br>
+    * Adds an option *Deposit Target Balance* which deposits up to your target balance<br>
     * Adds an option to *Withdraw Interest* which withdraws any earnings on top of your target balance
   `,
     type: "boolean",
@@ -85,7 +86,7 @@ exports.banker = {
         const targetBalanceDiv = document.createElement("div");
         targetBalanceDiv.classList.add("card-content-inner");
         targetBalanceDiv.innerHTML = `
-      Target Balance: <strong style="color: ${targetBalance === balance ? theme_1.GREEN_SUCCESS : theme_1.YELLOW_WARNING}">${formatter.format(targetBalance)} Silver</strong>
+      Target Balance: <strong style="color: ${targetBalance === balance ? theme_1.TEXT_SUCCESS : theme_1.TEXT_WARNING}">${formatter.format(targetBalance)} Silver</strong>
     `;
         (_d = balanceCard.firstElementChild) === null || _d === void 0 ? void 0 : _d.append(targetBalanceDiv);
         const availableInterest = Math.max(0, balance - targetBalance);
@@ -315,6 +316,464 @@ exports.compressChat = {
 
 /***/ }),
 
+/***/ 827:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.compressNavigation = exports.SETTING_NAVIGATION_HIDE_LOGO = exports.SETTING_NAVIGATION_COMPRESS = void 0;
+exports.SETTING_NAVIGATION_COMPRESS = {
+    id: "compressNav",
+    title: "Compress Navigation",
+    description: `Reduces whitespace in navigation to make space for more items`,
+    type: "boolean",
+    defaultValue: false,
+};
+exports.SETTING_NAVIGATION_HIDE_LOGO = {
+    id: "noLogoNav",
+    title: "Hide Navigation Logo",
+    description: `Hides Farm RPG logo in Navigation`,
+    type: "boolean",
+    defaultValue: true,
+};
+exports.compressNavigation = {
+    settings: [exports.SETTING_NAVIGATION_COMPRESS, exports.SETTING_NAVIGATION_HIDE_LOGO],
+    onInitialize: (settings) => {
+        if (settings[exports.SETTING_NAVIGATION_COMPRESS.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+          <style>
+            /* Reduce nav item spacing */
+            .panel-left .item-inner {
+              padding-top: 4px !important;
+              padding-bottom: 4px !important;
+            }
+            .panel-left .item-content,
+            .panel-left .item-inner {
+              min-height: 0 !important;
+            }
+          <style>
+        `);
+        }
+        if (settings[exports.SETTING_NAVIGATION_HIDE_LOGO.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+          <style>
+            /* Hide nav logo */
+            .panel-left .page-content div[align="center"] {
+              display: none !important;
+            }
+            
+            /* Hide extra padding */
+            .panel-left .page,
+            .panel-left .page-content {
+              padding-bottom: 0 !important;
+            }
+          <style>
+        `);
+        }
+    },
+};
+
+
+/***/ }),
+
+/***/ 224:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.customNavigation = exports.SETTING_CUSTOM_NAVIGATION = void 0;
+const theme_1 = __webpack_require__(178);
+const farmhandSettings_1 = __webpack_require__(973);
+const confirmation_1 = __webpack_require__(906);
+exports.SETTING_CUSTOM_NAVIGATION = {
+    id: "customNav",
+    title: "Customize Navigation",
+    description: `
+    Enables customization of the Navigation menu<br>
+    (click the gear in the navigation menu to configure)
+  `,
+    type: "boolean",
+    defaultValue: true,
+    dataKey: "customNav_data",
+};
+const state = {
+    isEditing: false,
+};
+const DEFAULT_NAVIGATION = [
+    { icon: "home", text: "Home", path: "index.php" },
+    { icon: "user", text: "My Profile", path: "profile.php" },
+    { icon: "list", text: "My Inventory", path: "inventory.php" },
+    { icon: "wrench", text: "My Workshop", path: "workshop.php" },
+    { icon: "spoon", text: "My Kitchen", path: "kitchen.php" },
+    { icon: "inbox", text: "My Mailbox", path: "postoffice.php" },
+    { icon: "envelope", text: "My Messages", path: "messages.php" },
+    { icon: "users", text: "My Friends", path: "friends.php" },
+    { icon: "gear", text: "My Settings", path: "settings.php" },
+    { icon: "building", text: "Town", path: "town.php" },
+    { icon: "book", text: "Library", path: "wiki.php" },
+    { icon: "info-circle", text: "About / Updates", path: "about.php" },
+    { icon: "close", text: "Logout", path: "logout.php" },
+];
+const icons = (() => {
+    const stylesheet = [...document.styleSheets].find(({ href }) => href === null || href === void 0 ? void 0 : href.includes("fontawesome"));
+    const icons = [];
+    if (!stylesheet) {
+        console.error("Could not find fontawesome stylesheet");
+        return icons;
+    }
+    for (const rule of stylesheet.cssRules) {
+        if (!(rule instanceof CSSStyleRule)) {
+            continue;
+        }
+        if (rule.style.length !== 1) {
+            continue;
+        }
+        if (!rule.style.content) {
+            continue;
+        }
+        const selector = rule.selectorText;
+        const aliases = selector.split(", ");
+        icons.push(aliases[0].slice(4, -8));
+    }
+    return icons.sort();
+})();
+const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    const navigationData = yield (0, farmhandSettings_1.getData)(exports.SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
+    const navigationList = document.querySelector(".panel-left ul");
+    if (!navigationList) {
+        console.error("Could not find navigation list");
+        return;
+    }
+    const navigationTitleLeft = document.querySelector(".panel-left .navbar .left");
+    if (!navigationTitleLeft) {
+        console.error("Could not find navigation title");
+        return;
+    }
+    navigationTitleLeft.innerHTML = "";
+    if (state.isEditing) {
+        const resetButton = document.createElement("i");
+        resetButton.style.cursor = "pointer";
+        resetButton.classList.add("fa");
+        resetButton.classList.add("fa-fw");
+        resetButton.classList.add("fa-arrow-left-rotate");
+        resetButton.addEventListener("click", () => {
+            (0, confirmation_1.showConfirmation)("Reset Navigation?", () => __awaiter(void 0, void 0, void 0, function* () {
+                yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
+                state.isEditing = false;
+                renderNavigation();
+            }));
+        });
+        navigationTitleLeft.append(resetButton);
+    }
+    navigationList.innerHTML = "";
+    for (const item of navigationData) {
+        const currentIndex = navigationData.indexOf(item);
+        const navigationItem = document.createElement("li");
+        navigationItem.innerHTML = `
+      <a
+        href="${item.path}"
+        data-view=".view-main"
+        class="item-link close-panel"
+      >
+        <div
+          class="item-content"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          "
+        >
+          <div
+            class="item-inner"
+            style="
+              background-image: none;
+              display: flex;
+              justify-content: space-between;
+              padding-right: 15px;
+              width: 100%;
+            "
+          >
+            <div class="item-title">
+              <i class="fa fa-fw fa-${item.icon}"></i>
+              <span class="fh-item">${item.text}</span>
+            </div>
+            ${state.isEditing
+            ? `
+                  <div>
+                    <i class="fa fa-fw ${state.editingIndex === currentIndex
+                ? "fa-check"
+                : "fa-pencil"} fh-edit"></i>
+                    <i class="fa fa-fw fa-trash fh-delete"></i>
+                  </div>
+                `
+            : '<i class="fa fa-fw fa-chevron-right"></i>'}
+          </div>
+          ${state.isEditing && state.editingIndex === currentIndex
+            ? `
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    padding-right: 15px;
+                  "
+                >
+                  <input
+                    type="text"
+                    class="fh-text"
+                    value="${item.text}"
+                    style="
+                      flex: 1;
+                      border: 1px solid ${theme_1.BORDER_GRAY};
+                      margin-left: 20px;
+                      margin-right: 10px;
+                      height: 30px;
+                      padding: 10px;
+                    "
+                  >
+                  <i class="fa fa-fw fa-arrow-down fh-down"></i>
+                  <i class="fa fa-fw fa-arrow-up fh-up"></i>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    padding-right: 15px;
+                  "
+                >
+                  <input
+                    type="text"
+                    class="fh-path"
+                    value="${item.path}"
+                    style="
+                      flex: 1;
+                      border: 1px solid ${theme_1.BORDER_GRAY};
+                      margin-left: 20px;
+                      height: 30px;
+                      padding: 10px;
+                      font-family: monospace;
+                    "
+                  >
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 4px;
+                    margin-top: 10px;
+                    height: 200px;
+                    width: 100%;
+                    overflow-y: scroll;
+                    flex-wrap: wrap;
+                  "
+                  class="fh-icons"
+                >
+                  ${icons
+                .map((icon) => `
+                        <i
+                          class="fa fa-fw fa-${icon}"
+                          data-icon="${icon}"
+                        ></i>
+                      `)
+                .join("")}
+                </div>
+              `
+            : ""}
+        </div>
+      </a>
+    `;
+        (_a = navigationItem
+            .querySelector(".fh-icons")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            var _l;
+            event.preventDefault();
+            event.stopPropagation();
+            if (!event.target) {
+                return;
+            }
+            item.icon = (_l = event.target.dataset.icon) !== null && _l !== void 0 ? _l : "";
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            renderNavigation();
+        }));
+        (_b = navigationItem
+            .querySelector(".fh-text")) === null || _b === void 0 ? void 0 : _b.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        (_c = navigationItem
+            .querySelector(".fh-text")) === null || _c === void 0 ? void 0 : _c.addEventListener("change", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            item.text = event.target.value;
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            renderNavigation();
+        }));
+        (_d = navigationItem
+            .querySelector(".fh-text")) === null || _d === void 0 ? void 0 : _d.addEventListener("keyup", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const itemText = navigationItem.querySelector(".fh-item");
+            if (!itemText) {
+                return;
+            }
+            itemText.textContent = event.target.value;
+        });
+        (_e = navigationItem
+            .querySelector(".fh-path")) === null || _e === void 0 ? void 0 : _e.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        (_f = navigationItem
+            .querySelector(".fh-path")) === null || _f === void 0 ? void 0 : _f.addEventListener("change", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            item.path = event.target.value;
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            renderNavigation();
+        }));
+        (_g = navigationItem
+            .querySelector(".fh-up")) === null || _g === void 0 ? void 0 : _g.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            if (currentIndex === 0) {
+                return;
+            }
+            navigationData.splice(currentIndex, 1);
+            navigationData.splice(currentIndex - 1, 0, item);
+            state.editingIndex = currentIndex - 1;
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            renderNavigation();
+        }));
+        (_h = navigationItem
+            .querySelector(".fh-down")) === null || _h === void 0 ? void 0 : _h.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            if (currentIndex === navigationData.length - 1) {
+                return;
+            }
+            navigationData.splice(currentIndex, 1);
+            navigationData.splice(currentIndex + 1, 0, item);
+            state.editingIndex = currentIndex + 1;
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            renderNavigation();
+        }));
+        (_j = navigationItem
+            .querySelector(".fh-edit")) === null || _j === void 0 ? void 0 : _j.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (state.editingIndex === currentIndex) {
+                delete state.editingIndex;
+            }
+            else {
+                state.editingIndex = currentIndex;
+            }
+            renderNavigation();
+        });
+        (_k = navigationItem
+            .querySelector(".fh-delete")) === null || _k === void 0 ? void 0 : _k.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            navigationData.splice(currentIndex, 1);
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            renderNavigation();
+        }));
+        navigationList.append(navigationItem);
+    }
+    if (state.isEditing) {
+        const addNavigationItem = document.createElement("li");
+        addNavigationItem.innerHTML = `
+      <a
+        href="#"
+        class="item-link close-panel"
+      >
+        <div
+          class="item-content"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          "
+        >
+          <div
+            class="item-inner"
+            style="
+              background-image: none;
+              display: flex;
+              justify-content: space-between;
+              padding-right: 15px;
+              width: 100%;
+            "
+          >
+            <div class="item-title">
+              <i class="fa fa-fw fa-plus"></i>
+              <span class="fh-item">Add Navigation Item</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    `;
+        addNavigationItem.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            navigationData.push({
+                icon: "sack-dollar",
+                text: "Tip anstosa",
+                path: "profile.php?user_name=anstosa",
+            });
+            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            state.editingIndex = navigationData.length - 1;
+            renderNavigation();
+        }));
+        navigationList.append(addNavigationItem);
+    }
+});
+exports.customNavigation = {
+    settings: [exports.SETTING_CUSTOM_NAVIGATION],
+    onInitialize: (settings) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_CUSTOM_NAVIGATION.id].value) {
+            return;
+        }
+        // add configuration icon
+        const navigationTitleRight = document.querySelector(".panel-left .navbar .right");
+        if (!navigationTitleRight) {
+            console.error("Could not find navigation title");
+            return;
+        }
+        const configurationButton = document.createElement("i");
+        configurationButton.style.cursor = "pointer";
+        configurationButton.classList.add("fa");
+        configurationButton.classList.add("fa-fw");
+        configurationButton.classList.add("fa-cog");
+        configurationButton.addEventListener("click", () => {
+            state.isEditing = !state.isEditing;
+            if (state.isEditing) {
+                configurationButton.classList.remove("fa-cog");
+                configurationButton.classList.add("fa-check");
+            }
+            else {
+                configurationButton.classList.remove("fa-check");
+                configurationButton.classList.add("fa-cog");
+            }
+            renderNavigation();
+        });
+        navigationTitleRight.append(configurationButton);
+        renderNavigation();
+    },
+};
+
+
+/***/ }),
+
 /***/ 164:
 /***/ (function(__unused_webpack_module, exports) {
 
@@ -334,7 +793,7 @@ exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     id: "dismissableChatBanners",
     title: "Dismissable Chat Banners",
     description: `
-    Adds × in chat banners to dismiss them<br />
+    Adds × in chat banners to dismiss them<br>
     Disable this to show dismissed banners again
   `,
     type: "boolean",
@@ -423,14 +882,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.farmhandSettings = exports.setSetting = exports.getSetting = exports.getSettings = void 0;
+exports.farmhandSettings = exports.SETTING_IMPORT = exports.SETTING_EXPORT = exports.setSetting = exports.setData = exports.getData = exports.getSetting = exports.getSettings = void 0;
 const page_1 = __webpack_require__(952);
+const popup_1 = __webpack_require__(469);
 const getSettings = (features) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const settings = {};
     for (const feature of features) {
         for (const setting of (_a = feature.settings) !== null && _a !== void 0 ? _a : []) {
-            settings[setting.id] = Object.assign(Object.assign({}, setting), { value: (yield GM.getValue(setting.id, setting.defaultValue)) });
+            setting.value = (yield GM.getValue(setting.id, setting.defaultValue));
+            settings[setting.id] = setting;
         }
     }
     return settings;
@@ -440,6 +901,21 @@ const getSetting = (setting) => __awaiter(void 0, void 0, void 0, function* () {
     return (Object.assign(Object.assign({}, setting), { value: (yield GM.getValue(setting.id, setting.defaultValue)) }));
 });
 exports.getSetting = getSetting;
+const getData = (setting, defaultValue) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    if (!setting.dataKey) {
+        return defaultValue;
+    }
+    return ((_b = JSON.parse(yield GM.getValue(setting.dataKey, ""))) !== null && _b !== void 0 ? _b : defaultValue);
+});
+exports.getData = getData;
+const setData = (setting, data) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!setting.dataKey) {
+        return;
+    }
+    yield GM.setValue(setting.dataKey, JSON.stringify(data));
+});
+exports.setData = setData;
 const setSetting = (setting) => { var _a; return GM.setValue(setting.id, (_a = setting.value) !== null && _a !== void 0 ? _a : ""); };
 exports.setSetting = setSetting;
 const getWrapper = ({ id, type, value }, children) => {
@@ -495,20 +971,22 @@ const getWrapper = ({ id, type, value }, children) => {
         }
     }
 };
-const getField = ({ id, type, value }) => {
-    switch (type) {
+const getField = (setting, children) => {
+    var _a;
+    switch (setting.type) {
         case "boolean": {
             return `
         <label class="label-switch">
           <input
             type="checkbox"
             class="settings_checkbox"
-            id="${id}"
-            name="${id}"
-            value="${value ? 1 : 0}"
-            ${value ? 'checked=""' : ""}"
-          />
+            id="${setting.id}"
+            name="${setting.id}"
+            value="${setting.value ? 1 : 0}"
+            ${setting.value ? 'checked=""' : ""}"
+          >
           <div class="checkbox"></div>
+          ${children}
         </label>
       `;
         }
@@ -518,11 +996,15 @@ const getField = ({ id, type, value }) => {
         <div class="item-after">
           <input
             type="text"
-            name="${id}"
-            value="${value}"
-            class="inlineinputsm"
-            style="width: 60px; font-family: -apple-system, &quot;SF UI Text&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Noto Color Emoji&quot;, EmojiNotoColor, &quot;Noto Emoji&quot;, EmojiNoto, &quot;Segoe UI&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Twitter Color Emoji&quot;, EmojiTwemColor, &quot;Twemoji Mozilla&quot;, EmojiTwem, &quot;EmojiOne Mozilla&quot;, &quot;Android Emoji&quot;, EmojiSymbols, Symbola, EmojiSymb !important;"
-          />
+            name="${setting.id}"
+            placeholder="${(_a = setting.placeholder) !== null && _a !== void 0 ? _a : ""}"
+            value="${setting.value}"
+            class="inlineinputsm fh-input"
+            style="
+              width: 100px !important;
+            "
+          >
+          ${children}
         </div>
       `;
         }
@@ -549,8 +1031,53 @@ const getValue = ({ id, type }, currentPage) => {
         }
     }
 };
+exports.SETTING_EXPORT = {
+    id: "export",
+    title: "Export",
+    description: "Exports Farmhand Settings to sync to other device",
+    type: "string",
+    defaultValue: "",
+    buttonText: "Export",
+    buttonAction: (settings, settingWrapper) => __awaiter(void 0, void 0, void 0, function* () {
+        const exportedSettings = Object.values(settings);
+        for (const setting of exportedSettings) {
+            setting.data = yield (0, exports.getData)(setting, "");
+        }
+        const exportString = JSON.stringify(exportedSettings);
+        GM.setClipboard(exportString);
+        (0, popup_1.showPopup)("Settings Exported to clipboard", "Open Farm RPG on another device with Farmhand installed to import");
+        const input = settingWrapper.querySelector(".fh-input");
+        if (input) {
+            input.value = exportString;
+        }
+    }),
+};
+exports.SETTING_IMPORT = {
+    id: "import",
+    title: "Import",
+    description: "Paste export into box and click Import",
+    type: "string",
+    defaultValue: "",
+    placeholder: "Paste Here",
+    buttonText: "Import",
+    buttonAction: (settings, settingWrapper) => __awaiter(void 0, void 0, void 0, function* () {
+        var _c;
+        const input = (_c = settingWrapper.querySelector(".fh-input")) === null || _c === void 0 ? void 0 : _c.value;
+        const importedSettings = JSON.parse(input !== null && input !== void 0 ? input : "[]");
+        for (const setting of importedSettings) {
+            yield (0, exports.setSetting)(setting);
+            if (setting.data) {
+                yield (0, exports.setData)(setting, setting.data);
+            }
+        }
+        yield (0, popup_1.showPopup)("Farmhand Settings Imported!", "Page will reload to apply");
+        window.location.reload();
+    }),
+};
 exports.farmhandSettings = {
+    settings: [exports.SETTING_EXPORT, exports.SETTING_IMPORT],
     onPageChange: (settings, page) => {
+        var _a;
         // make sure we are on the settings page
         if (page !== page_1.Page.SETTINGS_OPTIONS) {
             return;
@@ -574,11 +1101,25 @@ exports.farmhandSettings = {
         settingsList.append(farmhandSettingsLi);
         // add settings
         for (const setting of Object.values(settings)) {
+            const hasButton = setting.buttonText && setting.buttonAction;
             const settingLi = document.createElement("li");
             settingLi.innerHTML = `
-        <div class="item-content">
+        <div
+          class="item-content"
+          style="
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+          "
+        >
           ${getWrapper(setting, `
-            <div class="item-title label" style="width:60%">
+            <div
+              class="item-title label"
+              style="
+                flex: 1;
+                white-space: normal;
+              "
+            >
               <label
                 id="${setting.id}"
                 for="${setting.id}">
@@ -587,10 +1128,21 @@ exports.farmhandSettings = {
               <br>
               <div style="font-size: 11px">${setting.description}</div>
             </div>
-            ${getField(setting)}
+            ${getField(setting, hasButton
+                ? `
+                  <button
+                    class="button btngreen fh-action"
+                    style="margin-left: 8px"
+                  >${setting.buttonText}</button>
+                `
+                : "")}
             `)}
       </div>
       `;
+            (_a = settingLi.querySelector(".fh-action")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", () => {
+                var _a;
+                (_a = setting.buttonAction) === null || _a === void 0 ? void 0 : _a.call(setting, settings, settingLi);
+            });
             settingsList.append(settingLi);
         }
         // hook into save button
@@ -643,14 +1195,14 @@ exports.highlightSelfInChat = {
             var _a;
             const tags = document.querySelectorAll(`span a[href='profile.php?user_name=${username}']`);
             for (const tag of tags) {
-                tag.style.color = theme_1.YELLOW_WARNING;
+                tag.style.color = theme_1.TEXT_WARNING;
                 const message = (_a = tag.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement;
                 if (!message) {
                     console.error("Could not find message");
                     continue;
                 }
-                message.style.backgroundColor = theme_1.YELLOW_ALERT;
-                message.style.border = `1px solid ${theme_1.YELLOW_ALERT_BORDER}`;
+                message.style.backgroundColor = theme_1.ALERT_YELLOW_BACKGROUND;
+                message.style.border = `1px solid ${theme_1.ALERT_YELLOW_BORDER}`;
             }
         });
         const mobileChat = document.querySelector("#mobilechatpanel");
@@ -688,17 +1240,26 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const banker_1 = __webpack_require__(92);
 const buddyfarm_1 = __webpack_require__(273);
 const compressChat_1 = __webpack_require__(223);
+const compressNavigation_1 = __webpack_require__(827);
+const customNavigation_1 = __webpack_require__(224);
 const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
 const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
 const FEATURES = [
-    banker_1.banker,
+    // almanac
     buddyfarm_1.buddyFarm,
+    // bank
+    banker_1.banker,
+    // chat
     compressChat_1.compressChat,
     dismissableChatBanners_1.dismissableChatBanners,
-    farmhandSettings_1.farmhandSettings,
     highlightSelfInChat_1.highlightSelfInChat,
+    // nav
+    compressNavigation_1.compressNavigation,
+    customNavigation_1.customNavigation,
+    // settings
+    farmhandSettings_1.farmhandSettings,
 ];
 const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, function* () {
     const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
@@ -945,26 +1506,28 @@ exports.showPopup = showPopup;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BLUE_BUTTON_BORDER = exports.BLUE_BUTTON = exports.ORANGE_BUTTON_BORDER = exports.ORANGE_BUTTON = exports.GREEN_DARK_BUTTON_BORDER = exports.GREEN_DARK_BUTTON = exports.GREEN_BUTTON_BORDER = exports.GREEN_BUTTON = exports.GREEN_SUCCESS = exports.YELLOW_WARNING = exports.RED_ERROR = exports.YELLOW_ALERT_BORDER = exports.YELLOW_ALERT = exports.RED_LINK = exports.GREEN_LINK = void 0;
+exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.BORDER_GRAY = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = void 0;
 // links
-exports.GREEN_LINK = "#90EE90";
-exports.RED_LINK = "#ED143D";
+exports.LINK_GREEN = "#90EE90";
+exports.LINK_RED = "#ED143D";
 // alerts
-exports.YELLOW_ALERT = "#351C04";
-exports.YELLOW_ALERT_BORDER = "#41260D";
+exports.ALERT_YELLOW_BACKGROUND = "#351C04";
+exports.ALERT_YELLOW_BORDER = "#41260D";
 // text
-exports.RED_ERROR = "#FF0000";
-exports.YELLOW_WARNING = "#FFA500";
-exports.GREEN_SUCCESS = "#30D611";
+exports.TEXT_ERROR = "#FF0000";
+exports.TEXT_WARNING = "#FFA500";
+exports.TEXT_SUCCESS = "#30D611";
+// borders
+exports.BORDER_GRAY = "#393939";
 // buttons
-exports.GREEN_BUTTON = "#003300";
-exports.GREEN_BUTTON_BORDER = "#006600";
-exports.GREEN_DARK_BUTTON = "#001900";
-exports.GREEN_DARK_BUTTON_BORDER = "#003300";
-exports.ORANGE_BUTTON = "#351C04";
-exports.ORANGE_BUTTON_BORDER = "#41260D";
-exports.BLUE_BUTTON = "#000040";
-exports.BLUE_BUTTON_BORDER = "#00007F";
+exports.BUTTON_GREEN_BACKGROUND = "#003300";
+exports.BUTTON_GREEN_BORDER = "#006600";
+exports.BUTTON_GREEN_DARK_BACKGROUND = "#001900";
+exports.BUTTON_GREEN_DARK_BORDER = "#003300";
+exports.BUTTON_ORANGE_BACKGROUND = "#351C04";
+exports.BUTTON_ORANGE_BORDER = "#41260D";
+exports.BUTTON_BLUE_BACKGROUND = "#000040";
+exports.BUTTON_BLUE_BORDER = "#00007F";
 
 
 /***/ })

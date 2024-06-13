@@ -4,7 +4,7 @@ export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
   id: "dismissableChatBanners",
   title: "Dismissable Chat Banners",
   description: `
-    Adds × in chat banners to dismiss them<br />
+    Adds × in chat banners to dismiss them<br>
     Disable this to show dismissed banners again
   `,
   type: "boolean",

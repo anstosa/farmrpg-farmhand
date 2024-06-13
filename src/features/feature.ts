@@ -4,6 +4,9 @@ interface BaseFeatureSetting {
   id: string;
   title: string;
   description: string;
+  dataKey?: string;
+  buttonText?: string;
+  buttonAction?: (settings: Settings, settingWrapper: HTMLElement) => void;
 }
 
 export interface BooleanFeatureSetting extends BaseFeatureSetting {
@@ -14,12 +17,14 @@ export interface BooleanFeatureSetting extends BaseFeatureSetting {
 
 export interface NumberFeatureSetting extends BaseFeatureSetting {
   type: "number";
+  placeholder?: string;
   defaultValue: number;
   value?: number;
 }
 
 export interface StringFeatureSetting extends BaseFeatureSetting {
   type: "string";
+  placeholder?: string;
   defaultValue: string;
   value?: string;
 }

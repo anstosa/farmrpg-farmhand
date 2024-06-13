@@ -30,6 +30,16 @@ Adds shortcut in all items to view page in [Buddy's Almanac](https://buddy.farm)
 * Dismissable chat banners
 * Highlight messages tagging you in chat
 
+### Navigation
+
+* Customize navigation (icon, name, order, URL)
+* Compressed navigation view so more items are visible
+* Hide logo from navigation
+
+### Export
+
+All settings can be exported and imported on other devices
+
 ## Tip
 
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)

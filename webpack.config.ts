@@ -1,7 +1,6 @@
 /* eslint-disable unicorn/prefer-module */
 import { HeadersProps, UserscriptPlugin } from "webpack-userscript";
 import { Configuration as WebpackDevelopmentServerConfiguration } from "webpack-dev-server";
-import CircularDependencyPlugin from "circular-dependency-plugin";
 import ESLintPlugin from "eslint-webpack-plugin";
 import ForkTSCheckerPlugin from "fork-ts-checker-webpack-plugin";
 import path from "node:path";
@@ -21,48 +20,6 @@ const isDevelopment = process.env.NODE_ENV === "development";
 const PORT = 3333;
 
 console.log(`BUILDING IN ${mode} MODE`);
-
-const cssLoaders: webpack.RuleSetRule["use"] = [];
-const scssLoaders: webpack.RuleSetRule["use"] = [];
-
-// inject with JS with in dev mode
-if (isDevelopment) {
-  cssLoaders.push("style-loader");
-  scssLoaders.push("style-loader");
-}
-
-cssLoaders.push("css-loader");
-scssLoaders.push("css-loader");
-
-// use post-css to process tailwind, autoprefixer
-const postCSSLoader = {
-  loader: "postcss-loader",
-  options: {
-    sourceMap: true,
-    postcssOptions: {
-      config: "./postcss.config.js",
-    },
-  },
-};
-scssLoaders.push(postCSSLoader);
-
-// rewrite URLs for production
-const resolveLoader = {
-  loader: "resolve-url-loader",
-  options: {
-    sourceMap: true,
-  },
-};
-scssLoaders.push(resolveLoader);
-
-// compile SASS with sass-loader
-const sassLoader = {
-  loader: "sass-loader",
-  options: {
-    sourceMap: true,
-  },
-};
-scssLoaders.push(sassLoader);
 
 const config: Configuration = {
   mode,
@@ -130,16 +87,6 @@ const config: Configuration = {
             },
           },
 
-          // run CSS through pipeline
-          {
-            test: /\.css$/,
-            use: cssLoaders,
-          },
-          {
-            test: /\.scss$/,
-            use: scssLoaders,
-          },
-
           // use file-loader for everything else
           {
             loader: require.resolve("file-loader"),
@@ -152,58 +99,48 @@ const config: Configuration = {
       },
     ],
   },
-  plugins: (() => {
-    const plugins: webpack.Configuration["plugins"] = [
-      // don't allow circular dependencies
-      new CircularDependencyPlugin({
-        failOnError: true,
-        exclude: /node_modules/,
-      }),
+  plugins: [
+    // lint source with eslint config
+    new ESLintPlugin({
+      extensions: ["js", "ts", "json"],
+    }),
 
-      // lint source with eslint config
-      new ESLintPlugin({
-        extensions: ["js", "ts", "json"],
-      }),
+    // performant type checking
+    new ForkTSCheckerPlugin({}),
 
-      // performant type checking
-      new ForkTSCheckerPlugin({}),
-
-      new UserscriptPlugin({
-        headers(original) {
-          const overrides: HeadersProps = {
-            grant: ["GM.getValue", "GM.setValue"],
-            icon: "https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com",
-            license: "MIT",
-            match: "https://farmrpg.com/*",
-            name: "Farm RPG Farmhand",
-            namespace: "https://github.com/anstosa/farmrpg-farmhand",
-            // from package.json
-            //   description
-            //   version
-            //   author
-            //   homepage
-            //   bugs
-          };
-          const version = isDevelopment
-            ? {
-                version: `${original.version}-[buildTime]`,
-              }
-            : {};
-          return {
-            ...original,
-            ...overrides,
-            ...version,
-          };
-        },
-        proxyScript: {
-          baseURL: `http://localhost:${PORT}`,
-          filename: `[basename].proxy.user.js`,
-        },
-      }),
-    ];
-
-    return plugins;
-  })(),
+    new UserscriptPlugin({
+      headers(original) {
+        const overrides: HeadersProps = {
+          grant: ["GM.getValue", "GM.setValue", "GM.setClipboard"],
+          icon: "https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com",
+          license: "MIT",
+          match: "https://farmrpg.com/*",
+          name: "Farm RPG Farmhand",
+          namespace: "https://github.com/anstosa/farmrpg-farmhand",
+          // from package.json
+          //   description
+          //   version
+          //   author
+          //   homepage
+          //   bugs
+        };
+        const version = isDevelopment
+          ? {
+              version: `${original.version}-[buildTime]`,
+            }
+          : {};
+        return {
+          ...original,
+          ...overrides,
+          ...version,
+        };
+      },
+      proxyScript: {
+        baseURL: `http://localhost:${PORT}`,
+        filename: `[basename].proxy.user.js`,
+      },
+    }),
+  ],
 };
 
 export default config;

@@ -1,14 +1,16 @@
 import { Feature, FeatureSetting, Settings } from "./feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import { showPopup } from "~/utils/popup";
 
 export const getSettings = async (features: Feature[]): Promise<Settings> => {
   const settings: Settings = {};
   for (const feature of features) {
     for (const setting of feature.settings ?? []) {
-      settings[setting.id] = {
-        ...setting,
-        value: (await GM.getValue(setting.id, setting.defaultValue)) as any,
-      };
+      setting.value = (await GM.getValue(
+        setting.id,
+        setting.defaultValue
+      )) as any;
+      settings[setting.id] = setting;
     }
   }
   return settings;
@@ -20,6 +22,29 @@ export const getSetting = async (
   ...setting,
   value: (await GM.getValue(setting.id, setting.defaultValue)) as any,
 });
+
+export const getData = async <T>(
+  setting: FeatureSetting,
+  defaultValue: T
+): Promise<T> => {
+  if (!setting.dataKey) {
+    return defaultValue;
+  }
+  return (
+    (JSON.parse(await GM.getValue<string>(setting.dataKey, "")) as T) ??
+    defaultValue
+  );
+};
+
+export const setData = async (
+  setting: FeatureSetting,
+  data: any
+): Promise<void> => {
+  if (!setting.dataKey) {
+    return;
+  }
+  await GM.setValue(setting.dataKey, JSON.stringify(data));
+};
 
 export const setSetting = (setting: FeatureSetting): Promise<void> =>
   GM.setValue(setting.id, setting.value ?? "");
@@ -81,20 +106,21 @@ const getWrapper = (
   }
 };
 
-const getField = ({ id, type, value }: FeatureSetting): string => {
-  switch (type) {
+const getField = (setting: FeatureSetting, children: string): string => {
+  switch (setting.type) {
     case "boolean": {
       return `
         <label class="label-switch">
           <input
             type="checkbox"
             class="settings_checkbox"
-            id="${id}"
-            name="${id}"
-            value="${value ? 1 : 0}"
-            ${value ? 'checked=""' : ""}"
-          />
+            id="${setting.id}"
+            name="${setting.id}"
+            value="${setting.value ? 1 : 0}"
+            ${setting.value ? 'checked=""' : ""}"
+          >
           <div class="checkbox"></div>
+          ${children}
         </label>
       `;
     }
@@ -104,11 +130,15 @@ const getField = ({ id, type, value }: FeatureSetting): string => {
         <div class="item-after">
           <input
             type="text"
-            name="${id}"
-            value="${value}"
-            class="inlineinputsm"
-            style="width: 60px; font-family: -apple-system, &quot;SF UI Text&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Noto Color Emoji&quot;, EmojiNotoColor, &quot;Noto Emoji&quot;, EmojiNoto, &quot;Segoe UI&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Twitter Color Emoji&quot;, EmojiTwemColor, &quot;Twemoji Mozilla&quot;, EmojiTwem, &quot;EmojiOne Mozilla&quot;, &quot;Android Emoji&quot;, EmojiSymbols, Symbola, EmojiSymb !important;"
-          />
+            name="${setting.id}"
+            placeholder="${setting.placeholder ?? ""}"
+            value="${setting.value}"
+            class="inlineinputsm fh-input"
+            style="
+              width: 100px !important;
+            "
+          >
+          ${children}
         </div>
       `;
     }
@@ -142,7 +172,58 @@ const getValue = (
   }
 };
 
+type ExportedSettings = Array<FeatureSetting & { data: any }>;
+
+export const SETTING_EXPORT: FeatureSetting = {
+  id: "export",
+  title: "Export",
+  description: "Exports Farmhand Settings to sync to other device",
+  type: "string",
+  defaultValue: "",
+  buttonText: "Export",
+  buttonAction: async (settings, settingWrapper) => {
+    const exportedSettings = Object.values(settings) as ExportedSettings;
+    for (const setting of exportedSettings) {
+      setting.data = await getData(setting, "");
+    }
+    const exportString = JSON.stringify(exportedSettings);
+    GM.setClipboard(exportString);
+    showPopup(
+      "Settings Exported to clipboard",
+      "Open Farm RPG on another device with Farmhand installed to import"
+    );
+    const input = settingWrapper.querySelector<HTMLInputElement>(".fh-input");
+    if (input) {
+      input.value = exportString;
+    }
+  },
+};
+
+export const SETTING_IMPORT: FeatureSetting = {
+  id: "import",
+  title: "Import",
+  description: "Paste export into box and click Import",
+  type: "string",
+  defaultValue: "",
+  placeholder: "Paste Here",
+  buttonText: "Import",
+  buttonAction: async (settings, settingWrapper) => {
+    const input =
+      settingWrapper.querySelector<HTMLInputElement>(".fh-input")?.value;
+    const importedSettings = JSON.parse(input ?? "[]") as ExportedSettings;
+    for (const setting of importedSettings) {
+      await setSetting(setting);
+      if (setting.data) {
+        await setData(setting, setting.data);
+      }
+    }
+    await showPopup("Farmhand Settings Imported!", "Page will reload to apply");
+    window.location.reload();
+  },
+};
+
 export const farmhandSettings: Feature = {
+  settings: [SETTING_EXPORT, SETTING_IMPORT],
   onPageChange: (settings, page) => {
     // make sure we are on the settings page
     if (page !== Page.SETTINGS_OPTIONS) {
@@ -171,13 +252,27 @@ export const farmhandSettings: Feature = {
 
     // add settings
     for (const setting of Object.values(settings)) {
+      const hasButton = setting.buttonText && setting.buttonAction;
       const settingLi = document.createElement("li");
       settingLi.innerHTML = `
-        <div class="item-content">
+        <div
+          class="item-content"
+          style="
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+          "
+        >
           ${getWrapper(
             setting,
             `
-            <div class="item-title label" style="width:60%">
+            <div
+              class="item-title label"
+              style="
+                flex: 1;
+                white-space: normal;
+              "
+            >
               <label
                 id="${setting.id}"
                 for="${setting.id}">
@@ -186,11 +281,24 @@ export const farmhandSettings: Feature = {
               <br>
               <div style="font-size: 11px">${setting.description}</div>
             </div>
-            ${getField(setting)}
+            ${getField(
+              setting,
+              hasButton
+                ? `
+                  <button
+                    class="button btngreen fh-action"
+                    style="margin-left: 8px"
+                  >${setting.buttonText}</button>
+                `
+                : ""
+            )}
             `
           )}
       </div>
       `;
+      settingLi.querySelector(".fh-action")?.addEventListener("click", () => {
+        setting.buttonAction?.(settings, settingLi);
+      });
       settingsList.append(settingLi);
     }
 

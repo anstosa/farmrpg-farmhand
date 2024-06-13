@@ -1,9 +1,9 @@
-import { Feature, FeatureSetting } from "./feature";
 import {
-  YELLOW_ALERT,
-  YELLOW_ALERT_BORDER,
-  YELLOW_WARNING,
+  ALERT_YELLOW_BACKGROUND,
+  ALERT_YELLOW_BORDER,
+  TEXT_WARNING,
 } from "~/utils/theme";
+import { Feature, FeatureSetting } from "./feature";
 
 export const SETTING_CHAT_HIGHLIGHT_SELF: FeatureSetting = {
   id: "highlightSelfInChat",
@@ -32,14 +32,14 @@ export const highlightSelfInChat: Feature = {
         `span a[href='profile.php?user_name=${username}']`
       );
       for (const tag of tags) {
-        tag.style.color = YELLOW_WARNING;
+        tag.style.color = TEXT_WARNING;
         const message = tag.parentElement?.parentElement;
         if (!message) {
           console.error("Could not find message");
           continue;
         }
-        message.style.backgroundColor = YELLOW_ALERT;
-        message.style.border = `1px solid ${YELLOW_ALERT_BORDER}`;
+        message.style.backgroundColor = ALERT_YELLOW_BACKGROUND;
+        message.style.border = `1px solid ${ALERT_YELLOW_BORDER}`;
       }
     });
 

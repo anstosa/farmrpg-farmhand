@@ -6,16 +6,16 @@ import {
   getListByTitle,
   Page,
 } from "~/utils/page";
-import { GREEN_SUCCESS, YELLOW_WARNING } from "~/utils/theme";
 import { showConfirmation } from "~/utils/confirmation";
 import { showPopup } from "~/utils/popup";
+import { TEXT_SUCCESS, TEXT_WARNING } from "~/utils/theme";
 
 export const SETTING_BANKER: FeatureSetting = {
   id: "banker",
   title: "Banker",
   description: `
-    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br />
-    * Adds an option *Deposit Target Balance* which deposits up to your target balance<br />
+    * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br>
+    * Adds an option *Deposit Target Balance* which deposits up to your target balance<br>
     * Adds an option to *Withdraw Interest* which withdraws any earnings on top of your target balance
   `,
   type: "boolean",
@@ -71,7 +71,7 @@ export const banker: Feature = {
     targetBalanceDiv.classList.add("card-content-inner");
     targetBalanceDiv.innerHTML = `
       Target Balance: <strong style="color: ${
-        targetBalance === balance ? GREEN_SUCCESS : YELLOW_WARNING
+        targetBalance === balance ? TEXT_SUCCESS : TEXT_WARNING
       }">${formatter.format(targetBalance)} Silver</strong>
     `;
     balanceCard.firstElementChild?.append(targetBalanceDiv);

@@ -1,18 +1,31 @@
 import { banker } from "./features/banker";
 import { buddyFarm } from "~/features/buddyfarm";
 import { compressChat } from "./features/compressChat";
+import { compressNavigation } from "./features/compressNavigation";
+import { customNavigation } from "./features/customNavigation";
 import { dismissableChatBanners } from "./features/dismissableChatBanners";
 import { farmhandSettings, getSettings } from "./features/farmhandSettings";
 import { getPage, Page } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
 
 const FEATURES = [
-  banker,
+  // almanac
   buddyFarm,
+
+  // bank
+  banker,
+
+  // chat
   compressChat,
   dismissableChatBanners,
-  farmhandSettings,
   highlightSelfInChat,
+
+  // nav
+  compressNavigation,
+  customNavigation,
+
+  // settings
+  farmhandSettings,
 ];
 
 const onPageChange = async (

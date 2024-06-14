@@ -20,10 +20,18 @@ Farmhand purposefully avoids any features that would violate the letter or spiri
 
 ## Install
 
+### Desktop
+
 1. Install a browser that supports extensions (including [Firefox](https://www.mozilla.org/en-US/firefox/new) on mobile)
-2. [Install Tampermonkey](https://www.tampermonkey.net/) or another Greasemonkey script manager
+2. [Install Tampermonkey](https://www.tampermonkey.net/) or another Greasemonkey script manager like [Userscripts on iOS](https://apps.apple.com/us/app/userscripts/id1463298887)
 3. Install Farmhand via [Greasy Fork](https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand) (or [directly from this repository](https://github.com/anstosa/farmrpg-farmhand/blob/main/dist/farmrpg-farmhand.user.js))
 4. If you're on mobile, you can use your browser to add <https://farmrpg.com> to your homescreen so it feels like an app
+
+### Mobile
+
+1. Install [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887)
+2. Install Farmhand via [Greasy Fork](https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand) (or [directly from this repository](https://github.com/anstosa/farmrpg-farmhand/blob/main/dist/farmrpg-farmhand.user.js))
+3. Use the browser menu when visiting <https://farmrpg.com> to add it to you your homescreen so it feels like an app
 
 ## Features
 

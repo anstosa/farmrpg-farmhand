@@ -1401,6 +1401,176 @@ exports.highlightSelfInChat = {
 
 /***/ }),
 
+/***/ 682:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.perkManagment = exports.SETTING_PERK_MANAGER = void 0;
+const farmrpgApi_1 = __webpack_require__(626);
+const notifications_1 = __webpack_require__(783);
+const page_1 = __webpack_require__(952);
+exports.SETTING_PERK_MANAGER = {
+    id: "perkManager",
+    title: "Manage Perks",
+    description: `
+    1. Save your default perks set as "Default"<br>
+    2. Save perks for "Crafting", "Fishing", "Exploring" activities<br>
+    3. Activity perk sets will automatically be enabled for those activities and reverted to "Default" after
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+const state = {
+    perkSets: [],
+};
+const getNotification = (activity) => ({
+    class: "btnorange",
+    id: `activeperks`,
+    text: `${activity} perks activated`,
+});
+exports.perkManagment = {
+    settings: [exports.SETTING_PERK_MANAGER],
+    onInitialize: (settings) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
+            return;
+        }
+        state.perkSets = yield (0, farmrpgApi_1.getPerkSets)();
+    }),
+    onPageChange: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b, _c;
+        // make sure the setting is enabled
+        if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
+            return;
+        }
+        const defaultPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.DEFAULT);
+        // make sure we have a default perk set
+        if (!defaultPerks) {
+            console.warn("Default perk set not found");
+            return;
+        }
+        const craftingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.CRAFTING);
+        if (craftingPerks && page === page_1.Page.WORKSHOP) {
+            yield (0, farmrpgApi_1.activatePerkSet)(craftingPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.CRAFTING));
+            return;
+        }
+        if (craftingPerks) {
+            const quickcraftButton = document.querySelector(".quickcraftbtn");
+            if (quickcraftButton) {
+                quickcraftButton.style.display = "none";
+                const proxyButton = document.createElement("button");
+                proxyButton.classList.add("button");
+                proxyButton.classList.add("btngreen");
+                proxyButton.style.height = "28px;";
+                proxyButton.textContent = "CRAFT";
+                proxyButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+                    yield (0, farmrpgApi_1.activatePerkSet)(craftingPerks);
+                    (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.CRAFTING));
+                    quickcraftButton.click();
+                    yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
+                    (0, notifications_1.removeNotification)(getNotification());
+                }));
+                (_a = quickcraftButton.parentElement) === null || _a === void 0 ? void 0 : _a.insertBefore(proxyButton, quickcraftButton);
+            }
+        }
+        const fishingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.FISHING);
+        if (fishingPerks && page === page_1.Page.FISHING) {
+            yield (0, farmrpgApi_1.activatePerkSet)(fishingPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FISHING));
+            return;
+        }
+        const exploringPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.EXPLORING);
+        if (exploringPerks && page === page_1.Page.AREA) {
+            yield (0, farmrpgApi_1.activatePerkSet)(exploringPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.EXPLORING));
+            return;
+        }
+        const sellingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.SELLING);
+        if (sellingPerks && page === page_1.Page.FARMERS_MARKET) {
+            yield (0, farmrpgApi_1.activatePerkSet)(sellingPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.SELLING));
+            return;
+        }
+        if (sellingPerks) {
+            const quicksellButton = document.querySelector(".quicksellbtn, .quicksellbtnnc");
+            if (quicksellButton) {
+                quicksellButton.style.display = "none";
+                const proxyButton = document.createElement("button");
+                proxyButton.classList.add("button");
+                proxyButton.classList.add("btngreen");
+                proxyButton.style.height = "28px;";
+                proxyButton.textContent = "SELL";
+                proxyButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+                    yield (0, farmrpgApi_1.activatePerkSet)(sellingPerks);
+                    (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.SELLING));
+                    quicksellButton.click();
+                    yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
+                    (0, notifications_1.removeNotification)(getNotification());
+                }));
+                (_b = quicksellButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quicksellButton);
+            }
+        }
+        const friendshipPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.WHEEL);
+        if (friendshipPerks && page === page_1.Page.FRIENDSHIP) {
+            yield (0, farmrpgApi_1.activatePerkSet)(friendshipPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FRIENDSHIP));
+            return;
+        }
+        if (friendshipPerks) {
+            const quickgiveButton = document.querySelector(".quickgivebtn");
+            if (quickgiveButton) {
+                quickgiveButton.style.display = "none";
+                const proxyButton = document.createElement("button");
+                proxyButton.classList.add("button");
+                proxyButton.classList.add("btngreen");
+                proxyButton.style.height = "28px;";
+                proxyButton.textContent = "GIVE";
+                proxyButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+                    yield (0, farmrpgApi_1.activatePerkSet)(friendshipPerks);
+                    (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FRIENDSHIP));
+                    quickgiveButton.click();
+                    yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
+                    (0, notifications_1.removeNotification)(getNotification());
+                }));
+                (_c = quickgiveButton.parentElement) === null || _c === void 0 ? void 0 : _c.insertBefore(proxyButton, quickgiveButton);
+            }
+        }
+        const templePerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.TEMPLE);
+        if (templePerks && page === page_1.Page.TEMPLE) {
+            yield (0, farmrpgApi_1.activatePerkSet)(templePerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.TEMPLE));
+            return;
+        }
+        const locksmithPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.LOCKSMITH);
+        if (locksmithPerks && page === page_1.Page.LOCKSMITH) {
+            yield (0, farmrpgApi_1.activatePerkSet)(locksmithPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.LOCKSMITH));
+            return;
+        }
+        const wheelPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.WHEEL);
+        if (wheelPerks && page === page_1.Page.WHEEL) {
+            yield (0, farmrpgApi_1.activatePerkSet)(wheelPerks);
+            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.WHEEL));
+            return;
+        }
+        (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
+        (0, notifications_1.removeNotification)(getNotification());
+    }),
+};
+
+
+/***/ }),
+
 /***/ 217:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -1428,6 +1598,7 @@ const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
+const perkManagement_1 = __webpack_require__(682);
 const FEATURES = [
     // internal
     notifications_1.notifications,
@@ -1436,6 +1607,8 @@ const FEATURES = [
     buddyfarm_1.buddyFarm,
     // bank
     banker_1.banker,
+    // explore
+    perkManagement_1.perkManagment,
     // chat
     compressChat_1.compressChat,
     dismissableChatBanners_1.dismissableChatBanners,
@@ -1469,20 +1642,27 @@ const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, fun
                 onInitialize(settings);
             }
         }
-        // listen for location changes
-        let oldHref = document.location.href;
-        const { body } = document;
-        const observer = new MutationObserver(() => {
-            if (oldHref !== document.location.href) {
-                oldHref = document.location.href;
+        const pages = document.querySelector(".view-main .pages");
+        if (!pages) {
+            console.error("Pages not found");
+            return;
+        }
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                // only respond to tree changes
+                if (mutation.type !== "childList") {
+                    continue;
+                }
+                // ignore removals
+                if (mutation.addedNodes.length === 0) {
+                    continue;
+                }
                 const [page, parameters] = (0, page_1.getPage)();
-                console.debug("Page Change", page, parameters);
+                console.debug("Page Load", page, parameters);
                 onPageChange(page, parameters);
             }
         });
-        observer.observe(body, { childList: true, subtree: true });
-        // process first page
-        setTimeout(() => onPageChange(...(0, page_1.getPage)()));
+        observer.observe(pages, { childList: true });
     });
 })();
 
@@ -1838,10 +2018,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.collectMailbox = exports.getMailboxContents = exports.getMailboxCount = exports.withdrawSilver = exports.depositSilver = exports.getStats = exports.sendRequest = void 0;
+exports.activatePerkSet = exports.resetPerks = exports.isActivePerkSet = exports.getCurrentPerkSet = exports.getActivityPerksSet = exports.getPerkSets = exports.PerkActivity = exports.collectMailbox = exports.getMailboxContents = exports.getMailboxCount = exports.withdrawSilver = exports.depositSilver = exports.getStats = exports.sendRequest = void 0;
 const page_1 = __webpack_require__(952);
+const state = {};
 const sendRequest = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch(`https://farmrpg.com/worker.php?${query === null || query === void 0 ? void 0 : query.toString()}`, {
+    const response = yield fetch(`https://farmrpg.com/${page}.php?${query ? query.toString() : ""}`, {
         method: "POST",
         mode: "cors",
         credentials: "include",
@@ -1895,6 +2076,63 @@ const collectMailbox = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "collectallmailitems" }));
 });
 exports.collectMailbox = collectMailbox;
+var PerkActivity;
+(function (PerkActivity) {
+    PerkActivity["DEFAULT"] = "Default";
+    PerkActivity["CRAFTING"] = "Crafting";
+    PerkActivity["FISHING"] = "Fishing";
+    PerkActivity["EXPLORING"] = "Exploring";
+    PerkActivity["SELLING"] = "Selling";
+    PerkActivity["FRIENDSHIP"] = "Friendship";
+    PerkActivity["TEMPLE"] = "Temple";
+    PerkActivity["LOCKSMITH"] = "Locksmith";
+    PerkActivity["WHEEL"] = "Wheel";
+    PerkActivity["UNKNOWN"] = "Unknown";
+})(PerkActivity || (exports.PerkActivity = PerkActivity = {}));
+const getPerkSets = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _q, _r;
+    if (state.perkSets) {
+        return state.perkSets;
+    }
+    const response = yield (0, exports.sendRequest)(page_1.Page.PERKS);
+    const setList = (0, page_1.getListByTitle)("My Perk Sets", response.body);
+    const setWrappers = (_q = setList === null || setList === void 0 ? void 0 : setList.querySelectorAll(".item-title")) !== null && _q !== void 0 ? _q : [];
+    const sets = [];
+    for (const setWrapper of setWrappers) {
+        const link = setWrapper.querySelector("a");
+        const name = (_r = link === null || link === void 0 ? void 0 : link.textContent) !== null && _r !== void 0 ? _r : "";
+        const id = Number(link === null || link === void 0 ? void 0 : link.dataset.id);
+        sets.push({ name, id });
+    }
+    // eslint-disable-next-line require-atomic-updates
+    state.perkSets = sets;
+    return sets;
+});
+exports.getPerkSets = getPerkSets;
+const getActivityPerksSet = (activity) => __awaiter(void 0, void 0, void 0, function* () {
+    const sets = yield (0, exports.getPerkSets)();
+    return sets.find((set) => set.name === activity);
+});
+exports.getActivityPerksSet = getActivityPerksSet;
+const getCurrentPerkSet = () => state.currentPerksSet;
+exports.getCurrentPerkSet = getCurrentPerkSet;
+const isActivePerkSet = (set) => state.currentPerksSet === set;
+exports.isActivePerkSet = isActivePerkSet;
+const resetPerks = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "resetperks" }));
+});
+exports.resetPerks = resetPerks;
+const activatePerkSet = (set) => __awaiter(void 0, void 0, void 0, function* () {
+    if (state.currentPerksSet === set) {
+        return;
+    }
+    console.debug(`Activating ${set.name} Perks`);
+    yield (0, exports.resetPerks)();
+    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "activateperkset", id: set.id.toString() }));
+    // eslint-disable-next-line require-atomic-updates
+    state.currentPerksSet = set;
+});
+exports.activatePerkSet = activatePerkSet;
 
 
 /***/ }),
@@ -1931,15 +2169,17 @@ const sendNotification = (notification) => __awaiter(void 0, void 0, void 0, fun
         notification,
     ];
     yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
+    renderNotifications();
 });
 exports.sendNotification = sendNotification;
 const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
     state.notifications = state.notifications.filter(({ id }) => id !== notification.id);
     yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
+    renderNotifications();
 });
 exports.removeNotification = removeNotification;
 const renderNotifications = () => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const pageContent = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".page-content");
     if (!pageContent) {
         console.error("Page content not found");
@@ -1958,15 +2198,18 @@ const renderNotifications = () => {
         if (notification.replacesHref) {
             (_c = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(`a[href="${notification.replacesHref}"]`)) === null || _c === void 0 ? void 0 : _c.remove();
         }
-        const notificationElement = document.createElement("a");
+        const notificationElement = document.createElement(notification.handlerName ? "a" : "span");
         notificationElement.classList.add("fh-notification");
         notificationElement.classList.add("button");
-        notificationElement.classList.add(notification.class);
+        if (notification.class) {
+            notificationElement.classList.add(notification.class);
+        }
         notificationElement.textContent = notification.text;
         notificationElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            var _e;
             event.preventDefault();
             event.stopPropagation();
-            const handler = notificationHandlers.get(notification.handlerName);
+            const handler = notificationHandlers.get((_e = notification.handlerName) !== null && _e !== void 0 ? _e : "");
             if (handler) {
                 yield handler(notification);
             }
@@ -1976,7 +2219,12 @@ const renderNotifications = () => {
             (0, exports.removeNotification)(notification);
             renderNotifications();
         }));
-        pageContent.insertBefore(notificationElement, pageContent.children[1]);
+        if ((_d = pageContent.firstElementChild) === null || _d === void 0 ? void 0 : _d.classList.contains("pull-to-refresh-layer")) {
+            pageContent.insertBefore(notificationElement, pageContent.children[1]);
+        }
+        else {
+            pageContent.prepend(notificationElement);
+        }
     }
 };
 exports.notifications = {
@@ -2004,21 +2252,27 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getListByTitle = exports.getCardByTitle = exports.setTitle = exports.getCurrentPage = exports.getPreviousPage = exports.getPage = exports.Page = void 0;
 var Page;
 (function (Page) {
-    Page["ITEM"] = "item";
+    Page["AREA"] = "area";
     Page["BANK"] = "bank";
+    Page["FISHING"] = "fishing";
+    Page["FRIENDSHIP"] = "npclevels";
+    Page["ITEM"] = "item";
+    Page["LOCKSMITH"] = "locksmith";
+    Page["FARMERS_MARKET"] = "market";
+    Page["PERKS"] = "perks";
+    Page["POST_OFFICE"] = "postoffice";
     Page["SETTINGS"] = "settings";
     Page["SETTINGS_OPTIONS"] = "settings_options";
-    Page["POST_OFFICE"] = "postoffice";
+    Page["TEMPLE"] = "mailitems";
+    Page["WHEEL"] = "spin";
     Page["WORKER"] = "worker";
+    Page["WORKSHOP"] = "workshop";
 })(Page || (exports.Page = Page = {}));
 // get page and parameters if any
 const getPage = () => {
-    const match = window.location.hash.match(/#!\/(\w+).php\?{0,1}(.*)/);
-    if (!match) {
-        return [undefined, new URLSearchParams()];
-    }
-    const page = match[1];
-    const parameters = new URLSearchParams(match[2]);
+    const currentPage = (0, exports.getCurrentPage)();
+    const page = currentPage === null || currentPage === void 0 ? void 0 : currentPage.dataset.page;
+    const parameters = new URLSearchParams(window.location.hash.split("?")[1]);
     return [page, parameters];
 };
 exports.getPage = getPage;

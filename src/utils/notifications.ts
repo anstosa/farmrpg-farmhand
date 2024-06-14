@@ -5,14 +5,14 @@ import { getData, setData } from "../features/farmhandSettings";
 const KEY_NOTIFICATIONS = "notifications";
 
 interface BaseNotification {
-  class: string;
-  handlerName: string;
+  class?: string;
+  handlerName?: string;
   id: string;
   text: string;
   replacesHref?: string;
 }
 
-type Notification<T extends object> = BaseNotification & { data?: T };
+export type Notification<T> = BaseNotification & { data?: T };
 
 type NotificationHandler = (notification: Notification<any>) => void;
 
@@ -29,7 +29,7 @@ export const registerNotificationHandler = (
   notificationHandlers.set(handlerName, handler);
 };
 
-export const sendNotification = async <T extends object>(
+export const sendNotification = async <T>(
   notification: Notification<T>
 ): Promise<void> => {
   state.notifications = [
@@ -37,6 +37,7 @@ export const sendNotification = async <T extends object>(
     notification,
   ];
   await setData(KEY_NOTIFICATIONS, state.notifications);
+  renderNotifications();
 };
 
 export const removeNotification = async (
@@ -46,6 +47,7 @@ export const removeNotification = async (
     ({ id }) => id !== notification.id
   );
   await setData(KEY_NOTIFICATIONS, state.notifications);
+  renderNotifications();
 };
 
 const renderNotifications = (): void => {
@@ -73,15 +75,19 @@ const renderNotifications = (): void => {
         )
         ?.remove();
     }
-    const notificationElement = document.createElement("a");
+    const notificationElement = document.createElement(
+      notification.handlerName ? "a" : "span"
+    );
     notificationElement.classList.add("fh-notification");
     notificationElement.classList.add("button");
-    notificationElement.classList.add(notification.class);
+    if (notification.class) {
+      notificationElement.classList.add(notification.class);
+    }
     notificationElement.textContent = notification.text;
     notificationElement.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const handler = notificationHandlers.get(notification.handlerName);
+      const handler = notificationHandlers.get(notification.handlerName ?? "");
       if (handler) {
         await handler(notification);
       } else {
@@ -90,7 +96,13 @@ const renderNotifications = (): void => {
       removeNotification(notification);
       renderNotifications();
     });
-    pageContent.insertBefore(notificationElement, pageContent.children[1]);
+    if (
+      pageContent.firstElementChild?.classList.contains("pull-to-refresh-layer")
+    ) {
+      pageContent.insertBefore(notificationElement, pageContent.children[1]);
+    } else {
+      pageContent.prepend(notificationElement);
+    }
   }
 };
 

@@ -57,9 +57,32 @@ Adds shortcut in all items to view page in [Buddy's Almanac](https://buddy.farm)
 * Hide logo from navigation
 * Add menu button to bottom bar so it's easier to reach on mobile
 
+### Perk set management
+
+If you have a perk set named "Default" and perk sets with the names "Crafting", "Fishing", "Exploring", "Selling", "Friendship", "Temple", "Locksmish", or "Wheel", they will be automatically activated before doing the relevant activities, and deactivated after.
+
+Supports Quick Craft for "Crafting", Quick Sell for "Selling", and Quick Give for "Friendship"
+
+This frees up points from many activity specific perks to be re-invested in perks that need to be on all the time.
+
 ### Export
 
 All settings can be exported and imported on other devices
+
+## Roadmap
+
+Future features under consideration or development
+
+* Ctrl+K quick go to popup for quickly going to any page, item, etc from anywhere
+* Show collected items in success popup when collecting from pets
+* Quick collect link in mailbox notification like with pets that shows collected items in success popup
+* Contextual status information in custom navigation items (e.g. crops growing for farm, chores completed for Chores, items exchanged for exchange, etc)
+* Persistent notification for meal countdowns
+* Notification for wine and max value
+* Notification for crops complete that allows you to harvest and/or replant without going to farm page
+* Disable Quick Sell and Quick Give for locked items
+* Compressed view for home and town pages (square tiles)
+* Shortcut on missing materials to link without scrolling down
 
 ## Tip
 

@@ -1,27 +1,33 @@
 export enum Page {
-  ITEM = "item",
+  AREA = "area",
   BANK = "bank",
+  FISHING = "fishing",
+  FRIENDSHIP = "npclevels",
+  ITEM = "item",
+  LOCKSMITH = "locksmith",
+  FARMERS_MARKET = "market",
+  PERKS = "perks",
+  POST_OFFICE = "postoffice",
   SETTINGS = "settings",
   SETTINGS_OPTIONS = "settings_options",
-  POST_OFFICE = "postoffice",
+  TEMPLE = "mailitems", // not a typo
+  WHEEL = "spin",
   WORKER = "worker",
+  WORKSHOP = "workshop",
 }
 
 // get page and parameters if any
 export const getPage = (): [Page | undefined, URLSearchParams] => {
-  const match = window.location.hash.match(/#!\/(\w+).php\?{0,1}(.*)/);
-  if (!match) {
-    return [undefined, new URLSearchParams()];
-  }
-  const page = match[1];
-  const parameters = new URLSearchParams(match[2]);
-  return [page as Page, parameters];
+  const currentPage = getCurrentPage();
+  const page = currentPage?.dataset.page as Page | undefined;
+  const parameters = new URLSearchParams(window.location.hash.split("?")[1]);
+  return [page, parameters];
 };
 
 export const getPreviousPage = (): HTMLElement | null =>
   document.querySelector(".page-on-left");
 
-export const getCurrentPage = (): HTMLElement | null =>
+export const getCurrentPage = (): HTMLDivElement | null =>
   document.querySelector(".page-on-center, .page-from-right-to-center");
 
 export const setTitle = (title: string): void => {

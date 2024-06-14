@@ -11,6 +11,7 @@ import { getPage, Page } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
+import { perkManagment } from "./features/perkManagement";
 
 const FEATURES = [
   // internal
@@ -22,6 +23,9 @@ const FEATURES = [
 
   // bank
   banker,
+
+  // explore
+  perkManagment,
 
   // chat
   compressChat,
@@ -64,19 +68,25 @@ const onPageChange = async (
     }
   }
 
-  // listen for location changes
-  let oldHref = document.location.href;
-  const { body } = document;
-  const observer = new MutationObserver(() => {
-    if (oldHref !== document.location.href) {
-      oldHref = document.location.href;
+  const pages = document.querySelector(".view-main .pages");
+  if (!pages) {
+    console.error("Pages not found");
+    return;
+  }
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      // only respond to tree changes
+      if (mutation.type !== "childList") {
+        continue;
+      }
+      // ignore removals
+      if (mutation.addedNodes.length === 0) {
+        continue;
+      }
       const [page, parameters] = getPage();
-      console.debug("Page Change", page, parameters);
+      console.debug("Page Load", page, parameters);
       onPageChange(page, parameters);
     }
   });
-  observer.observe(body, { childList: true, subtree: true });
-
-  // process first page
-  setTimeout(() => onPageChange(...getPage()));
+  observer.observe(pages, { childList: true });
 })();

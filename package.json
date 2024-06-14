@@ -6,7 +6,6 @@
   "repository": "git@github.com:anstosa/farmrpg-farmhand.git",
   "author": "Ansel Santosa <568242+anstosa@users.noreply.github.com>",
   "license": "MIT",
-  "type": "module",
   "devDependencies": {
     "@types/circular-dependency-plugin": "^5.0.8",
     "@types/greasemonkey": "^4.0.7",

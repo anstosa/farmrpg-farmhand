@@ -39,9 +39,10 @@ Farmhand purposefully avoids any features that would violate the letter or spiri
 
 All features are configurable via new settings in [My Settings > Change Game Options](https://farmrpg.com/#!/settings_options.php)
 
-### Buddy's Almanac Integration
+### Items
 
-Adds shortcut in all items to view page in [Buddy's Almanac](https://buddy.farm)
+* Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
+* Locks Quick Sell for locked items
 
 ### Banker
 
@@ -105,6 +106,10 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.7
+
+* Added: Locks Quick Sell button if item is locked
 
 ### 1.0.6
 

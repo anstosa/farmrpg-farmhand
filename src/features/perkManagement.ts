@@ -11,6 +11,7 @@ import {
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
+import { onQuicksellClick } from "./quickSellSafely";
 import { Page } from "~/utils/page";
 
 export const SETTING_PERK_MANAGER: FeatureSetting = {
@@ -110,28 +111,15 @@ export const perkManagment: Feature = {
     }
 
     if (sellingPerks) {
-      const quicksellButton = document.querySelector<HTMLButtonElement>(
-        ".quicksellbtn, .quicksellbtnnc"
-      );
-      if (quicksellButton && !quicksellButton.style.display) {
-        quicksellButton.style.display = "none";
-        const proxyButton = document.createElement("button");
-        proxyButton.classList.add("button");
-        proxyButton.classList.add("btngreen");
-        proxyButton.style.height = "28px;";
-        proxyButton.textContent = "SELL";
-        proxyButton.addEventListener("click", async () => {
-          await activatePerkSet(sellingPerks);
-          sendNotification(getNotification(PerkActivity.SELLING));
-          quicksellButton.click();
+      onQuicksellClick(async () => {
+        await activatePerkSet(sellingPerks);
+        sendNotification(getNotification(PerkActivity.SELLING));
+        setTimeout(async () => {
           await activatePerkSet(defaultPerks);
           removeNotification(getNotification());
-        });
-        quicksellButton.parentElement?.insertBefore(
-          proxyButton,
-          quicksellButton
-        );
-      }
+        }, 1000);
+        return true;
+      });
     }
 
     const friendshipPerks = await getActivityPerksSet(PerkActivity.WHEEL);

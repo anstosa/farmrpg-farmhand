@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.6
+// @version 1.0.7
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @grant GM.getValue
@@ -1653,6 +1653,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.perkManagment = exports.SETTING_PERK_MANAGER = void 0;
 const farmrpgApi_1 = __webpack_require__(626);
 const notifications_1 = __webpack_require__(783);
+const quickSellSafely_1 = __webpack_require__(760);
 const page_1 = __webpack_require__(952);
 exports.SETTING_PERK_MANAGER = {
     id: "perkManager",
@@ -1682,7 +1683,7 @@ exports.perkManagment = {
         state.perkSets = yield (0, farmrpgApi_1.getPerkSets)();
     }),
     onPageChange: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b;
         // make sure the setting is enabled
         if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
             return;
@@ -1737,23 +1738,15 @@ exports.perkManagment = {
             return;
         }
         if (sellingPerks) {
-            const quicksellButton = document.querySelector(".quicksellbtn, .quicksellbtnnc");
-            if (quicksellButton && !quicksellButton.style.display) {
-                quicksellButton.style.display = "none";
-                const proxyButton = document.createElement("button");
-                proxyButton.classList.add("button");
-                proxyButton.classList.add("btngreen");
-                proxyButton.style.height = "28px;";
-                proxyButton.textContent = "SELL";
-                proxyButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
-                    yield (0, farmrpgApi_1.activatePerkSet)(sellingPerks);
-                    (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.SELLING));
-                    quicksellButton.click();
+            (0, quickSellSafely_1.onQuicksellClick)(() => __awaiter(void 0, void 0, void 0, function* () {
+                yield (0, farmrpgApi_1.activatePerkSet)(sellingPerks);
+                (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.SELLING));
+                setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
                     yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
                     (0, notifications_1.removeNotification)(getNotification());
-                }));
-                (_b = quicksellButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quicksellButton);
-            }
+                }), 1000);
+                return true;
+            }));
         }
         const friendshipPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.WHEEL);
         if (friendshipPerks &&
@@ -1778,7 +1771,7 @@ exports.perkManagment = {
                     yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
                     (0, notifications_1.removeNotification)(getNotification());
                 }));
-                (_c = quickgiveButton.parentElement) === null || _c === void 0 ? void 0 : _c.insertBefore(proxyButton, quickgiveButton);
+                (_b = quickgiveButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quickgiveButton);
             }
         }
         const templePerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.TEMPLE);
@@ -1802,6 +1795,85 @@ exports.perkManagment = {
         (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
         (0, notifications_1.removeNotification)(getNotification());
     }),
+};
+
+
+/***/ }),
+
+/***/ 760:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.quicksellSafely = exports.onQuicksellClick = exports.SETTING_QUICKSELL_SAFELY = void 0;
+const page_1 = __webpack_require__(952);
+exports.SETTING_QUICKSELL_SAFELY = {
+    id: "quicksellSafely",
+    title: "Safe Quick Sell",
+    description: "If item is locked, also lock the Quick Sell button",
+    type: "boolean",
+    defaultValue: true,
+};
+const state = {
+    onQuicksellClick: [],
+};
+const onQuicksellClick = (callback) => {
+    state.onQuicksellClick.push(callback);
+};
+exports.onQuicksellClick = onQuicksellClick;
+exports.quicksellSafely = {
+    settings: [exports.SETTING_QUICKSELL_SAFELY],
+    onPageChange: (settings, page) => {
+        var _a, _b, _c;
+        // make sure we're on the right page
+        if (page !== page_1.Page.ITEM) {
+            return;
+        }
+        const isSafetyOn = settings[exports.SETTING_QUICKSELL_SAFELY.id].value;
+        const lockButton = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".lockbtn");
+        const unlockButton = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(".unlockbtn");
+        const isLocked = unlockButton && !lockButton;
+        const quicksellButton = document.querySelector(".quicksellbtn, .quicksellbtnnc");
+        if (quicksellButton && !quicksellButton.style.display) {
+            quicksellButton.style.display = "none";
+            const proxyButton = document.createElement("button");
+            proxyButton.classList.add("button");
+            proxyButton.classList.add(isSafetyOn && isLocked ? "btnred" : "btngreen");
+            proxyButton.style.height = "28px;";
+            if (!isSafetyOn || !isLocked) {
+                proxyButton.textContent = "SELL";
+            }
+            if (isSafetyOn && isLocked) {
+                const lock = document.createElement("i");
+                lock.classList.add("f7-icons");
+                lock.style.fontSize = "17px";
+                lock.textContent = "unlock_fill";
+                proxyButton.append(lock);
+            }
+            proxyButton.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+                if (isSafetyOn && isLocked) {
+                    unlockButton.click();
+                    return;
+                }
+                for (const callback of state.onQuicksellClick) {
+                    if (!(yield callback(event))) {
+                        return;
+                    }
+                }
+                quicksellButton.click();
+            }));
+            (_c = quicksellButton.parentElement) === null || _c === void 0 ? void 0 : _c.insertBefore(proxyButton, quicksellButton);
+        }
+    },
 };
 
 
@@ -1837,6 +1909,7 @@ const moveUpdateToTop_1 = __webpack_require__(417);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
+const quickSellSafely_1 = __webpack_require__(760);
 const FEATURES = [
     // internal
     notifications_1.notifications,
@@ -1844,8 +1917,9 @@ const FEATURES = [
     // home
     cleanupHome_1.cleanupHome,
     moveUpdateToTop_1.moveUpdateToTop,
-    // almanac
+    // items
     buddyfarm_1.buddyFarm,
+    quickSellSafely_1.quicksellSafely,
     // bank
     banker_1.banker,
     // explore

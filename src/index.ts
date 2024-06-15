@@ -14,6 +14,7 @@ import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
+import { quicksellSafely } from "./features/quickSellSafely";
 
 const FEATURES = [
   // internal
@@ -24,8 +25,9 @@ const FEATURES = [
   cleanupHome,
   moveUpdateToTop,
 
-  // almanac
+  // items
   buddyFarm,
+  quicksellSafely,
 
   // bank
   banker,

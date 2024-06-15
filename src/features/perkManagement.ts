@@ -135,7 +135,10 @@ export const perkManagment: Feature = {
     }
 
     const friendshipPerks = await getActivityPerksSet(PerkActivity.WHEEL);
-    if (friendshipPerks && page === Page.FRIENDSHIP) {
+    if (
+      friendshipPerks &&
+      (page === Page.FRIENDSHIP || page === Page.MAILBOX)
+    ) {
       await activatePerkSet(friendshipPerks);
       sendNotification(getNotification(PerkActivity.FRIENDSHIP));
       return;

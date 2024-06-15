@@ -7,6 +7,7 @@ export enum Page {
   HOME = "index-1", // not a typo
   ITEM = "item",
   LOCKSMITH = "locksmith",
+  MAILBOX = "mailbox",
   PERKS = "perks",
   POST_OFFICE = "postoffice",
   SETTINGS = "settings",

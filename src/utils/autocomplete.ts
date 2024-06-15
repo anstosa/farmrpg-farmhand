@@ -88,6 +88,9 @@ const autocompleteSearchControlHandler = async (
   if (!event.target) {
     return;
   }
+  if (!state.activeAutocomplete) {
+    return;
+  }
   if (!["Enter", "ArrowDown", "ArrowUp"].includes(event.key)) {
     return;
   }

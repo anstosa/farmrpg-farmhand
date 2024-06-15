@@ -111,6 +111,7 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 * Fixed: Bottom menu buttons go under tracked quest on small screens
 * Fixed: Duplicate quick buttons on items
 * Fixed: Friendship perks didn't apply to mailbox pages
+* Fixed: Enter doesn't send messages in chat
 
 ### 1.0.5
 

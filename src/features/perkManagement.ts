@@ -67,7 +67,7 @@ export const perkManagment: Feature = {
     if (craftingPerks) {
       const quickcraftButton =
         document.querySelector<HTMLButtonElement>(".quickcraftbtn");
-      if (quickcraftButton) {
+      if (quickcraftButton && !quickcraftButton.style.display) {
         quickcraftButton.style.display = "none";
         const proxyButton = document.createElement("button");
         proxyButton.classList.add("button");
@@ -113,7 +113,7 @@ export const perkManagment: Feature = {
       const quicksellButton = document.querySelector<HTMLButtonElement>(
         ".quicksellbtn, .quicksellbtnnc"
       );
-      if (quicksellButton) {
+      if (quicksellButton && !quicksellButton.style.display) {
         quicksellButton.style.display = "none";
         const proxyButton = document.createElement("button");
         proxyButton.classList.add("button");
@@ -147,7 +147,7 @@ export const perkManagment: Feature = {
     if (friendshipPerks) {
       const quickgiveButton =
         document.querySelector<HTMLButtonElement>(".quickgivebtn");
-      if (quickgiveButton) {
+      if (quickgiveButton && !quickgiveButton.style.display) {
         quickgiveButton.style.display = "none";
         const proxyButton = document.createElement("button");
         proxyButton.classList.add("button");

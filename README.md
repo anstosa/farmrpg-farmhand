@@ -73,6 +73,14 @@ Supports Quick Craft for "Crafting", Quick Sell for "Selling", and Quick Give fo
 
 This frees up points from many activity specific perks to be re-invested in perks that need to be on all the time.
 
+### UI Cleanup
+
+* Home: hide players section
+* Home: hide theme switcher
+* Home: home footer
+* Home: moves updates to top if there is a new one
+* Home: compress skills section
+
 ### Export
 
 All settings can be exported and imported on other devices

@@ -1,11 +1,12 @@
 export enum Page {
   AREA = "area",
   BANK = "bank",
+  FARMERS_MARKET = "market",
   FISHING = "fishing",
   FRIENDSHIP = "npclevels",
+  HOME = "index-1", // not a typo
   ITEM = "item",
   LOCKSMITH = "locksmith",
-  FARMERS_MARKET = "market",
   PERKS = "perks",
   POST_OFFICE = "postoffice",
   SETTINGS = "settings",
@@ -28,7 +29,9 @@ export const getPreviousPage = (): HTMLElement | null =>
   document.querySelector(".page-on-left");
 
 export const getCurrentPage = (): HTMLDivElement | null =>
-  document.querySelector(".page-on-center, .page-from-right-to-center");
+  document.querySelector(
+    ".page-on-center, .page-from-right-to-center, .view-main .page:only-child"
+  );
 
 export const setTitle = (title: string): void => {
   const nav = document.querySelector(".navbar-on-center");

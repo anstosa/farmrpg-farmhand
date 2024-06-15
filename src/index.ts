@@ -3,12 +3,14 @@ import { autocompleteItems } from "./features/autocompleteItems";
 import { autocompleteUsers } from "./features/autocompleteUsers";
 import { banker } from "./features/banker";
 import { buddyFarm } from "~/features/buddyfarm";
+import { cleanupHome } from "./features/cleanupHome";
 import { compressChat } from "./features/compressChat";
 import { customNavigation } from "./features/customNavigation";
 import { dismissableChatBanners } from "./features/dismissableChatBanners";
 import { farmhandSettings, getSettings } from "./features/farmhandSettings";
 import { getPage, Page } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
+import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
@@ -17,6 +19,10 @@ const FEATURES = [
   // internal
   notifications,
   autocomplete,
+
+  // home
+  cleanupHome,
+  moveUpdateToTop,
 
   // almanac
   buddyFarm,

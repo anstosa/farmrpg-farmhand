@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.4
+// @version 1.0.5
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @grant GM.getValue
@@ -352,6 +352,127 @@ exports.buddyFarm = {
     `;
         // insert at top
         itemDetailsList.insertBefore(buddyFarmLinkLi, itemDetailsList.firstChild);
+    },
+};
+
+
+/***/ }),
+
+/***/ 870:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.cleanupHome = exports.SETTING_COMPRESS_SKILLS = exports.SETTING_HIDE_FOOTER = exports.SETTING_HIDE_THEME = exports.SETTING_HIDE_PLAYERS = void 0;
+const page_1 = __webpack_require__(952);
+exports.SETTING_HIDE_PLAYERS = {
+    id: "homeHidePlayers",
+    title: "Home: Hide players",
+    description: "Hide Online, new, find players options",
+    type: "boolean",
+    defaultValue: false,
+};
+exports.SETTING_HIDE_THEME = {
+    id: "homeHideTheme",
+    title: "Home: Hide theme switcher",
+    description: "Hide theme switcher on homepage",
+    type: "boolean",
+    defaultValue: false,
+};
+exports.SETTING_HIDE_FOOTER = {
+    id: "homeHideFooter",
+    title: "Home: Hide footer",
+    description: "Hide footer (Privacy, CoC, T&C, Support) ",
+    type: "boolean",
+    defaultValue: false,
+};
+exports.SETTING_COMPRESS_SKILLS = {
+    id: "homeCompressSkills",
+    title: "Home: Compress Skills",
+    description: "Hide Level 99 skills",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.cleanupHome = {
+    settings: [
+        exports.SETTING_HIDE_PLAYERS,
+        exports.SETTING_HIDE_THEME,
+        exports.SETTING_HIDE_FOOTER,
+        exports.SETTING_COMPRESS_SKILLS,
+    ],
+    onInitialize: (settings) => {
+        var _a, _b;
+        if (settings[exports.SETTING_HIDE_PLAYERS.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        /* Hide players card */
+        .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
+        .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
+          display: none !important;
+        }
+      <style>
+    `);
+        }
+        if (settings[exports.SETTING_HIDE_THEME.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        /* Hide theme switcher */
+        [data-page="index-1"] .page-content > p:nth-of-type(1),
+        [data-page="index-1"] .page-content > p:nth-of-type(2) {
+          display: none !important;
+        }
+      <style>
+    `);
+        }
+        if (settings[exports.SETTING_HIDE_FOOTER.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        [data-page="index-1"] .page-content > p:last-of-type,
+        [data-page="index-1"] .page-content > div:last-of-type {
+          display: none !important;
+        }
+      <style>
+    `);
+        }
+        if (settings[exports.SETTING_COMPRESS_SKILLS.id].value) {
+            // get wrappers
+            const skillsCard = (0, page_1.getCardByTitle)("My skills");
+            const skillsTitle = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.previousElementSibling;
+            const skillsCardInner = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelector(".card-content-inner");
+            if (skillsCard && skillsTitle && skillsCardInner) {
+                // new row
+                const newRow = document.createElement("div");
+                newRow.classList.add("row");
+                newRow.style.marginBottom = "0";
+                newRow.style.display = "flex";
+                newRow.style.justifyContent = "space-around";
+                // get all skills
+                const skills = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelectorAll(".col-33");
+                let x99 = 0;
+                for (const skill of skills) {
+                    const progress = skill.querySelector("div");
+                    if (!progress) {
+                        continue;
+                    }
+                    if (progress.classList.contains("progressbar-infinite")) {
+                        x99++;
+                    }
+                    else {
+                        newRow.append(skill);
+                    }
+                }
+                skillsCardInner.prepend(newRow);
+                (_a = newRow.nextElementSibling) === null || _a === void 0 ? void 0 : _a.remove();
+                (_b = newRow.nextElementSibling) === null || _b === void 0 ? void 0 : _b.remove();
+                skillsTitle.style.textTransform = "none";
+                skillsTitle.textContent = `MY SKILLS (${x99}x99)`;
+                const shinyBar = document.createElement("div");
+                shinyBar.classList.add("progressbar-infinite");
+                shinyBar.classList.add("color-multi");
+                shinyBar.style.width = "100%";
+                skillsTitle.after(shinyBar);
+            }
+        }
     },
 };
 
@@ -1401,6 +1522,74 @@ exports.highlightSelfInChat = {
 
 /***/ }),
 
+/***/ 417:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.moveUpdateToTop = void 0;
+const page_1 = __webpack_require__(952);
+const KEY_RECENT = "recentUpdate";
+exports.moveUpdateToTop = {
+    onPageChange: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
+        // make sure we're on the home page
+        if (page !== page_1.Page.HOME) {
+            return;
+        }
+        // get the recent card and title
+        const recentUpdatesCard = (0, page_1.getCardByTitle)("Most Recent Update");
+        const recentUpdatesTitle = recentUpdatesCard === null || recentUpdatesCard === void 0 ? void 0 : recentUpdatesCard.previousElementSibling;
+        if (!recentUpdatesCard || !recentUpdatesTitle) {
+            return;
+        }
+        // get the latest title
+        const latestUpdate = (_a = recentUpdatesCard.querySelector("strong")) === null || _a === void 0 ? void 0 : _a.textContent;
+        if (!latestUpdate) {
+            return;
+        }
+        // check if it's newer
+        const latestRead = yield GM.getValue(KEY_RECENT, "");
+        if (latestUpdate === latestRead) {
+            return;
+        }
+        // move to top
+        const home = (0, page_1.getCurrentPage)();
+        if (!home) {
+            return;
+        }
+        const firstTitle = home.querySelector(".content-block-title");
+        if (!firstTitle) {
+            return;
+        }
+        firstTitle.before(recentUpdatesTitle);
+        firstTitle.before(recentUpdatesCard);
+        // add hide button
+        const hideButton = document.createElement("a");
+        hideButton.style.marginLeft = "10px";
+        hideButton.style.cursor = "pointer";
+        hideButton.textContent = "Hide";
+        hideButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+            // mark current as read
+            yield GM.setValue(KEY_RECENT, latestUpdate);
+            window.location.reload();
+        }));
+        recentUpdatesTitle.append(hideButton);
+    }),
+};
+
+
+/***/ }),
+
 /***/ 682:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -1590,12 +1779,14 @@ const autocompleteItems_1 = __webpack_require__(477);
 const autocompleteUsers_1 = __webpack_require__(881);
 const banker_1 = __webpack_require__(92);
 const buddyfarm_1 = __webpack_require__(273);
+const cleanupHome_1 = __webpack_require__(870);
 const compressChat_1 = __webpack_require__(223);
 const customNavigation_1 = __webpack_require__(224);
 const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
 const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
+const moveUpdateToTop_1 = __webpack_require__(417);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
@@ -1603,6 +1794,9 @@ const FEATURES = [
     // internal
     notifications_1.notifications,
     autocomplete_1.autocomplete,
+    // home
+    cleanupHome_1.cleanupHome,
+    moveUpdateToTop_1.moveUpdateToTop,
     // almanac
     buddyfarm_1.buddyFarm,
     // bank
@@ -2254,11 +2448,12 @@ var Page;
 (function (Page) {
     Page["AREA"] = "area";
     Page["BANK"] = "bank";
+    Page["FARMERS_MARKET"] = "market";
     Page["FISHING"] = "fishing";
     Page["FRIENDSHIP"] = "npclevels";
+    Page["HOME"] = "index-1";
     Page["ITEM"] = "item";
     Page["LOCKSMITH"] = "locksmith";
-    Page["FARMERS_MARKET"] = "market";
     Page["PERKS"] = "perks";
     Page["POST_OFFICE"] = "postoffice";
     Page["SETTINGS"] = "settings";
@@ -2278,7 +2473,7 @@ const getPage = () => {
 exports.getPage = getPage;
 const getPreviousPage = () => document.querySelector(".page-on-left");
 exports.getPreviousPage = getPreviousPage;
-const getCurrentPage = () => document.querySelector(".page-on-center, .page-from-right-to-center");
+const getCurrentPage = () => document.querySelector(".page-on-center, .page-from-right-to-center, .view-main .page:only-child");
 exports.getCurrentPage = getCurrentPage;
 const setTitle = (title) => {
     const nav = document.querySelector(".navbar-on-center");

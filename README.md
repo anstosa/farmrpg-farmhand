@@ -103,3 +103,52 @@ Future features under consideration or development
 ## Tip
 
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
+
+## Changelog
+
+### 1.0.6
+
+* Fixed: Bottom menu buttons go under tracked quest on small screens
+* Fixed: Duplicate quick buttons on items
+* Fixed: Friendship perks didn't apply to mailbox pages
+
+### 1.0.5
+
+* New: Home: hide players section
+* New: Home: hide theme switcher
+* New: Home: home footer
+* New: Home: moves updates to top if there is a new one
+* New: Home: compress skills section
+
+### 1.0.4
+
+* New: Home: hide players section
+* New: Home: hide theme switcher
+* New: Home: home footer
+* New: Home: moves updates to top if there is a new one
+* New: Home: compress skills section
+
+### 1.0.3
+
+* New: Add perks management
+
+### 1.0.2
+
+* New: Export/Import farmhand settings
+* New: Compressed navigation view so more items are visible
+* New: Hide logo from navigation
+* New: Customize navigation (icon, name, order, URL)
+
+### 1.0.1
+
+* New: Compress chat view so more messages are visible
+* New: Dismissable chat banners
+* New: Highlight messages tagging you
+
+### 1.0.0
+
+Initial version 🎉
+
+* New: Basic infrastructure
+* New: Buddy's Almanac integration
+* New: Banker

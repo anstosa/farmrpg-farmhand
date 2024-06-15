@@ -1,4 +1,5 @@
 import { Feature, FeatureSetting } from "./feature";
+import { showPopup } from "~/utils/popup";
 
 export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
   id: "dismissableChatBanners",
@@ -7,6 +8,19 @@ export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
     Adds × in chat banners to dismiss them<br>
     Disable this to show dismissed banners again
   `,
+  buttonText: "Reset",
+  buttonAction: async () => {
+    const keys = await GM.listValues();
+    for (const key of keys) {
+      if (key.startsWith(SETTING_CHAT_DISMISSABLE_BANNERS.id)) {
+        await GM.deleteValue(key);
+      }
+    }
+    await showPopup(
+      "Chat banners reset",
+      "Previously dismissed chat banners will be shown again"
+    );
+  },
   type: "boolean",
   defaultValue: true,
 };

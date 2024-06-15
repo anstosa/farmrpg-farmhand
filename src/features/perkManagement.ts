@@ -18,7 +18,7 @@ export const SETTING_PERK_MANAGER: FeatureSetting = {
   title: "Manage Perks",
   description: `
     1. Save your default perks set as "Default"<br>
-    2. Save perks for "Crafting", "Fishing", "Exploring" activities<br>
+    2. Save perks for "Crafting", "Fishing", "Exploring", "Selling", "Friendship", "Temple", "Locksmish", or "Wheel" activities<br>
     3. Activity perk sets will automatically be enabled for those activities and reverted to "Default" after
   `,
   type: "boolean",

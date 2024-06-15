@@ -78,8 +78,6 @@ export const banker: Feature = {
 
     const availableInterest = Math.max(0, balance - targetBalance);
 
-    console.debug(interestRate, maxInterest, balance);
-
     // use title to find the bulk options section
     const bulkOptionsList = getListByTitle("Bulk Options");
     if (!bulkOptionsList) {

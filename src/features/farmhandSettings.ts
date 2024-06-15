@@ -227,6 +227,22 @@ export const SETTING_IMPORT: FeatureSetting = {
 
 export const farmhandSettings: Feature = {
   settings: [SETTING_EXPORT, SETTING_IMPORT],
+  onInitialize: () => {
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `
+      <style>
+        /* Allow action buttons next to switches */
+        .label-switch {
+          display: flex !important;
+          align-items: center !important;
+          gap: 10px !important;
+          width: auto !important; 
+        }
+      <style>
+    `
+    );
+  },
   onPageChange: (settings, page) => {
     // make sure we are on the settings page
     if (page !== Page.SETTINGS_OPTIONS) {
@@ -299,9 +315,13 @@ export const farmhandSettings: Feature = {
           )}
       </div>
       `;
-      settingLi.querySelector(".fh-action")?.addEventListener("click", () => {
-        setting.buttonAction?.(settings, settingLi);
-      });
+      settingLi
+        .querySelector(".fh-action")
+        ?.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setting.buttonAction?.(settings, settingLi);
+        });
       settingsList.append(settingLi);
     }
 

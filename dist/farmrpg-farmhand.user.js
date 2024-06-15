@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.5
+// @version 1.0.6
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @grant GM.getValue
@@ -191,7 +191,6 @@ exports.banker = {
     `;
         (_d = balanceCard.firstElementChild) === null || _d === void 0 ? void 0 : _d.append(targetBalanceDiv);
         const availableInterest = Math.max(0, balance - targetBalance);
-        console.debug(interestRate, maxInterest, balance);
         // use title to find the bulk options section
         const bulkOptionsList = (0, page_1.getListByTitle)("Bulk Options");
         if (!bulkOptionsList) {
@@ -401,7 +400,6 @@ exports.cleanupHome = {
         exports.SETTING_COMPRESS_SKILLS,
     ],
     onInitialize: (settings) => {
-        var _a, _b;
         if (settings[exports.SETTING_HIDE_PLAYERS.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
       <style>
@@ -434,44 +432,51 @@ exports.cleanupHome = {
       <style>
     `);
         }
-        if (settings[exports.SETTING_COMPRESS_SKILLS.id].value) {
-            // get wrappers
-            const skillsCard = (0, page_1.getCardByTitle)("My skills");
-            const skillsTitle = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.previousElementSibling;
-            const skillsCardInner = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelector(".card-content-inner");
-            if (skillsCard && skillsTitle && skillsCardInner) {
-                // new row
-                const newRow = document.createElement("div");
-                newRow.classList.add("row");
-                newRow.style.marginBottom = "0";
-                newRow.style.display = "flex";
-                newRow.style.justifyContent = "space-around";
-                // get all skills
-                const skills = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelectorAll(".col-33");
-                let x99 = 0;
-                for (const skill of skills) {
-                    const progress = skill.querySelector("div");
-                    if (!progress) {
-                        continue;
-                    }
-                    if (progress.classList.contains("progressbar-infinite")) {
-                        x99++;
-                    }
-                    else {
-                        newRow.append(skill);
-                    }
+    },
+    onPageChange: (settings, page) => {
+        var _a, _b;
+        if (page !== page_1.Page.HOME) {
+            return;
+        }
+        if (!settings[exports.SETTING_COMPRESS_SKILLS.id].value) {
+            return;
+        }
+        // get wrappers
+        const skillsCard = (0, page_1.getCardByTitle)("My skills");
+        const skillsTitle = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.previousElementSibling;
+        const skillsCardInner = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelector(".card-content-inner");
+        if (skillsCard && skillsTitle && skillsCardInner) {
+            // new row
+            const newRow = document.createElement("div");
+            newRow.classList.add("row");
+            newRow.style.marginBottom = "0";
+            newRow.style.display = "flex";
+            newRow.style.justifyContent = "space-around";
+            // get all skills
+            const skills = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelectorAll(".col-33");
+            let x99 = 0;
+            for (const skill of skills) {
+                const progress = skill.querySelector("div");
+                if (!progress) {
+                    continue;
                 }
-                skillsCardInner.prepend(newRow);
-                (_a = newRow.nextElementSibling) === null || _a === void 0 ? void 0 : _a.remove();
-                (_b = newRow.nextElementSibling) === null || _b === void 0 ? void 0 : _b.remove();
-                skillsTitle.style.textTransform = "none";
-                skillsTitle.textContent = `MY SKILLS (${x99}x99)`;
-                const shinyBar = document.createElement("div");
-                shinyBar.classList.add("progressbar-infinite");
-                shinyBar.classList.add("color-multi");
-                shinyBar.style.width = "100%";
-                skillsTitle.after(shinyBar);
+                if (progress.classList.contains("progressbar-infinite")) {
+                    x99++;
+                }
+                else {
+                    newRow.append(skill);
+                }
             }
+            skillsCardInner.prepend(newRow);
+            (_a = newRow.nextElementSibling) === null || _a === void 0 ? void 0 : _a.remove();
+            (_b = newRow.nextElementSibling) === null || _b === void 0 ? void 0 : _b.remove();
+            skillsTitle.style.textTransform = "none";
+            skillsTitle.textContent = `MY SKILLS (${x99}x99)`;
+            const shinyBar = document.createElement("div");
+            shinyBar.classList.add("progressbar-infinite");
+            shinyBar.classList.add("color-multi");
+            shinyBar.style.width = "100%";
+            skillsTitle.after(shinyBar);
         }
     },
 };
@@ -641,6 +646,20 @@ exports.navigationStyle = {
           <style>
         `);
         }
+        // responsive bottom links
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          /* responsive bottom links */
+          @media (max-width: 420px) {
+          .toolbar-inner > .button i {
+            margin-right: 50px !important;
+          }
+          .toolbar-inner > .button {
+            display: block !important;
+            width: 28px !important;
+          }
+        <style>
+      `);
         if (settings[exports.SETTINGS_NAVIGATION_ADD_MENU.id].value) {
             const homeButton = document.querySelector("#homebtn");
             if (!homeButton) {
@@ -1069,7 +1088,7 @@ exports.customNavigation = {
 /***/ }),
 
 /***/ 164:
-/***/ (function(__unused_webpack_module, exports) {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -1083,6 +1102,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.dismissableChatBanners = exports.SETTING_CHAT_DISMISSABLE_BANNERS = void 0;
+const popup_1 = __webpack_require__(469);
 exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     id: "dismissableChatBanners",
     title: "Dismissable Chat Banners",
@@ -1090,6 +1110,16 @@ exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     Adds × in chat banners to dismiss them<br>
     Disable this to show dismissed banners again
   `,
+    buttonText: "Reset",
+    buttonAction: () => __awaiter(void 0, void 0, void 0, function* () {
+        const keys = yield GM.listValues();
+        for (const key of keys) {
+            if (key.startsWith(exports.SETTING_CHAT_DISMISSABLE_BANNERS.id)) {
+                yield GM.deleteValue(key);
+            }
+        }
+        yield (0, popup_1.showPopup)("Chat banners reset", "Previously dismissed chat banners will be shown again");
+    }),
     type: "boolean",
     defaultValue: true,
 };
@@ -1375,6 +1405,19 @@ exports.SETTING_IMPORT = {
 };
 exports.farmhandSettings = {
     settings: [exports.SETTING_EXPORT, exports.SETTING_IMPORT],
+    onInitialize: () => {
+        document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        /* Allow action buttons next to switches */
+        .label-switch {
+          display: flex !important;
+          align-items: center !important;
+          gap: 10px !important;
+          width: auto !important; 
+        }
+      <style>
+    `);
+    },
     onPageChange: (settings, page) => {
         var _a;
         // make sure we are on the settings page
@@ -1438,8 +1481,11 @@ exports.farmhandSettings = {
             `)}
       </div>
       `;
-            (_a = settingLi.querySelector(".fh-action")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", () => {
+            (_a = settingLi
+                .querySelector(".fh-action")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", (event) => {
                 var _a;
+                event.preventDefault();
+                event.stopPropagation();
                 (_a = setting.buttonAction) === null || _a === void 0 ? void 0 : _a.call(setting, settings, settingLi);
             });
             settingsList.append(settingLi);
@@ -1613,7 +1659,7 @@ exports.SETTING_PERK_MANAGER = {
     title: "Manage Perks",
     description: `
     1. Save your default perks set as "Default"<br>
-    2. Save perks for "Crafting", "Fishing", "Exploring" activities<br>
+    2. Save perks for "Crafting", "Fishing", "Exploring", "Selling", "Friendship", "Temple", "Locksmish", or "Wheel" activities<br>
     3. Activity perk sets will automatically be enabled for those activities and reverted to "Default" after
   `,
     type: "boolean",
@@ -1655,7 +1701,7 @@ exports.perkManagment = {
         }
         if (craftingPerks) {
             const quickcraftButton = document.querySelector(".quickcraftbtn");
-            if (quickcraftButton) {
+            if (quickcraftButton && !quickcraftButton.style.display) {
                 quickcraftButton.style.display = "none";
                 const proxyButton = document.createElement("button");
                 proxyButton.classList.add("button");
@@ -1692,7 +1738,7 @@ exports.perkManagment = {
         }
         if (sellingPerks) {
             const quicksellButton = document.querySelector(".quicksellbtn, .quicksellbtnnc");
-            if (quicksellButton) {
+            if (quicksellButton && !quicksellButton.style.display) {
                 quicksellButton.style.display = "none";
                 const proxyButton = document.createElement("button");
                 proxyButton.classList.add("button");
@@ -1710,14 +1756,15 @@ exports.perkManagment = {
             }
         }
         const friendshipPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.WHEEL);
-        if (friendshipPerks && page === page_1.Page.FRIENDSHIP) {
+        if (friendshipPerks &&
+            (page === page_1.Page.FRIENDSHIP || page === page_1.Page.MAILBOX)) {
             yield (0, farmrpgApi_1.activatePerkSet)(friendshipPerks);
             (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FRIENDSHIP));
             return;
         }
         if (friendshipPerks) {
             const quickgiveButton = document.querySelector(".quickgivebtn");
-            if (quickgiveButton) {
+            if (quickgiveButton && !quickgiveButton.style.display) {
                 quickgiveButton.style.display = "none";
                 const proxyButton = document.createElement("button");
                 proxyButton.classList.add("button");
@@ -1933,6 +1980,9 @@ const applyInput = (input, item) => __awaiter(void 0, void 0, void 0, function* 
 });
 const autocompleteSearchControlHandler = (event) => __awaiter(void 0, void 0, void 0, function* () {
     if (!event.target) {
+        return;
+    }
+    if (!state.activeAutocomplete) {
         return;
     }
     if (!["Enter", "ArrowDown", "ArrowUp"].includes(event.key)) {
@@ -2454,6 +2504,7 @@ var Page;
     Page["HOME"] = "index-1";
     Page["ITEM"] = "item";
     Page["LOCKSMITH"] = "locksmith";
+    Page["MAILBOX"] = "mailbox";
     Page["PERKS"] = "perks";
     Page["POST_OFFICE"] = "postoffice";
     Page["SETTINGS"] = "settings";

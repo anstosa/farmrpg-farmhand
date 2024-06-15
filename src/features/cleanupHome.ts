@@ -1,5 +1,5 @@
 import { Feature, FeatureSetting } from "./feature";
-import { getCardByTitle } from "~/utils/page";
+import { getCardByTitle, Page } from "~/utils/page";
 
 export const SETTING_HIDE_PLAYERS: FeatureSetting = {
   id: "homeHidePlayers",
@@ -84,46 +84,52 @@ export const cleanupHome: Feature = {
     `
       );
     }
+  },
+  onPageChange: (settings, page) => {
+    if (page !== Page.HOME) {
+      return;
+    }
+    if (!settings[SETTING_COMPRESS_SKILLS.id].value) {
+      return;
+    }
 
-    if (settings[SETTING_COMPRESS_SKILLS.id].value) {
-      // get wrappers
-      const skillsCard = getCardByTitle("My skills");
-      const skillsTitle = skillsCard?.previousElementSibling as
-        | HTMLDivElement
-        | undefined;
-      const skillsCardInner = skillsCard?.querySelector(".card-content-inner");
-      if (skillsCard && skillsTitle && skillsCardInner) {
-        // new row
-        const newRow = document.createElement("div");
-        newRow.classList.add("row");
-        newRow.style.marginBottom = "0";
-        newRow.style.display = "flex";
-        newRow.style.justifyContent = "space-around";
-        // get all skills
-        const skills = skillsCard?.querySelectorAll(".col-33");
-        let x99 = 0;
-        for (const skill of skills) {
-          const progress = skill.querySelector("div");
-          if (!progress) {
-            continue;
-          }
-          if (progress.classList.contains("progressbar-infinite")) {
-            x99++;
-          } else {
-            newRow.append(skill);
-          }
+    // get wrappers
+    const skillsCard = getCardByTitle("My skills");
+    const skillsTitle = skillsCard?.previousElementSibling as
+      | HTMLDivElement
+      | undefined;
+    const skillsCardInner = skillsCard?.querySelector(".card-content-inner");
+    if (skillsCard && skillsTitle && skillsCardInner) {
+      // new row
+      const newRow = document.createElement("div");
+      newRow.classList.add("row");
+      newRow.style.marginBottom = "0";
+      newRow.style.display = "flex";
+      newRow.style.justifyContent = "space-around";
+      // get all skills
+      const skills = skillsCard?.querySelectorAll(".col-33");
+      let x99 = 0;
+      for (const skill of skills) {
+        const progress = skill.querySelector("div");
+        if (!progress) {
+          continue;
         }
-        skillsCardInner.prepend(newRow);
-        newRow.nextElementSibling?.remove();
-        newRow.nextElementSibling?.remove();
-        skillsTitle.style.textTransform = "none";
-        skillsTitle.textContent = `MY SKILLS (${x99}x99)`;
-        const shinyBar = document.createElement("div");
-        shinyBar.classList.add("progressbar-infinite");
-        shinyBar.classList.add("color-multi");
-        shinyBar.style.width = "100%";
-        skillsTitle.after(shinyBar);
+        if (progress.classList.contains("progressbar-infinite")) {
+          x99++;
+        } else {
+          newRow.append(skill);
+        }
       }
+      skillsCardInner.prepend(newRow);
+      newRow.nextElementSibling?.remove();
+      newRow.nextElementSibling?.remove();
+      skillsTitle.style.textTransform = "none";
+      skillsTitle.textContent = `MY SKILLS (${x99}x99)`;
+      const shinyBar = document.createElement("div");
+      shinyBar.classList.add("progressbar-infinite");
+      shinyBar.classList.add("color-multi");
+      shinyBar.style.width = "100%";
+      skillsTitle.after(shinyBar);
     }
   },
 };

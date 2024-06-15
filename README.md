@@ -108,48 +108,51 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ### 1.0.6
 
+* Added: Reset button for dismissed chat banners
 * Fixed: Bottom menu buttons go under tracked quest on small screens
 * Fixed: Duplicate quick buttons on items
 * Fixed: Friendship perks didn't apply to mailbox pages
 * Fixed: Enter doesn't send messages in chat
+* Fixed: Settings action buttons cause page reload
+* Fixed: Compress skills inconsistent
 
 ### 1.0.5
 
-* New: Home: hide players section
-* New: Home: hide theme switcher
-* New: Home: home footer
-* New: Home: moves updates to top if there is a new one
-* New: Home: compress skills section
+* Added: Home: hide players section
+* Added: Home: hide theme switcher
+* Added: Home: home footer
+* Added: Home: moves updates to top if there is a new one
+* Added: Home: compress skills section
 
 ### 1.0.4
 
-* New: Home: hide players section
-* New: Home: hide theme switcher
-* New: Home: home footer
-* New: Home: moves updates to top if there is a new one
-* New: Home: compress skills section
+* Added: Home: hide players section
+* Added: Home: hide theme switcher
+* Added: Home: home footer
+* Added: Home: moves updates to top if there is a new one
+* Added: Home: compress skills section
 
 ### 1.0.3
 
-* New: Add perks management
+* Added: Add perks management
 
 ### 1.0.2
 
-* New: Export/Import farmhand settings
-* New: Compressed navigation view so more items are visible
-* New: Hide logo from navigation
-* New: Customize navigation (icon, name, order, URL)
+* Added: Export/Import farmhand settings
+* Added: Compressed navigation view so more items are visible
+* Added: Hide logo from navigation
+* Added: Customize navigation (icon, name, order, URL)
 
 ### 1.0.1
 
-* New: Compress chat view so more messages are visible
-* New: Dismissable chat banners
-* New: Highlight messages tagging you
+* Added: Compress chat view so more messages are visible
+* Added: Dismissable chat banners
+* Added: Highlight messages tagging you
 
 ### 1.0.0
 
 Initial version 🎉
 
-* New: Basic infrastructure
-* New: Buddy's Almanac integration
-* New: Banker
+* Added: Basic infrastructure
+* Added: Buddy's Almanac integration
+* Added: Banker

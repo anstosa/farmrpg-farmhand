@@ -117,6 +117,24 @@ export const navigationStyle: Feature = {
       );
     }
 
+    // responsive bottom links
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `
+        <style>
+          /* responsive bottom links */
+          @media (max-width: 420px) {
+          .toolbar-inner > .button i {
+            margin-right: 50px !important;
+          }
+          .toolbar-inner > .button {
+            display: block !important;
+            width: 28px !important;
+          }
+        <style>
+      `
+    );
+
     if (settings[SETTINGS_NAVIGATION_ADD_MENU.id].value) {
       const homeButton = document.querySelector("#homebtn");
       if (!homeButton) {

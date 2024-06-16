@@ -4,7 +4,7 @@ import { registerAutocomplete } from "~/utils/autocomplete";
 
 export const SETTING_AUTOCOMPLETE_ITEMS: FeatureSetting = {
   id: "autocompleteItems",
-  title: "Chat Autocomplete: Items",
+  title: "Chat: Autocomplete ((items))",
   description: "Auto-complete item names in chat",
   type: "boolean",
   defaultValue: true,

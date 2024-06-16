@@ -1,8 +1,9 @@
+import { BORDER_GRAY } from "~/utils/theme";
 import { Feature, FeatureSetting } from "./feature";
 
 export const SETTING_CHAT_COMPRESS: FeatureSetting = {
   id: "compressChat",
-  title: "Compress chat",
+  title: "Chat: Compress messages",
   description: "Compress chat messages to make more visible at once",
   type: "boolean",
   defaultValue: true,
@@ -16,6 +17,14 @@ export const compressChat: Feature = {
       "beforeend",
       `
       <style>
+        .page-content {
+          padding-right: 0 !important; 
+          margin-right: -2px !important;
+        }
+        #desktopchatpanel {
+          border-color: ${BORDER_GRAY};
+          border-top: 0 !important;
+        }
         #mobilechatpanel .content-block,
         #desktopchatpanel .content-block {
           padding: 0 !important;

@@ -48,10 +48,10 @@ export const setTitle = (title: string): void => {
   text.textContent = title;
 };
 
-export const getCardByTitle = (
+export const getTitle = (
   searchTitle: string,
   root?: HTMLElement
-): Element | null => {
+): HTMLElement | null => {
   const currentPage = root ?? getCurrentPage();
   if (!currentPage) {
     console.error("Current page not found");
@@ -61,11 +61,19 @@ export const getCardByTitle = (
   const targetTitle = [...titles].find(
     (title) => title.textContent === searchTitle
   );
+  return (targetTitle as HTMLElement | undefined) ?? null;
+};
+
+export const getCardByTitle = (
+  searchTitle: string,
+  root?: HTMLElement
+): HTMLElement | null => {
+  const targetTitle = getTitle(searchTitle, root);
   if (!targetTitle) {
     console.error(`${searchTitle} title not found`);
     return null;
   }
-  return targetTitle.nextElementSibling;
+  return targetTitle.nextElementSibling as HTMLElement | null;
 };
 
 export const getListByTitle = (

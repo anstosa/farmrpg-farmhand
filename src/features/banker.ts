@@ -12,7 +12,7 @@ import { TEXT_SUCCESS, TEXT_WARNING } from "~/utils/theme";
 
 export const SETTING_BANKER: FeatureSetting = {
   id: "banker",
-  title: "Banker",
+  title: "Bank: Banker",
   description: `
     * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br>
     * Adds an option *Deposit Target Balance* which deposits up to your target balance<br>
@@ -24,7 +24,7 @@ export const SETTING_BANKER: FeatureSetting = {
 
 export const banker: Feature = {
   settings: [SETTING_BANKER],
-  onPageChange: (settings, page) => {
+  onPageLoad: (settings, page) => {
     // make sure the banker is enabled
     if (!settings[SETTING_BANKER.id].value) {
       return;
@@ -67,14 +67,18 @@ export const banker: Feature = {
 
     // calculate target balance
     const targetBalance = Math.ceil(maxInterest / interestRate);
-    const targetBalanceDiv = document.createElement("div");
-    targetBalanceDiv.classList.add("card-content-inner");
-    targetBalanceDiv.innerHTML = `
+    let targetBalanceDiv = document.querySelector(".fh-banker-target-balance");
+    if (!targetBalanceDiv) {
+      targetBalanceDiv = document.createElement("div");
+      targetBalanceDiv.classList.add("card-content-inner");
+      targetBalanceDiv.classList.add("fh-banker-target-balance");
+      targetBalanceDiv.innerHTML = `
       Target Balance: <strong style="color: ${
         targetBalance === balance ? TEXT_SUCCESS : TEXT_WARNING
       }">${formatter.format(targetBalance)} Silver</strong>
     `;
-    balanceCard.firstElementChild?.append(targetBalanceDiv);
+      balanceCard.firstElementChild?.append(targetBalanceDiv);
+    }
 
     const availableInterest = Math.max(0, balance - targetBalance);
 
@@ -86,13 +90,15 @@ export const banker: Feature = {
     }
 
     // deposit target balance button
-    const missingFromTarget = Math.max(0, targetBalance - balance);
-    const depositTargetLi = document.createElement("li");
-    depositTargetLi.innerHTML = `
+    let depositTargetLi = document.querySelector(".fh-banker-deposit-target");
+    if (!depositTargetLi) {
+      const missingFromTarget = Math.max(0, targetBalance - balance);
+      depositTargetLi = document.createElement("li");
+      depositTargetLi.innerHTML = `
       <a
         href="#"
         data-view=".view-main"
-        class="item-link close-panel"
+        class="item-link close-panel fh-banker-deposit-target"
       >
         <div class="item-content">
           <div class="item-inner">
@@ -107,33 +113,38 @@ export const banker: Feature = {
         </div>
       </a>
     `;
-    depositTargetLi.addEventListener("click", (event) => {
-      event.preventDefault();
-      if (missingFromTarget === 0) {
-        return;
-      }
-      showConfirmation(
-        `Deposit ${formatter.format(missingFromTarget)} Silver?`,
-        async () => {
-          await depositSilver(missingFromTarget);
-          await showPopup("Success!", "You deposited Silver!");
-          window.location.reload();
+      depositTargetLi.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (missingFromTarget === 0) {
+          return;
         }
+        showConfirmation(
+          `Deposit ${formatter.format(missingFromTarget)} Silver?`,
+          async () => {
+            await depositSilver(missingFromTarget);
+            await showPopup("Success!", "You deposited Silver!");
+            window.location.reload();
+          }
+        );
+      });
+      bulkOptionsList.insertBefore(
+        depositTargetLi,
+        // eslint-disable-next-line unicorn/prefer-at
+        bulkOptionsList.children[bulkOptionsList.children.length - 1]
       );
-    });
-    bulkOptionsList.insertBefore(
-      depositTargetLi,
-      // eslint-disable-next-line unicorn/prefer-at
-      bulkOptionsList.children[bulkOptionsList.children.length - 1]
-    );
+    }
 
     // withdraw interest button
-    const withdrawInterestLi = document.createElement("li");
-    withdrawInterestLi.innerHTML = `
+    let withdrawInterestLi = document.querySelector(
+      ".fh-banker-withdraw-interest"
+    );
+    if (!withdrawInterestLi) {
+      withdrawInterestLi = document.createElement("li");
+      withdrawInterestLi.innerHTML = `
       <a
         href="#"
         data-view=".view-main"
-        class="item-link close-panel"
+        class="item-link close-panel fh-banker-withdraw-interest"
       >
         <div class="item-content">
           <div class="item-inner">
@@ -148,24 +159,25 @@ export const banker: Feature = {
         </div>
       </a>
     `;
-    withdrawInterestLi.addEventListener("click", (event) => {
-      event.preventDefault();
-      if (availableInterest === 0) {
-        return;
-      }
-      showConfirmation(
-        `Withdraw ${formatter.format(availableInterest)} Silver?`,
-        async () => {
-          await withdrawSilver(availableInterest);
-          await showPopup("Success!", "You withdrew Silver!");
-          window.location.reload();
+      withdrawInterestLi.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (availableInterest === 0) {
+          return;
         }
+        showConfirmation(
+          `Withdraw ${formatter.format(availableInterest)} Silver?`,
+          async () => {
+            await withdrawSilver(availableInterest);
+            await showPopup("Success!", "You withdrew Silver!");
+            window.location.reload();
+          }
+        );
+      });
+      bulkOptionsList.insertBefore(
+        withdrawInterestLi,
+        // eslint-disable-next-line unicorn/prefer-at
+        bulkOptionsList.children[bulkOptionsList.children.length - 1]
       );
-    });
-    bulkOptionsList.insertBefore(
-      withdrawInterestLi,
-      // eslint-disable-next-line unicorn/prefer-at
-      bulkOptionsList.children[bulkOptionsList.children.length - 1]
-    );
+    }
   },
 };

@@ -85,7 +85,7 @@ export const cleanupHome: Feature = {
       );
     }
   },
-  onPageChange: (settings, page) => {
+  onPageLoad: (settings, page) => {
     if (page !== Page.HOME) {
       return;
     }

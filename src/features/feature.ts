@@ -36,12 +36,16 @@ export type FeatureSetting =
 
 export type Settings = Record<BaseFeatureSetting["id"], FeatureSetting>;
 
+export type LoadHandler = (
+  settings: Settings,
+  page: Page | undefined,
+  parameters: URLSearchParams
+) => void;
+
 export interface Feature {
   onInitialize?: (settings: Settings) => void;
-  onPageChange?: (
-    settings: Settings,
-    page: Page | undefined,
-    parameters: URLSearchParams
-  ) => void;
+  onPageLoad?: LoadHandler;
+  onChatLoad?: LoadHandler;
+  onMenuLoad?: LoadHandler;
   settings?: FeatureSetting[];
 }

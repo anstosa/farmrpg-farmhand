@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.7
+// @version 1.0.8
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @grant GM.getValue
@@ -35,7 +35,7 @@ const buddyfarmApi_1 = __webpack_require__(651);
 const autocomplete_1 = __webpack_require__(67);
 exports.SETTING_AUTOCOMPLETE_ITEMS = {
     id: "autocompleteItems",
-    title: "Chat Autocomplete: Items",
+    title: "Chat: Autocomplete ((items))",
     description: "Auto-complete item names in chat",
     type: "boolean",
     defaultValue: true,
@@ -79,7 +79,7 @@ exports.autocompleteUsers = exports.getUsers = exports.SETTING_AUTOCOMPLETE_USER
 const autocomplete_1 = __webpack_require__(67);
 exports.SETTING_AUTOCOMPLETE_USERS = {
     id: "autocompleteUsers",
-    title: "Chat Autocomplete: Users",
+    title: "Chat: Autocomplete @Users:",
     description: "Auto-complete usernames in chat",
     type: "boolean",
     defaultValue: true,
@@ -139,7 +139,7 @@ const popup_1 = __webpack_require__(469);
 const theme_1 = __webpack_require__(178);
 exports.SETTING_BANKER = {
     id: "banker",
-    title: "Banker",
+    title: "Bank: Banker",
     description: `
     * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br>
     * Adds an option *Deposit Target Balance* which deposits up to your target balance<br>
@@ -150,7 +150,7 @@ exports.SETTING_BANKER = {
 };
 exports.banker = {
     settings: [exports.SETTING_BANKER],
-    onPageChange: (settings, page) => {
+    onPageLoad: (settings, page) => {
         var _a, _b, _c, _d;
         // make sure the banker is enabled
         if (!settings[exports.SETTING_BANKER.id].value) {
@@ -184,12 +184,16 @@ exports.banker = {
         const formatter = new Intl.NumberFormat();
         // calculate target balance
         const targetBalance = Math.ceil(maxInterest / interestRate);
-        const targetBalanceDiv = document.createElement("div");
-        targetBalanceDiv.classList.add("card-content-inner");
-        targetBalanceDiv.innerHTML = `
+        let targetBalanceDiv = document.querySelector(".fh-banker-target-balance");
+        if (!targetBalanceDiv) {
+            targetBalanceDiv = document.createElement("div");
+            targetBalanceDiv.classList.add("card-content-inner");
+            targetBalanceDiv.classList.add("fh-banker-target-balance");
+            targetBalanceDiv.innerHTML = `
       Target Balance: <strong style="color: ${targetBalance === balance ? theme_1.TEXT_SUCCESS : theme_1.TEXT_WARNING}">${formatter.format(targetBalance)} Silver</strong>
     `;
-        (_d = balanceCard.firstElementChild) === null || _d === void 0 ? void 0 : _d.append(targetBalanceDiv);
+            (_d = balanceCard.firstElementChild) === null || _d === void 0 ? void 0 : _d.append(targetBalanceDiv);
+        }
         const availableInterest = Math.max(0, balance - targetBalance);
         // use title to find the bulk options section
         const bulkOptionsList = (0, page_1.getListByTitle)("Bulk Options");
@@ -198,13 +202,15 @@ exports.banker = {
             return;
         }
         // deposit target balance button
-        const missingFromTarget = Math.max(0, targetBalance - balance);
-        const depositTargetLi = document.createElement("li");
-        depositTargetLi.innerHTML = `
+        let depositTargetLi = document.querySelector(".fh-banker-deposit-target");
+        if (!depositTargetLi) {
+            const missingFromTarget = Math.max(0, targetBalance - balance);
+            depositTargetLi = document.createElement("li");
+            depositTargetLi.innerHTML = `
       <a
         href="#"
         data-view=".view-main"
-        class="item-link close-panel"
+        class="item-link close-panel fh-banker-deposit-target"
       >
         <div class="item-content">
           <div class="item-inner">
@@ -217,27 +223,30 @@ exports.banker = {
         </div>
       </a>
     `;
-        depositTargetLi.addEventListener("click", (event) => {
-            event.preventDefault();
-            if (missingFromTarget === 0) {
-                return;
-            }
-            (0, confirmation_1.showConfirmation)(`Deposit ${formatter.format(missingFromTarget)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
-                yield (0, farmrpgApi_1.depositSilver)(missingFromTarget);
-                yield (0, popup_1.showPopup)("Success!", "You deposited Silver!");
-                window.location.reload();
-            }));
-        });
-        bulkOptionsList.insertBefore(depositTargetLi, 
-        // eslint-disable-next-line unicorn/prefer-at
-        bulkOptionsList.children[bulkOptionsList.children.length - 1]);
+            depositTargetLi.addEventListener("click", (event) => {
+                event.preventDefault();
+                if (missingFromTarget === 0) {
+                    return;
+                }
+                (0, confirmation_1.showConfirmation)(`Deposit ${formatter.format(missingFromTarget)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
+                    yield (0, farmrpgApi_1.depositSilver)(missingFromTarget);
+                    yield (0, popup_1.showPopup)("Success!", "You deposited Silver!");
+                    window.location.reload();
+                }));
+            });
+            bulkOptionsList.insertBefore(depositTargetLi, 
+            // eslint-disable-next-line unicorn/prefer-at
+            bulkOptionsList.children[bulkOptionsList.children.length - 1]);
+        }
         // withdraw interest button
-        const withdrawInterestLi = document.createElement("li");
-        withdrawInterestLi.innerHTML = `
+        let withdrawInterestLi = document.querySelector(".fh-banker-withdraw-interest");
+        if (!withdrawInterestLi) {
+            withdrawInterestLi = document.createElement("li");
+            withdrawInterestLi.innerHTML = `
       <a
         href="#"
         data-view=".view-main"
-        class="item-link close-panel"
+        class="item-link close-panel fh-banker-withdraw-interest"
       >
         <div class="item-content">
           <div class="item-inner">
@@ -250,20 +259,21 @@ exports.banker = {
         </div>
       </a>
     `;
-        withdrawInterestLi.addEventListener("click", (event) => {
-            event.preventDefault();
-            if (availableInterest === 0) {
-                return;
-            }
-            (0, confirmation_1.showConfirmation)(`Withdraw ${formatter.format(availableInterest)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
-                yield (0, farmrpgApi_1.withdrawSilver)(availableInterest);
-                yield (0, popup_1.showPopup)("Success!", "You withdrew Silver!");
-                window.location.reload();
-            }));
-        });
-        bulkOptionsList.insertBefore(withdrawInterestLi, 
-        // eslint-disable-next-line unicorn/prefer-at
-        bulkOptionsList.children[bulkOptionsList.children.length - 1]);
+            withdrawInterestLi.addEventListener("click", (event) => {
+                event.preventDefault();
+                if (availableInterest === 0) {
+                    return;
+                }
+                (0, confirmation_1.showConfirmation)(`Withdraw ${formatter.format(availableInterest)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
+                    yield (0, farmrpgApi_1.withdrawSilver)(availableInterest);
+                    yield (0, popup_1.showPopup)("Success!", "You withdrew Silver!");
+                    window.location.reload();
+                }));
+            });
+            bulkOptionsList.insertBefore(withdrawInterestLi, 
+            // eslint-disable-next-line unicorn/prefer-at
+            bulkOptionsList.children[bulkOptionsList.children.length - 1]);
+        }
     },
 };
 
@@ -280,15 +290,15 @@ const page_1 = __webpack_require__(952);
 const buddyfarmApi_1 = __webpack_require__(651);
 exports.SETTING_BUDDY_FARM = {
     id: "buddyFarm",
-    title: "Buddy's Almanac",
+    title: "Item: Buddy's Almanac",
     description: "Add shortcut to look up items on buddy.farm",
     type: "boolean",
     defaultValue: true,
 };
 exports.buddyFarm = {
     settings: [exports.SETTING_BUDDY_FARM],
-    onPageChange: (settings, page) => {
-        var _a;
+    onPageLoad: (settings, page) => {
+        var _a, _b;
         // make sure setting is enabled
         if (!settings[exports.SETTING_BUDDY_FARM.id].value) {
             return;
@@ -320,9 +330,12 @@ exports.buddyFarm = {
             console.error("Item Details list not found");
             return;
         }
+        // remove existing link
+        (_b = document.querySelector(".fh-buddyshortcut")) === null || _b === void 0 ? void 0 : _b.remove();
         // create a new item detail for buddy.farm link
         const buddyFarmLinkLi = document.createElement("li");
         buddyFarmLinkLi.classList.add("close-panel");
+        buddyFarmLinkLi.classList.add("fh-buddyshortcut");
         buddyFarmLinkLi.innerHTML = `
       <div class="item-content">
         <div class="item-media">
@@ -351,6 +364,116 @@ exports.buddyFarm = {
     `;
         // insert at top
         itemDetailsList.insertBefore(buddyFarmLinkLi, itemDetailsList.firstChild);
+    },
+};
+
+
+/***/ }),
+
+/***/ 922:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.chatNav = void 0;
+const theme_1 = __webpack_require__(178);
+const openAutocomplete = (dropdown) => {
+    const currentLink = document.querySelector(".cclinkselected");
+    const links = [
+        ...document.querySelectorAll("#desktopchatpanel .cclink"),
+    ];
+    if (!links || !currentLink) {
+        return;
+    }
+    links.sort((a, b) => { var _a, _b, _c; return (_c = (_a = a.textContent) === null || _a === void 0 ? void 0 : _a.localeCompare((_b = b.textContent) !== null && _b !== void 0 ? _b : "")) !== null && _c !== void 0 ? _c : 0; });
+    const menu = document.createElement("div");
+    menu.classList.add("fh-chatdropdown-menu");
+    menu.style.display = "flex";
+    menu.style.flexDirection = "column";
+    menu.style.position = "absolute";
+    menu.style.top = "100%";
+    menu.style.left = "0";
+    menu.style.width = "100%";
+    menu.style.background = theme_1.BACKGROUND_DARK;
+    menu.style.zIndex = "9999";
+    for (const link of links) {
+        if (link.dataset.channel === currentLink.dataset.channel) {
+            continue;
+        }
+        const option = document.createElement("div");
+        option.textContent = link.textContent;
+        option.style.cursor = "pointer";
+        option.style.padding = "10px";
+        option.addEventListener("click", () => {
+            link.click();
+            closeAutocomplete();
+        });
+        menu.append(option);
+    }
+    dropdown.append(menu);
+};
+const closeAutocomplete = () => {
+    var _a;
+    (_a = document.querySelector(".fh-chatdropdown-menu")) === null || _a === void 0 ? void 0 : _a.remove();
+};
+exports.chatNav = {
+    onInitialize: () => {
+        document.head.insertAdjacentHTML(`beforeend`, `
+      <style>
+        /* Hide original chat nav */
+        .cclink {
+          display: none !important;
+        }
+      <style>
+    `);
+    },
+    onChatLoad: () => {
+        const currentLink = document.querySelector(".cclinkselected");
+        if (!currentLink) {
+            return;
+        }
+        const dropdowns = [
+            ...document.querySelectorAll(".fh-chatdropdown"),
+        ];
+        // create dropdowns if we haven't
+        if (dropdowns.length === 0) {
+            for (const title of document.querySelectorAll(".content-block-title.item-input")) {
+                const dropdown = document.createElement("div");
+                dropdown.classList.add("fh-chatdropdown");
+                dropdown.style.cursor = "pointer";
+                dropdown.style.textTransform = "titlecase";
+                dropdown.style.width = "100%";
+                dropdown.style.height = "44px";
+                dropdown.style.display = "flex";
+                dropdown.style.alignContent = "center";
+                dropdown.style.justifyContent = "center";
+                dropdown.style.flexWrap = "wrap";
+                dropdowns.push(dropdown);
+                dropdown.addEventListener("click", () => {
+                    const menu = document.querySelector(".fh-chatdropdown-menu");
+                    if (menu) {
+                        closeAutocomplete();
+                    }
+                    else {
+                        openAutocomplete(title);
+                    }
+                });
+                title.append(dropdown);
+                title.style.margin = "0";
+                title.style.marginTop = "-5px";
+                title.style.overflow = "visible";
+            }
+        }
+        // update dropdown content
+        for (const dropdown of dropdowns) {
+            if (dropdown.dataset.channel !== currentLink.dataset.channel) {
+                dropdown.innerHTML = `
+          ${currentLink.textContent}
+          <i class="fa fw fa-caret-down" style="margin-left: 5px;"></i>
+        `;
+                dropdown.dataset.channel = currentLink.dataset.channel;
+            }
+        }
     },
 };
 
@@ -433,7 +556,7 @@ exports.cleanupHome = {
     `);
         }
     },
-    onPageChange: (settings, page) => {
+    onPageLoad: (settings, page) => {
         var _a, _b;
         if (page !== page_1.Page.HOME) {
             return;
@@ -484,15 +607,80 @@ exports.cleanupHome = {
 
 /***/ }),
 
+/***/ 56:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.collapseItemImage = exports.SETTING_COLLAPSE_ITEM = void 0;
+const page_1 = __webpack_require__(952);
+exports.SETTING_COLLAPSE_ITEM = {
+    id: "collapseItem",
+    title: "Item: Collapse Item Image",
+    description: "Move item image in header to save space",
+    type: "boolean",
+    defaultValue: false,
+};
+exports.collapseItemImage = {
+    settings: [exports.SETTING_COLLAPSE_ITEM],
+    onInitialize: (settings) => {
+        if (settings[exports.SETTING_COLLAPSE_ITEM.id].value) {
+            document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          /* Hide item image and description */
+          [data-page="item"] #img {
+            display: none !important;
+          }
+          
+          /* Hide first section title */
+          [data-page="item"] #img + .content-block-title {
+            display: none !important;
+          }
+        </style>
+      `);
+        }
+    },
+    onPageLoad: (settings, page) => {
+        // make sure we're on the item page
+        if (page !== page_1.Page.ITEM) {
+            return;
+        }
+        const itemImage = document.querySelector("#img img");
+        if (!itemImage) {
+            console.error("Item image not found");
+            return;
+        }
+        // wait for animations
+        const sharelink = document.querySelector(".view-main .center .sharelink");
+        if (!sharelink) {
+            return;
+        }
+        let smallImage = sharelink.querySelector("img");
+        if (!smallImage) {
+            smallImage = document.createElement("img");
+        }
+        sharelink.style.display = "flex";
+        sharelink.style.alignItems = "center";
+        sharelink.style.gap = "10px";
+        smallImage.src = itemImage.src;
+        smallImage.style.width = "30px";
+        sharelink.prepend(smallImage);
+    },
+};
+
+
+/***/ }),
+
 /***/ 223:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.compressChat = exports.SETTING_CHAT_COMPRESS = void 0;
+const theme_1 = __webpack_require__(178);
 exports.SETTING_CHAT_COMPRESS = {
     id: "compressChat",
-    title: "Compress chat",
+    title: "Chat: Compress messages",
     description: "Compress chat messages to make more visible at once",
     type: "boolean",
     defaultValue: true,
@@ -503,6 +691,14 @@ exports.compressChat = {
         // move spacing from panel margin to message padding regardless of setting
         document.head.insertAdjacentHTML("beforeend", `
       <style>
+        .page-content {
+          padding-right: 0 !important; 
+          margin-right: -2px !important;
+        }
+        #desktopchatpanel {
+          border-color: ${theme_1.BORDER_GRAY};
+          border-top: 0 !important;
+        }
         #mobilechatpanel .content-block,
         #desktopchatpanel .content-block {
           padding: 0 !important;
@@ -550,28 +746,28 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.navigationStyle = exports.SETTINGS_NAVIGATION_ADD_MENU = exports.SETTING_NAVIGATION_ALIGN_BOTTOM = exports.SETTING_NAVIGATION_HIDE_LOGO = exports.SETTING_NAVIGATION_COMPRESS = void 0;
 exports.SETTING_NAVIGATION_COMPRESS = {
     id: "compressNav",
-    title: "Compress Navigation",
+    title: "Menu: Reduce Whitespace",
     description: `Reduces whitespace in navigation to make space for more items`,
     type: "boolean",
     defaultValue: false,
 };
 exports.SETTING_NAVIGATION_HIDE_LOGO = {
     id: "noLogoNav",
-    title: "Hide Navigation Logo",
+    title: "Menu: Hide Logo",
     description: `Hides Farm RPG logo in Navigation`,
     type: "boolean",
     defaultValue: true,
 };
 exports.SETTING_NAVIGATION_ALIGN_BOTTOM = {
     id: "alignBottomNav",
-    title: "Align Navigation to Bottom",
+    title: "Menu: Align to Bottom",
     description: `Aligns Navigation menu to bottom of screen for easier reach on mobile`,
     type: "boolean",
     defaultValue: false,
 };
 exports.SETTINGS_NAVIGATION_ADD_MENU = {
     id: "bottomMenu",
-    title: "Add Bottom Menu Shortcut",
+    title: "Menu: Add Shortcut to Bottom",
     description: `Adds navigation menu shortcut to bottom bar for easier reach on mobile`,
     type: "boolean",
     defaultValue: true,
@@ -585,19 +781,43 @@ exports.navigationStyle = {
     ],
     onInitialize: (settings) => {
         var _a;
+        // hide buttons until we can replace them
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          .icon.icon-bars,
+          .refreshbtn .f7-icons {
+            display: none !important;
+          }
+        <style>
+      `);
         // align toolbar more consistently
         document.head.insertAdjacentHTML("beforeend", `
           <style>
             .toolbar-inner {
               display: flex !important;
               justify-content: end !important;
-              gap: 10px !important;
+              padding: 0 !important;
+            }
+
+            .toolbar-inner .link {
+              display: none !important;
             }
 
             @media (min-width: 768px) {
               .fh-menu {
                 display: none !important;
               }
+            }
+
+            .toolbar-inner a {
+              height: 100%;
+              border: 0;
+              background: transparent;
+              display: flex;
+              align-items: center;
+              gap: 5px;
+              padding: 15px !important;
+              border-radius: 0 !important;
             }
           <style>
         `);
@@ -684,6 +904,24 @@ exports.navigationStyle = {
             (_a = homeButton.parentElement) === null || _a === void 0 ? void 0 : _a.insertBefore(menuButton, homeButton);
         }
     },
+    onPageLoad: () => {
+        for (const icon of document.querySelectorAll(".icon.icon-bars")) {
+            icon.style.color = "white";
+            icon.classList.remove("icon");
+            icon.classList.remove("icon-bars");
+            icon.classList.add("fa");
+            icon.classList.add("fw");
+            icon.classList.add("fa-bars");
+        }
+        for (const refresh of document.querySelectorAll(".refreshbtn")) {
+            refresh.style.color = "white";
+            refresh.classList.remove("fv-icons");
+            refresh.textContent = "";
+            refresh.classList.add("fa");
+            refresh.classList.add("fw");
+            refresh.classList.add("fa-refresh");
+        }
+    },
 };
 
 
@@ -767,6 +1005,10 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
         console.error("Could not find navigation list");
         return;
     }
+    if (navigationList.dataset.isCustomized) {
+        // already rendered
+        return;
+    }
     const navigationTitleLeft = document.querySelector(".panel-left .navbar .left");
     if (!navigationTitleLeft) {
         console.error("Could not find navigation title");
@@ -789,6 +1031,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
         navigationTitleLeft.append(resetButton);
     }
     navigationList.innerHTML = "";
+    navigationList.dataset.isCustomized = "true";
     for (const item of navigationData) {
         const currentIndex = navigationData.indexOf(item);
         const navigationItem = document.createElement("li");
@@ -1051,7 +1294,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.customNavigation = {
     settings: [exports.SETTING_CUSTOM_NAVIGATION],
-    onInitialize: (settings) => {
+    onMenuLoad: (settings) => {
         // make sure setting is enabled
         if (!settings[exports.SETTING_CUSTOM_NAVIGATION.id].value) {
             return;
@@ -1062,24 +1305,26 @@ exports.customNavigation = {
             console.error("Could not find navigation title");
             return;
         }
-        const configurationButton = document.createElement("i");
-        configurationButton.style.cursor = "pointer";
-        configurationButton.classList.add("fa");
-        configurationButton.classList.add("fa-fw");
-        configurationButton.classList.add("fa-cog");
-        configurationButton.addEventListener("click", () => {
-            state.isEditing = !state.isEditing;
-            if (state.isEditing) {
-                configurationButton.classList.remove("fa-cog");
-                configurationButton.classList.add("fa-check");
-            }
-            else {
-                configurationButton.classList.remove("fa-check");
-                configurationButton.classList.add("fa-cog");
-            }
-            renderNavigation();
-        });
-        navigationTitleRight.append(configurationButton);
+        if (navigationTitleRight.children.length === 0) {
+            const configurationButton = document.createElement("i");
+            configurationButton.style.cursor = "pointer";
+            configurationButton.classList.add("fa");
+            configurationButton.classList.add("fa-fw");
+            configurationButton.classList.add("fa-cog");
+            configurationButton.addEventListener("click", () => {
+                state.isEditing = !state.isEditing;
+                if (state.isEditing) {
+                    configurationButton.classList.remove("fa-cog");
+                    configurationButton.classList.add("fa-check");
+                }
+                else {
+                    configurationButton.classList.remove("fa-check");
+                    configurationButton.classList.add("fa-cog");
+                }
+                renderNavigation();
+            });
+            navigationTitleRight.append(configurationButton);
+        }
         renderNavigation();
     },
 };
@@ -1105,7 +1350,7 @@ exports.dismissableChatBanners = exports.SETTING_CHAT_DISMISSABLE_BANNERS = void
 const popup_1 = __webpack_require__(469);
 exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     id: "dismissableChatBanners",
-    title: "Dismissable Chat Banners",
+    title: "Chat: Dismissable Banners",
     description: `
     Adds × in chat banners to dismiss them<br>
     Disable this to show dismissed banners again
@@ -1362,7 +1607,7 @@ const getValue = ({ id, type }, currentPage) => {
 };
 exports.SETTING_EXPORT = {
     id: "export",
-    title: "Export",
+    title: "Settings: Export",
     description: "Exports Farmhand Settings to sync to other device",
     type: "string",
     defaultValue: "",
@@ -1383,7 +1628,7 @@ exports.SETTING_EXPORT = {
 };
 exports.SETTING_IMPORT = {
     id: "import",
-    title: "Import",
+    title: "Settings: Import",
     description: "Paste export into box and click Import",
     type: "string",
     defaultValue: "",
@@ -1418,7 +1663,7 @@ exports.farmhandSettings = {
       <style>
     `);
     },
-    onPageChange: (settings, page) => {
+    onPageLoad: (settings, page) => {
         var _a;
         // make sure we are on the settings page
         if (page !== page_1.Page.SETTINGS_OPTIONS) {
@@ -1436,9 +1681,15 @@ exports.farmhandSettings = {
             return;
         }
         // add section
-        const farmhandSettingsLi = document.createElement("li");
+        let farmhandSettingsLi = settingsList.querySelector(".fh-settings-title");
+        if (farmhandSettingsLi) {
+            // already rendered
+            return;
+        }
+        farmhandSettingsLi = document.createElement("li");
         farmhandSettingsLi.classList.add("list-group-title");
         farmhandSettingsLi.classList.add("item-divider");
+        farmhandSettingsLi.classList.add("fh-settings-title");
         farmhandSettingsLi.textContent = "Farmhand Settings";
         settingsList.append(farmhandSettingsLi);
         // add settings
@@ -1509,6 +1760,42 @@ exports.farmhandSettings = {
 
 /***/ }),
 
+/***/ 100:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fishinInBarrel = exports.SETTING_FISH_IN_BARREL = void 0;
+exports.SETTING_FISH_IN_BARREL = {
+    id: "fishInBarrel",
+    title: "Fishing: Barrel Mode",
+    description: "Fish always appear in middle of pond",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.fishinInBarrel = {
+    settings: [exports.SETTING_FISH_IN_BARREL],
+    onInitialize: (settings) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_FISH_IN_BARREL.id].value) {
+            return;
+        }
+        document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        /* Move fish to middle */
+        .fish {
+          position: absolute;
+          top: calc(50% - 30px);
+          left: calc(50% - 30px);
+        }
+      <style>
+    `);
+    },
+};
+
+
+/***/ }),
+
 /***/ 454:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -1518,15 +1805,15 @@ exports.highlightSelfInChat = exports.SETTING_CHAT_HIGHLIGHT_SELF = void 0;
 const theme_1 = __webpack_require__(178);
 exports.SETTING_CHAT_HIGHLIGHT_SELF = {
     id: "highlightSelfInChat",
-    title: "Highlight self in chat",
+    title: "Chat: Highlight self",
     description: "Highlight messages in chat where you are @mentioned",
     type: "boolean",
     defaultValue: true,
 };
 exports.highlightSelfInChat = {
     settings: [exports.SETTING_CHAT_HIGHLIGHT_SELF],
-    onInitialize: (settings) => {
-        var _a;
+    onChatLoad: (settings) => {
+        var _a, _b;
         // make sure setting is enabled
         if (!settings[exports.SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
             return;
@@ -1536,33 +1823,69 @@ exports.highlightSelfInChat = {
             console.error("Could not find username");
             return;
         }
-        const chatWatcher = new MutationObserver(() => {
-            var _a;
-            const tags = document.querySelectorAll(`span a[href='profile.php?user_name=${username}']`);
-            for (const tag of tags) {
-                tag.style.color = theme_1.TEXT_WARNING;
-                const message = (_a = tag.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement;
-                if (!message) {
-                    console.error("Could not find message");
-                    continue;
-                }
-                message.style.backgroundColor = theme_1.ALERT_YELLOW_BACKGROUND;
-                message.style.border = `1px solid ${theme_1.ALERT_YELLOW_BORDER}`;
+        const tags = document.querySelectorAll(`span a[href='profile.php?user_name=${username}']`);
+        for (const tag of tags) {
+            tag.style.color = theme_1.TEXT_WARNING;
+            const message = (_b = tag.parentElement) === null || _b === void 0 ? void 0 : _b.parentElement;
+            if (!message) {
+                console.error("Could not find message");
+                continue;
             }
-        });
-        const mobileChat = document.querySelector("#mobilechatpanel");
-        if (!mobileChat) {
-            console.error("Could not find mobile panel");
-            return;
+            message.style.backgroundColor = theme_1.ALERT_YELLOW_BACKGROUND;
+            message.style.border = `1px solid ${theme_1.ALERT_YELLOW_BORDER}`;
         }
-        const desktopChat = document.querySelector("#desktopchatpanel");
-        if (!desktopChat) {
-            console.error("Could not find desktop panel");
-            return;
-        }
-        chatWatcher.observe(mobileChat, { childList: true, subtree: true });
-        chatWatcher.observe(desktopChat, { childList: true, subtree: true });
     },
+};
+
+
+/***/ }),
+
+/***/ 711:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.linkifyQuickCraft = void 0;
+const page_1 = __webpack_require__(952);
+const buddyfarmApi_1 = __webpack_require__(651);
+exports.linkifyQuickCraft = {
+    onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
+        // make sure we're on the item page
+        if (page !== page_1.Page.ITEM) {
+            return;
+        }
+        const currentPage = (0, page_1.getCurrentPage)();
+        if (!currentPage) {
+            return;
+        }
+        const missingIngredients = currentPage.querySelectorAll("span[style='color:red']");
+        for (const ingredient of missingIngredients) {
+            const ingredientName = ingredient.textContent;
+            if (!ingredientName) {
+                continue;
+            }
+            const data = yield (0, buddyfarmApi_1.getItemData)(ingredientName);
+            if (!data) {
+                console.error(`No data for ${ingredientName}`);
+                continue;
+            }
+            const link = document.createElement("a");
+            link.dataset.view = ".view-main";
+            link.href = `item.php?id=${data.id}`;
+            link.textContent = ingredientName;
+            link.style.color = "red";
+            ingredient.replaceWith(link);
+        }
+    }),
 };
 
 
@@ -1586,7 +1909,7 @@ exports.moveUpdateToTop = void 0;
 const page_1 = __webpack_require__(952);
 const KEY_RECENT = "recentUpdate";
 exports.moveUpdateToTop = {
-    onPageChange: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
+    onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         // make sure we're on the home page
         if (page !== page_1.Page.HOME) {
@@ -1613,23 +1936,27 @@ exports.moveUpdateToTop = {
         if (!home) {
             return;
         }
-        const firstTitle = home.querySelector(".content-block-title");
+        const firstTitle = (0, page_1.getTitle)("Where do you want to go?");
         if (!firstTitle) {
             return;
         }
         firstTitle.before(recentUpdatesTitle);
         firstTitle.before(recentUpdatesCard);
         // add hide button
-        const hideButton = document.createElement("a");
-        hideButton.style.marginLeft = "10px";
-        hideButton.style.cursor = "pointer";
-        hideButton.textContent = "Hide";
-        hideButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
-            // mark current as read
-            yield GM.setValue(KEY_RECENT, latestUpdate);
-            window.location.reload();
-        }));
-        recentUpdatesTitle.append(hideButton);
+        let hideButton = recentUpdatesTitle.querySelector(".fh-hide-update");
+        if (!hideButton) {
+            hideButton = document.createElement("a");
+            hideButton.classList.add("fh-hide-update");
+            hideButton.style.marginLeft = "10px";
+            hideButton.style.cursor = "pointer";
+            hideButton.textContent = "Hide";
+            hideButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+                // mark current as read
+                yield GM.setValue(KEY_RECENT, latestUpdate);
+                window.location.reload();
+            }));
+            recentUpdatesTitle.append(hideButton);
+        }
     }),
 };
 
@@ -1652,12 +1979,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.perkManagment = exports.SETTING_PERK_MANAGER = void 0;
 const farmrpgApi_1 = __webpack_require__(626);
+const page_1 = __webpack_require__(952);
 const notifications_1 = __webpack_require__(783);
 const quickSellSafely_1 = __webpack_require__(760);
-const page_1 = __webpack_require__(952);
 exports.SETTING_PERK_MANAGER = {
     id: "perkManager",
-    title: "Manage Perks",
+    title: "Perks: Auto manage",
     description: `
     1. Save your default perks set as "Default"<br>
     2. Save perks for "Crafting", "Fishing", "Exploring", "Selling", "Friendship", "Temple", "Locksmish", or "Wheel" activities<br>
@@ -1682,8 +2009,8 @@ exports.perkManagment = {
         }
         state.perkSets = yield (0, farmrpgApi_1.getPerkSets)();
     }),
-    onPageChange: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b;
+    onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b, _c, _d;
         // make sure the setting is enabled
         if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
             return;
@@ -1701,7 +2028,7 @@ exports.perkManagment = {
             return;
         }
         if (craftingPerks) {
-            const quickcraftButton = document.querySelector(".quickcraftbtn");
+            const quickcraftButton = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".quickcraftbtn");
             if (quickcraftButton && !quickcraftButton.style.display) {
                 quickcraftButton.style.display = "none";
                 const proxyButton = document.createElement("button");
@@ -1716,7 +2043,7 @@ exports.perkManagment = {
                     yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
                     (0, notifications_1.removeNotification)(getNotification());
                 }));
-                (_a = quickcraftButton.parentElement) === null || _a === void 0 ? void 0 : _a.insertBefore(proxyButton, quickcraftButton);
+                (_b = quickcraftButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quickcraftButton);
             }
         }
         const fishingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.FISHING);
@@ -1748,7 +2075,7 @@ exports.perkManagment = {
                 return true;
             }));
         }
-        const friendshipPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.WHEEL);
+        const friendshipPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.FRIENDSHIP);
         if (friendshipPerks &&
             (page === page_1.Page.FRIENDSHIP || page === page_1.Page.MAILBOX)) {
             yield (0, farmrpgApi_1.activatePerkSet)(friendshipPerks);
@@ -1756,7 +2083,7 @@ exports.perkManagment = {
             return;
         }
         if (friendshipPerks) {
-            const quickgiveButton = document.querySelector(".quickgivebtn");
+            const quickgiveButton = (_c = (0, page_1.getCurrentPage)()) === null || _c === void 0 ? void 0 : _c.querySelector(".quickgivebtn");
             if (quickgiveButton && !quickgiveButton.style.display) {
                 quickgiveButton.style.display = "none";
                 const proxyButton = document.createElement("button");
@@ -1771,7 +2098,7 @@ exports.perkManagment = {
                     yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
                     (0, notifications_1.removeNotification)(getNotification());
                 }));
-                (_b = quickgiveButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quickgiveButton);
+                (_d = quickgiveButton.parentElement) === null || _d === void 0 ? void 0 : _d.insertBefore(proxyButton, quickgiveButton);
             }
         }
         const templePerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.TEMPLE);
@@ -1800,6 +2127,31 @@ exports.perkManagment = {
 
 /***/ }),
 
+/***/ 710:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.quests = void 0;
+const theme_1 = __webpack_require__(178);
+exports.quests = {
+    onInitialize: () => {
+        // move spacing from panel margin to message padding regardless of setting
+        document.head.insertAdjacentHTML("beforeend", `
+      <style>
+        #statszone hr {
+            height: 1px;
+            background-color: ${theme_1.BORDER_GRAY};
+            border: none;
+        }
+      <style>
+    `);
+    },
+};
+
+
+/***/ }),
+
 /***/ 760:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -1818,7 +2170,7 @@ exports.quicksellSafely = exports.onQuicksellClick = exports.SETTING_QUICKSELL_S
 const page_1 = __webpack_require__(952);
 exports.SETTING_QUICKSELL_SAFELY = {
     id: "quicksellSafely",
-    title: "Safe Quick Sell",
+    title: "Item: Safe Quick Sell",
     description: "If item is locked, also lock the Quick Sell button",
     type: "boolean",
     defaultValue: true,
@@ -1832,8 +2184,8 @@ const onQuicksellClick = (callback) => {
 exports.onQuicksellClick = onQuicksellClick;
 exports.quicksellSafely = {
     settings: [exports.SETTING_QUICKSELL_SAFELY],
-    onPageChange: (settings, page) => {
-        var _a, _b, _c;
+    onPageLoad: (settings, page) => {
+        var _a, _b, _c, _d;
         // make sure we're on the right page
         if (page !== page_1.Page.ITEM) {
             return;
@@ -1842,7 +2194,7 @@ exports.quicksellSafely = {
         const lockButton = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".lockbtn");
         const unlockButton = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(".unlockbtn");
         const isLocked = unlockButton && !lockButton;
-        const quicksellButton = document.querySelector(".quicksellbtn, .quicksellbtnnc");
+        const quicksellButton = (_c = (0, page_1.getCurrentPage)()) === null || _c === void 0 ? void 0 : _c.querySelector(".quicksellbtn, .quicksellbtnnc");
         if (quicksellButton && !quicksellButton.style.display) {
             quicksellButton.style.display = "none";
             const proxyButton = document.createElement("button");
@@ -1871,7 +2223,7 @@ exports.quicksellSafely = {
                 }
                 quicksellButton.click();
             }));
-            (_c = quicksellButton.parentElement) === null || _c === void 0 ? void 0 : _c.insertBefore(proxyButton, quicksellButton);
+            (_d = quicksellButton.parentElement) === null || _d === void 0 ? void 0 : _d.insertBefore(proxyButton, quicksellButton);
         }
     },
 };
@@ -1898,17 +2250,22 @@ const autocompleteItems_1 = __webpack_require__(477);
 const autocompleteUsers_1 = __webpack_require__(881);
 const banker_1 = __webpack_require__(92);
 const buddyfarm_1 = __webpack_require__(273);
+const chatNav_1 = __webpack_require__(922);
 const cleanupHome_1 = __webpack_require__(870);
+const collapseItemImage_1 = __webpack_require__(56);
 const compressChat_1 = __webpack_require__(223);
 const customNavigation_1 = __webpack_require__(224);
 const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
+const fishInBarrel_1 = __webpack_require__(100);
 const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
+const linkifyQuickCraft_1 = __webpack_require__(711);
 const moveUpdateToTop_1 = __webpack_require__(417);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
+const quests_1 = __webpack_require__(710);
 const quickSellSafely_1 = __webpack_require__(760);
 const FEATURES = [
     // internal
@@ -1919,12 +2276,19 @@ const FEATURES = [
     moveUpdateToTop_1.moveUpdateToTop,
     // items
     buddyfarm_1.buddyFarm,
+    collapseItemImage_1.collapseItemImage,
     quickSellSafely_1.quicksellSafely,
+    linkifyQuickCraft_1.linkifyQuickCraft,
+    // quests
+    quests_1.quests,
     // bank
     banker_1.banker,
+    // fishing
+    fishInBarrel_1.fishinInBarrel,
     // explore
     perkManagement_1.perkManagment,
     // chat
+    chatNav_1.chatNav,
     compressChat_1.compressChat,
     dismissableChatBanners_1.dismissableChatBanners,
     highlightSelfInChat_1.highlightSelfInChat,
@@ -1936,14 +2300,46 @@ const FEATURES = [
     // settings
     farmhandSettings_1.farmhandSettings,
 ];
-const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, function* () {
-    const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
-    for (const { onPageChange } of FEATURES) {
-        if (onPageChange) {
-            onPageChange(settings, page, parameters);
-        }
+const watchSubtree = (selector, handler, filter) => {
+    const target = document.querySelector(selector);
+    if (!target) {
+        console.error(`${selector} not found`);
+        return;
     }
-});
+    const handle = () => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
+        const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
+        const [page, parameters] = (0, page_1.getPage)();
+        console.debug(`${selector} Load`, page, parameters);
+        for (const feature of FEATURES) {
+            (_a = feature[handler]) === null || _a === void 0 ? void 0 : _a.call(feature, settings, page, parameters);
+        }
+    });
+    const observer = new MutationObserver((mutations) => {
+        var _a, _b;
+        for (const mutation of mutations) {
+            // only respond to tree changes
+            if (mutation.type !== "childList") {
+                continue;
+            }
+            if (mutation.addedNodes.length === 0) {
+                continue;
+            }
+            if (filter) {
+                for (const node of mutation.addedNodes) {
+                    if ((_b = (_a = node).matches) === null || _b === void 0 ? void 0 : _b.call(_a, filter)) {
+                        handle();
+                    }
+                }
+            }
+            else {
+                handle();
+            }
+        }
+    });
+    observer.observe(target, { childList: true, subtree: true });
+    handle();
+};
 // eslint-disable-next-line unicorn/prefer-top-level-await
 (function () {
     return __awaiter(this, void 0, void 0, function* () {
@@ -1957,27 +2353,15 @@ const onPageChange = (page, parameters) => __awaiter(void 0, void 0, void 0, fun
                 onInitialize(settings);
             }
         }
-        const pages = document.querySelector(".view-main .pages");
-        if (!pages) {
-            console.error("Pages not found");
-            return;
-        }
-        const observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                // only respond to tree changes
-                if (mutation.type !== "childList") {
-                    continue;
-                }
-                // ignore removals
-                if (mutation.addedNodes.length === 0) {
-                    continue;
-                }
-                const [page, parameters] = (0, page_1.getPage)();
-                console.debug("Page Load", page, parameters);
-                onPageChange(page, parameters);
-            }
-        });
-        observer.observe(pages, { childList: true });
+        // double watches because the page and nav load at different times but
+        // separating the handlers makes everything harder
+        watchSubtree(".view-main .pages", "onPageLoad", ".page");
+        watchSubtree(".view-main .navbar", "onPageLoad", ".navbar-inner");
+        // watch menu
+        watchSubtree(".view-left", "onMenuLoad");
+        // watch desktop and mobile versions of chat
+        watchSubtree("#mobilechatpanel", "onChatLoad");
+        watchSubtree("#desktopchatpanel", "onChatLoad");
     });
 })();
 
@@ -2059,7 +2443,7 @@ const autocompleteSearchControlHandler = (event) => __awaiter(void 0, void 0, vo
     if (!state.activeAutocomplete) {
         return;
     }
-    if (!["Enter", "ArrowDown", "ArrowUp"].includes(event.key)) {
+    if (!["Enter", "ArrowDown", "ArrowUp", "Escape"].includes(event.key)) {
         return;
     }
     event.preventDefault();
@@ -2170,27 +2554,14 @@ exports.autocomplete = {
         }
       <style>
     `);
-        const mobileChat = document.querySelector("#mobilechatpanel");
-        if (!mobileChat) {
-            console.error("Could not find mobile panel");
-            return;
+    },
+    onChatLoad: () => {
+        for (const input of document.querySelectorAll(`
+      #mobilechatpanel input[type="text"],
+      #desktopchatpanel input[type='text']
+    `)) {
+            (0, exports.registerInputListeners)(input);
         }
-        const desktopChat = document.querySelector("#desktopchatpanel");
-        if (!desktopChat) {
-            console.error("Could not find desktop panel");
-            return;
-        }
-        const chatWatcher = new MutationObserver(() => {
-            for (const chat of [mobileChat, desktopChat]) {
-                const input = chat.querySelector("input[type='text']");
-                if (!input) {
-                    continue;
-                }
-                (0, exports.registerInputListeners)(input);
-            }
-        });
-        chatWatcher.observe(mobileChat, { childList: true, subtree: true });
-        chatWatcher.observe(desktopChat, { childList: true, subtree: true });
     },
 };
 
@@ -2434,21 +2805,21 @@ const getActivityPerksSet = (activity) => __awaiter(void 0, void 0, void 0, func
 exports.getActivityPerksSet = getActivityPerksSet;
 const getCurrentPerkSet = () => state.currentPerksSet;
 exports.getCurrentPerkSet = getCurrentPerkSet;
-const isActivePerkSet = (set) => state.currentPerksSet === set;
+const isActivePerkSet = (set) => { var _a; return ((_a = (0, exports.getCurrentPerkSet)()) === null || _a === void 0 ? void 0 : _a.id) === set.id; };
 exports.isActivePerkSet = isActivePerkSet;
 const resetPerks = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "resetperks" }));
 });
 exports.resetPerks = resetPerks;
 const activatePerkSet = (set) => __awaiter(void 0, void 0, void 0, function* () {
-    if (state.currentPerksSet === set) {
+    if ((0, exports.isActivePerkSet)(set)) {
         return;
     }
     console.debug(`Activating ${set.name} Perks`);
+    state.currentPerksSet = set;
     yield (0, exports.resetPerks)();
     yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "activateperkset", id: set.id.toString() }));
     // eslint-disable-next-line require-atomic-updates
-    state.currentPerksSet = set;
 });
 exports.activatePerkSet = activatePerkSet;
 
@@ -2567,7 +2938,7 @@ exports.notifications = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getListByTitle = exports.getCardByTitle = exports.setTitle = exports.getCurrentPage = exports.getPreviousPage = exports.getPage = exports.Page = void 0;
+exports.getListByTitle = exports.getCardByTitle = exports.getTitle = exports.setTitle = exports.getCurrentPage = exports.getPreviousPage = exports.getPage = exports.Page = void 0;
 var Page;
 (function (Page) {
     Page["AREA"] = "area";
@@ -2614,7 +2985,8 @@ const setTitle = (title) => {
     text.textContent = title;
 };
 exports.setTitle = setTitle;
-const getCardByTitle = (searchTitle, root) => {
+const getTitle = (searchTitle, root) => {
+    var _a;
     const currentPage = root !== null && root !== void 0 ? root : (0, exports.getCurrentPage)();
     if (!currentPage) {
         console.error("Current page not found");
@@ -2622,6 +2994,11 @@ const getCardByTitle = (searchTitle, root) => {
     }
     const titles = currentPage.querySelectorAll(".content-block-title");
     const targetTitle = [...titles].find((title) => title.textContent === searchTitle);
+    return (_a = targetTitle) !== null && _a !== void 0 ? _a : null;
+};
+exports.getTitle = getTitle;
+const getCardByTitle = (searchTitle, root) => {
+    const targetTitle = (0, exports.getTitle)(searchTitle, root);
     if (!targetTitle) {
         console.error(`${searchTitle} title not found`);
         return null;

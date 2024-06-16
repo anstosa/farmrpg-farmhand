@@ -149,22 +149,22 @@ export const getCurrentPerkSet = (): PerkSet | undefined =>
   state.currentPerksSet;
 
 export const isActivePerkSet = (set: PerkSet): boolean =>
-  state.currentPerksSet === set;
+  getCurrentPerkSet()?.id === set.id;
 
 export const resetPerks = async (): Promise<void> => {
   await sendRequest(Page.WORKER, new URLSearchParams({ go: "resetperks" }));
 };
 
 export const activatePerkSet = async (set: PerkSet): Promise<void> => {
-  if (state.currentPerksSet === set) {
+  if (isActivePerkSet(set)) {
     return;
   }
   console.debug(`Activating ${set.name} Perks`);
+  state.currentPerksSet = set;
   await resetPerks();
   await sendRequest(
     Page.WORKER,
     new URLSearchParams({ go: "activateperkset", id: set.id.toString() })
   );
   // eslint-disable-next-line require-atomic-updates
-  state.currentPerksSet = set;
 };

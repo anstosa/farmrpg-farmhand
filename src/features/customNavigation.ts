@@ -72,9 +72,15 @@ const renderNavigation = async (): Promise<void> => {
     SETTING_CUSTOM_NAVIGATION,
     DEFAULT_NAVIGATION
   );
-  const navigationList = document.querySelector(".panel-left ul");
+  const navigationList =
+    document.querySelector<HTMLUListElement>(".panel-left ul");
   if (!navigationList) {
     console.error("Could not find navigation list");
+    return;
+  }
+
+  if (navigationList.dataset.isCustomized) {
+    // already rendered
     return;
   }
 
@@ -104,6 +110,7 @@ const renderNavigation = async (): Promise<void> => {
   }
 
   navigationList.innerHTML = "";
+  navigationList.dataset.isCustomized = "true";
   for (const item of navigationData) {
     const currentIndex = navigationData.indexOf(item);
     const navigationItem = document.createElement("li");
@@ -383,7 +390,7 @@ const renderNavigation = async (): Promise<void> => {
 
 export const customNavigation: Feature = {
   settings: [SETTING_CUSTOM_NAVIGATION],
-  onInitialize: (settings) => {
+  onMenuLoad: (settings) => {
     // make sure setting is enabled
     if (!settings[SETTING_CUSTOM_NAVIGATION.id].value) {
       return;
@@ -397,23 +404,25 @@ export const customNavigation: Feature = {
       console.error("Could not find navigation title");
       return;
     }
-    const configurationButton = document.createElement("i");
-    configurationButton.style.cursor = "pointer";
-    configurationButton.classList.add("fa");
-    configurationButton.classList.add("fa-fw");
-    configurationButton.classList.add("fa-cog");
-    configurationButton.addEventListener("click", () => {
-      state.isEditing = !state.isEditing;
-      if (state.isEditing) {
-        configurationButton.classList.remove("fa-cog");
-        configurationButton.classList.add("fa-check");
-      } else {
-        configurationButton.classList.remove("fa-check");
-        configurationButton.classList.add("fa-cog");
-      }
-      renderNavigation();
-    });
-    navigationTitleRight.append(configurationButton);
+    if (navigationTitleRight.children.length === 0) {
+      const configurationButton = document.createElement("i");
+      configurationButton.style.cursor = "pointer";
+      configurationButton.classList.add("fa");
+      configurationButton.classList.add("fa-fw");
+      configurationButton.classList.add("fa-cog");
+      configurationButton.addEventListener("click", () => {
+        state.isEditing = !state.isEditing;
+        if (state.isEditing) {
+          configurationButton.classList.remove("fa-cog");
+          configurationButton.classList.add("fa-check");
+        } else {
+          configurationButton.classList.remove("fa-check");
+          configurationButton.classList.add("fa-cog");
+        }
+        renderNavigation();
+      });
+      navigationTitleRight.append(configurationButton);
+    }
     renderNavigation();
   },
 };

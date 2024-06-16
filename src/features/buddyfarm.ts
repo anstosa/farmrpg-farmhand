@@ -4,7 +4,7 @@ import { nameToSlug } from "~/utils/buddyfarmApi";
 
 export const SETTING_BUDDY_FARM: FeatureSetting = {
   id: "buddyFarm",
-  title: "Buddy's Almanac",
+  title: "Item: Buddy's Almanac",
   description: "Add shortcut to look up items on buddy.farm",
   type: "boolean",
   defaultValue: true,
@@ -12,7 +12,7 @@ export const SETTING_BUDDY_FARM: FeatureSetting = {
 
 export const buddyFarm: Feature = {
   settings: [SETTING_BUDDY_FARM],
-  onPageChange: (settings, page) => {
+  onPageLoad: (settings, page) => {
     // make sure setting is enabled
     if (!settings[SETTING_BUDDY_FARM.id].value) {
       return;
@@ -52,9 +52,13 @@ export const buddyFarm: Feature = {
       return;
     }
 
+    // remove existing link
+    document.querySelector(".fh-buddyshortcut")?.remove();
+
     // create a new item detail for buddy.farm link
     const buddyFarmLinkLi = document.createElement("li");
     buddyFarmLinkLi.classList.add("close-panel");
+    buddyFarmLinkLi.classList.add("fh-buddyshortcut");
     buddyFarmLinkLi.innerHTML = `
       <div class="item-content">
         <div class="item-media">

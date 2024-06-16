@@ -1,10 +1,10 @@
 import { Feature } from "./feature";
-import { getCardByTitle, getCurrentPage, Page } from "~/utils/page";
+import { getCardByTitle, getCurrentPage, getTitle, Page } from "~/utils/page";
 
 const KEY_RECENT = "recentUpdate";
 
 export const moveUpdateToTop: Feature = {
-  onPageChange: async (settings, page) => {
+  onPageLoad: async (settings, page) => {
     // make sure we're on the home page
     if (page !== Page.HOME) {
       return;
@@ -34,7 +34,7 @@ export const moveUpdateToTop: Feature = {
     if (!home) {
       return;
     }
-    const firstTitle = home.querySelector(".content-block-title");
+    const firstTitle = getTitle("Where do you want to go?");
     if (!firstTitle) {
       return;
     }
@@ -42,15 +42,20 @@ export const moveUpdateToTop: Feature = {
     firstTitle.before(recentUpdatesCard);
 
     // add hide button
-    const hideButton = document.createElement("a");
-    hideButton.style.marginLeft = "10px";
-    hideButton.style.cursor = "pointer";
-    hideButton.textContent = "Hide";
-    hideButton.addEventListener("click", async () => {
-      // mark current as read
-      await GM.setValue(KEY_RECENT, latestUpdate);
-      window.location.reload();
-    });
-    recentUpdatesTitle.append(hideButton);
+    let hideButton =
+      recentUpdatesTitle.querySelector<HTMLAnchorElement>(".fh-hide-update");
+    if (!hideButton) {
+      hideButton = document.createElement("a");
+      hideButton.classList.add("fh-hide-update");
+      hideButton.style.marginLeft = "10px";
+      hideButton.style.cursor = "pointer";
+      hideButton.textContent = "Hide";
+      hideButton.addEventListener("click", async () => {
+        // mark current as read
+        await GM.setValue(KEY_RECENT, latestUpdate);
+        window.location.reload();
+      });
+      recentUpdatesTitle.append(hideButton);
+    }
   },
 };

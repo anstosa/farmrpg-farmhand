@@ -3,7 +3,7 @@ import { showPopup } from "~/utils/popup";
 
 export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
   id: "dismissableChatBanners",
-  title: "Dismissable Chat Banners",
+  title: "Chat: Dismissable Banners",
   description: `
     Adds × in chat banners to dismiss them<br>
     Disable this to show dismissed banners again

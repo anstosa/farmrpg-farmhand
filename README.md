@@ -43,6 +43,7 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 
 * Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
 * Locks Quick Sell for locked items
+* Make missing ingredients in Quick Carft links
 
 ### Banker
 
@@ -74,6 +75,10 @@ Supports Quick Craft for "Crafting", Quick Sell for "Selling", and Quick Give fo
 
 This frees up points from many activity specific perks to be re-invested in perks that need to be on all the time.
 
+### Fishing
+
+* Fish always appear in middle of pond
+
 ### UI Cleanup
 
 * Home: hide players section
@@ -81,6 +86,7 @@ This frees up points from many activity specific perks to be re-invested in perk
 * Home: home footer
 * Home: moves updates to top if there is a new one
 * Home: compress skills section
+* Quests: Styled border
 
 ### Export
 
@@ -95,17 +101,24 @@ Future features under consideration or development
 * Quick collect link in mailbox notification like with pets that shows collected items in success popup
 * Contextual status information in custom navigation items (e.g. crops growing for farm, chores completed for Chores, items exchanged for exchange, etc)
 * Persistent notification for meal countdowns
-* Notification for wine and max value
+* Notification for wine at max value
 * Notification for crops complete that allows you to harvest and/or replant without going to farm page
-* Disable Quick Sell and Quick Give for locked items
 * Compressed view for home and town pages (square tiles)
-* Shortcut on missing materials to link without scrolling down
 
 ## Tip
 
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.8
+
+* Added: Make missing ingredients in Quick Craft links
+* Added: Collapsed item view
+* Added: Fish always appear in middle of pond
+* Added: Nicer chat navigation
+* Fixed: Autocomplete not closing on Esc
+* Fixed: Rendering modded elements was sometimes delayed or missed
 
 ### 1.0.7
 

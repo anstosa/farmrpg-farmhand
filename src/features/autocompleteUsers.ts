@@ -4,7 +4,7 @@ import { registerAutocomplete } from "~/utils/autocomplete";
 
 export const SETTING_AUTOCOMPLETE_USERS: FeatureSetting = {
   id: "autocompleteUsers",
-  title: "Chat Autocomplete: Users",
+  title: "Chat: Autocomplete @Users:",
   description: "Auto-complete usernames in chat",
   type: "boolean",
   defaultValue: true,

@@ -6,17 +6,17 @@ import {
   PerkSet,
 } from "~/utils/farmrpgApi";
 import { Feature, FeatureSetting } from "./feature";
+import { getCurrentPage, Page } from "~/utils/page";
 import {
   Notification,
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
 import { onQuicksellClick } from "./quickSellSafely";
-import { Page } from "~/utils/page";
 
 export const SETTING_PERK_MANAGER: FeatureSetting = {
   id: "perkManager",
-  title: "Manage Perks",
+  title: "Perks: Auto manage",
   description: `
     1. Save your default perks set as "Default"<br>
     2. Save perks for "Crafting", "Fishing", "Exploring", "Selling", "Friendship", "Temple", "Locksmish", or "Wheel" activities<br>
@@ -44,7 +44,7 @@ export const perkManagment: Feature = {
     }
     state.perkSets = await getPerkSets();
   },
-  onPageChange: async (settings, page) => {
+  onPageLoad: async (settings, page) => {
     // make sure the setting is enabled
     if (!settings[SETTING_PERK_MANAGER.id].value) {
       return;
@@ -67,7 +67,7 @@ export const perkManagment: Feature = {
 
     if (craftingPerks) {
       const quickcraftButton =
-        document.querySelector<HTMLButtonElement>(".quickcraftbtn");
+        getCurrentPage()?.querySelector<HTMLButtonElement>(".quickcraftbtn");
       if (quickcraftButton && !quickcraftButton.style.display) {
         quickcraftButton.style.display = "none";
         const proxyButton = document.createElement("button");
@@ -122,7 +122,7 @@ export const perkManagment: Feature = {
       });
     }
 
-    const friendshipPerks = await getActivityPerksSet(PerkActivity.WHEEL);
+    const friendshipPerks = await getActivityPerksSet(PerkActivity.FRIENDSHIP);
     if (
       friendshipPerks &&
       (page === Page.FRIENDSHIP || page === Page.MAILBOX)
@@ -134,7 +134,7 @@ export const perkManagment: Feature = {
 
     if (friendshipPerks) {
       const quickgiveButton =
-        document.querySelector<HTMLButtonElement>(".quickgivebtn");
+        getCurrentPage()?.querySelector<HTMLButtonElement>(".quickgivebtn");
       if (quickgiveButton && !quickgiveButton.style.display) {
         quickgiveButton.style.display = "none";
         const proxyButton = document.createElement("button");

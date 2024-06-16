@@ -179,7 +179,7 @@ type ExportedSettings = Array<FeatureSetting & { data: any }>;
 
 export const SETTING_EXPORT: FeatureSetting = {
   id: "export",
-  title: "Export",
+  title: "Settings: Export",
   description: "Exports Farmhand Settings to sync to other device",
   type: "string",
   defaultValue: "",
@@ -204,7 +204,7 @@ export const SETTING_EXPORT: FeatureSetting = {
 
 export const SETTING_IMPORT: FeatureSetting = {
   id: "import",
-  title: "Import",
+  title: "Settings: Import",
   description: "Paste export into box and click Import",
   type: "string",
   defaultValue: "",
@@ -243,7 +243,7 @@ export const farmhandSettings: Feature = {
     `
     );
   },
-  onPageChange: (settings, page) => {
+  onPageLoad: (settings, page) => {
     // make sure we are on the settings page
     if (page !== Page.SETTINGS_OPTIONS) {
       return;
@@ -263,9 +263,16 @@ export const farmhandSettings: Feature = {
     }
 
     // add section
-    const farmhandSettingsLi = document.createElement("li");
+    let farmhandSettingsLi =
+      settingsList.querySelector<HTMLLIElement>(".fh-settings-title");
+    if (farmhandSettingsLi) {
+      // already rendered
+      return;
+    }
+    farmhandSettingsLi = document.createElement("li");
     farmhandSettingsLi.classList.add("list-group-title");
     farmhandSettingsLi.classList.add("item-divider");
+    farmhandSettingsLi.classList.add("fh-settings-title");
     farmhandSettingsLi.textContent = "Farmhand Settings";
     settingsList.append(farmhandSettingsLi);
 

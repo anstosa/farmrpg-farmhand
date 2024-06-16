@@ -91,7 +91,7 @@ const autocompleteSearchControlHandler = async (
   if (!state.activeAutocomplete) {
     return;
   }
-  if (!["Enter", "ArrowDown", "ArrowUp"].includes(event.key)) {
+  if (!["Enter", "ArrowDown", "ArrowUp", "Escape"].includes(event.key)) {
     return;
   }
   event.preventDefault();
@@ -223,32 +223,13 @@ export const autocomplete: Feature = {
       <style>
     `
     );
-
-    const mobileChat = document.querySelector("#mobilechatpanel");
-    if (!mobileChat) {
-      console.error("Could not find mobile panel");
-      return;
+  },
+  onChatLoad: () => {
+    for (const input of document.querySelectorAll<HTMLInputElement>(`
+      #mobilechatpanel input[type="text"],
+      #desktopchatpanel input[type='text']
+    `)) {
+      registerInputListeners(input);
     }
-
-    const desktopChat = document.querySelector("#desktopchatpanel");
-    if (!desktopChat) {
-      console.error("Could not find desktop panel");
-      return;
-    }
-
-    const chatWatcher = new MutationObserver(() => {
-      for (const chat of [mobileChat, desktopChat]) {
-        const input =
-          chat.querySelector<HTMLInputElement>("input[type='text']");
-        if (!input) {
-          continue;
-        }
-
-        registerInputListeners(input);
-      }
-    });
-
-    chatWatcher.observe(mobileChat, { childList: true, subtree: true });
-    chatWatcher.observe(desktopChat, { childList: true, subtree: true });
   },
 };

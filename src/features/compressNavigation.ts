@@ -57,35 +57,35 @@ export const navigationStyle: Feature = {
     document.head.insertAdjacentHTML(
       "beforeend",
       `
-          <style>
-            .toolbar-inner {
-              display: flex !important;
-              justify-content: end !important;
-              padding: 0 !important;
-            }
+        <style>
+          .toolbar-inner {
+            display: flex !important;
+            justify-content: end !important;
+            padding: 0 !important;
+          }
 
-            .toolbar-inner .link {
+          .toolbar-inner .link {
+            display: none !important;
+          }
+
+          @media (min-width: 768px) {
+            .fh-menu {
               display: none !important;
             }
+          }
 
-            @media (min-width: 768px) {
-              .fh-menu {
-                display: none !important;
-              }
-            }
-
-            .toolbar-inner a {
-              height: 100%;
-              border: 0;
-              background: transparent;
-              display: flex;
-              align-items: center;
-              gap: 5px;
-              padding: 15px !important;
-              border-radius: 0 !important;
-            }
-          <style>
-        `
+          .toolbar-inner a {
+            height: 100%;
+            border: 0;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 15px !important;
+            border-radius: 0 !important;
+          }
+        <style>
+      `
     );
 
     if (settings[SETTING_NAVIGATION_COMPRESS.id].value) {

@@ -1,4 +1,4 @@
-import { depositSilver, withdrawSilver } from "~/utils/farmrpgApi";
+import { depositSilver, withdrawSilver } from "~/api/farmrpg/bank";
 import { Feature, FeatureSetting } from "./feature";
 import {
   getCardByTitle,
@@ -122,7 +122,10 @@ export const banker: Feature = {
           `Deposit ${formatter.format(missingFromTarget)} Silver?`,
           async () => {
             await depositSilver(missingFromTarget);
-            await showPopup("Success!", "You deposited Silver!");
+            await showPopup({
+              title: "Success!",
+              contentHTML: "You deposited Silver!",
+            });
             window.location.reload();
           }
         );
@@ -168,7 +171,10 @@ export const banker: Feature = {
           `Withdraw ${formatter.format(availableInterest)} Silver?`,
           async () => {
             await withdrawSilver(availableInterest);
-            await showPopup("Success!", "You withdrew Silver!");
+            await showPopup({
+              title: "Success!",
+              contentHTML: "You withdrew Silver!",
+            });
             window.location.reload();
           }
         );

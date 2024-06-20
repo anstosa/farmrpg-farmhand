@@ -47,5 +47,6 @@ export interface Feature {
   onPageLoad?: LoadHandler;
   onChatLoad?: LoadHandler;
   onMenuLoad?: LoadHandler;
+  onQuestLoad?: LoadHandler;
   settings?: FeatureSetting[];
 }

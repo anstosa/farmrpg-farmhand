@@ -4,6 +4,7 @@ import {
   TEXT_WARNING,
 } from "~/utils/theme";
 import { Feature, FeatureSetting } from "./feature";
+import { usernameState } from "~/api/farmrpg/api";
 
 export const SETTING_CHAT_HIGHLIGHT_SELF: FeatureSetting = {
   id: "highlightSelfInChat",
@@ -15,13 +16,13 @@ export const SETTING_CHAT_HIGHLIGHT_SELF: FeatureSetting = {
 
 export const highlightSelfInChat: Feature = {
   settings: [SETTING_CHAT_HIGHLIGHT_SELF],
-  onChatLoad: (settings) => {
+  onChatLoad: async (settings) => {
     // make sure setting is enabled
     if (!settings[SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
       return;
     }
 
-    const username = document.querySelector("#logged_in_username")?.textContent;
+    const username = await usernameState.get();
     if (!username) {
       console.error("Could not find username");
       return;

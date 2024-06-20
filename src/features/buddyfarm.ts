@@ -1,6 +1,6 @@
 import { Feature, FeatureSetting } from "./feature";
 import { getCurrentPage, Page } from "~/utils/page";
-import { nameToSlug } from "~/utils/buddyfarmApi";
+import { nameToSlug } from "~/api/buddyfarm/state";
 
 export const SETTING_BUDDY_FARM: FeatureSetting = {
   id: "buddyFarm",

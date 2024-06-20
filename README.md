@@ -59,12 +59,12 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 * Autocomplete ((item)) tags in chat
 * Autocomplete usernames when @mentioning: in chat
 
-### Navigation
+### Menu
 
-* Customize navigation (icon, name, order, URL)
-* Compressed navigation view so more items are visible
-* Align navigation to bottom so it's easier to reach on mobile
-* Hide logo from navigation
+* Customize menu (icon, name, order, URL)
+* Compressed menu view so more items are visible
+* Align menu to bottom so it's easier to reach on mobile
+* Hide logo from menu
 * Add menu button to bottom bar so it's easier to reach on mobile
 
 ### Perk set management
@@ -87,6 +87,7 @@ This frees up points from many activity specific perks to be re-invested in perk
 * Home: moves updates to top if there is a new one
 * Home: compress skills section
 * Quests: Styled border
+* Quests: Minimizable
 
 ### Export
 
@@ -110,6 +111,13 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.9
+
+* Added: Farmhand version checking and update notifications
+* Added: Support for alpha
+* Added: Make quests minimizable
+* Fixed: Updated caching infrastructure to significantly reduce any load impact on farmrpg.com or buddy.farm
 
 ### 1.0.8
 

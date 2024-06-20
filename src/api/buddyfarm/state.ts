@@ -25,17 +25,17 @@ interface ItemPage extends BasePage {
   type: null;
 }
 
-interface BuddyFarmPage extends BasePage {
+interface CalculatorPage extends BasePage {
   type: null;
 }
 
-type Page =
+export type BuddyFarmPage =
   | TownsfolkPage
   | QuestlinePage
   | QuizPage
   | QuestPage
   | ItemPage
-  | BuddyFarmPage;
+  | CalculatorPage;
 
 export interface Item {
   __typename: "FarmRPG_Item";
@@ -224,7 +224,7 @@ export interface BasicEntity {
   image: string;
 }
 
-interface PageData {
+export interface BuddyFarmPageData {
   townsfolk: TownsfolkPage[];
   questlines: QuestlinePage[];
   quizzes: QuizPage[];
@@ -233,85 +233,5 @@ interface PageData {
   pages: BuddyFarmPage[];
 }
 
-const state: { pageData?: PageData; itemData: Record<string, Item> } = {
-  itemData: {},
-};
-
 export const nameToSlug = (name: string): string =>
   name.toLowerCase().replaceAll(/[\s']/g, "-");
-
-export const getPageData = async (): Promise<PageData> => {
-  if (state.pageData) {
-    return state.pageData;
-  }
-  state.pageData = {
-    townsfolk: [],
-    questlines: [],
-    quizzes: [],
-    quests: [],
-    items: [],
-    pages: [],
-  };
-  const response = await fetch("https://buddy.farm/search.json");
-  const data = (await response.json()) as Page[];
-  for (const page of data) {
-    // eslint-disable-next-line unicorn/prefer-switch
-    if (page.type === "Townsfolk") {
-      state.pageData.townsfolk.push(page);
-    } else if (page.type === "Questline") {
-      state.pageData.questlines.push(page);
-    } else if (page.type === "Schoolhouse Quiz") {
-      state.pageData.quizzes.push(page);
-    } else if (page.href.startsWith("/q/")) {
-      state.pageData.quests.push(page);
-    } else if (page.href.startsWith("/i/")) {
-      state.pageData.items.push(page);
-    } else {
-      state.pageData.pages.push(page);
-    }
-  }
-  return state.pageData;
-};
-
-interface PageDataResponse {
-  componentChunkName: string;
-  path: string;
-  result: {
-    data: {
-      farmrpg: {
-        items: Item[];
-      };
-    };
-    pageContext: {
-      id: number;
-      name: string;
-    };
-  };
-  slicesMap: unknown;
-  staticQueryHashes: unknown;
-}
-
-export const getItemData = async (
-  itemName: string
-): Promise<Item | undefined> => {
-  if (state.itemData[itemName]) {
-    return state.itemData[itemName];
-  }
-  const response = await fetch(
-    `https://buddy.farm/page-data/i/${nameToSlug(itemName)}/page-data.json`
-  );
-  const data = (await response.json()) as PageDataResponse;
-  const item = data?.result?.data?.farmrpg?.items?.[0];
-  if (!item) {
-    console.error(`Item ${itemName} not found`);
-    return;
-  }
-  // eslint-disable-next-line require-atomic-updates
-  state.itemData[itemName] = item;
-  return item;
-};
-
-export const getBasicItems = async (): Promise<BasicEntity[]> => {
-  const { items } = await getPageData();
-  return items.map(({ name, image }) => ({ name, image }));
-};

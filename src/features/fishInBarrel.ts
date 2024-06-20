@@ -19,15 +19,15 @@ export const fishinInBarrel: Feature = {
     document.head.insertAdjacentHTML(
       "beforeend",
       `
-      <style>
-        /* Move fish to middle */
-        .fish {
-          position: absolute;
-          top: calc(50% - 30px);
-          left: calc(50% - 30px);
-        }
-      <style>
-    `
+        <style>
+          /* Move fish to middle */
+          .fish {
+            position: absolute;
+            top: calc(50% - 30px);
+            left: calc(50% - 30px);
+          }
+        <style>
+      `
     );
   },
 };

@@ -1,6 +1,6 @@
 import { Feature } from "./feature";
 import { getCurrentPage, Page } from "~/utils/page";
-import { getItemData } from "~/utils/buddyfarmApi";
+import { getItemByName } from "~/api/buddyfarm/api";
 
 export const linkifyQuickCraft: Feature = {
   onPageLoad: async (settings, page) => {
@@ -22,7 +22,7 @@ export const linkifyQuickCraft: Feature = {
       if (!ingredientName) {
         continue;
       }
-      const data = await getItemData(ingredientName);
+      const data = await getItemByName(ingredientName);
       if (!data) {
         console.error(`No data for ${ingredientName}`);
         continue;

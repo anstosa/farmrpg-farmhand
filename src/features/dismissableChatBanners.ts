@@ -1,5 +1,6 @@
 import { Feature, FeatureSetting } from "./feature";
 import { showPopup } from "~/utils/popup";
+import { StorageKey } from "~/api/state";
 
 export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
   id: "dismissableChatBanners",
@@ -12,14 +13,14 @@ export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
   buttonAction: async () => {
     const keys = await GM.listValues();
     for (const key of keys) {
-      if (key.startsWith(SETTING_CHAT_DISMISSABLE_BANNERS.id)) {
+      if (key.startsWith(StorageKey.CHAT_BANNERS)) {
         await GM.deleteValue(key);
       }
     }
-    await showPopup(
-      "Chat banners reset",
-      "Previously dismissed chat banners will be shown again"
-    );
+    await showPopup({
+      title: "Chat banners reset",
+      contentHTML: "Previously dismissed chat banners will be shown again",
+    });
   },
   type: "boolean",
   defaultValue: true,
@@ -42,62 +43,42 @@ const hashBanner = (banner: Element): number => {
 
 export const dismissableChatBanners: Feature = {
   settings: [SETTING_CHAT_DISMISSABLE_BANNERS],
-  onInitialize: (settings) => {
+  onChatLoad: async (settings) => {
     // make sure setting is enabled
     if (!settings[SETTING_CHAT_DISMISSABLE_BANNERS.id].value) {
       return;
     }
+    const banners = document.querySelectorAll(
+      "#desktopchatpanel .card, #mobilechatpanel .card"
+    );
+    for (const banner of banners) {
+      const bannerKey = `${StorageKey.CHAT_BANNERS}_${hashBanner(banner)}`;
 
-    const chatWatcher = new MutationObserver(async () => {
-      const banners = document.querySelectorAll(
-        "#desktopchatpanel .card, #mobilechatpanel .card"
-      );
-      for (const banner of banners) {
-        const bannerKey = `${SETTING_CHAT_DISMISSABLE_BANNERS.id}_${hashBanner(
-          banner
-        )}`;
-
-        // hide banner if dismissed
-        const isDismissed = await GM.getValue(bannerKey, false);
-        if (isDismissed) {
-          banner.remove();
-          continue;
-        }
-
-        // skip adding close button if it already exists
-        if (banner.querySelector(".fh-close")) {
-          continue;
-        }
-
-        // add close button
-        const closeButton = document.createElement("div");
-        closeButton.classList.add("fh-close");
-        closeButton.textContent = "×";
-        closeButton.style.position = "absolute";
-        closeButton.style.top = "2px";
-        closeButton.style.right = "2px";
-        closeButton.style.cursor = "pointer";
-        closeButton.addEventListener("click", () => {
-          banner.remove();
-          GM.setValue(bannerKey, true);
-        });
-        banner.append(closeButton);
+      // hide banner if dismissed
+      const isDismissed = await GM.getValue(bannerKey, false);
+      if (isDismissed) {
+        banner.remove();
+        continue;
       }
-    });
 
-    const mobileChat = document.querySelector("#mobilechatpanel");
-    if (!mobileChat) {
-      console.error("Could not find mobile panel");
-      return;
+      // skip adding close button if it already exists
+      if (banner.querySelector(".fh-close")) {
+        continue;
+      }
+
+      // add close button
+      const closeButton = document.createElement("div");
+      closeButton.classList.add("fh-close");
+      closeButton.textContent = "×";
+      closeButton.style.position = "absolute";
+      closeButton.style.top = "2px";
+      closeButton.style.right = "2px";
+      closeButton.style.cursor = "pointer";
+      closeButton.addEventListener("click", () => {
+        banner.remove();
+        GM.setValue(bannerKey, true);
+      });
+      banner.append(closeButton);
     }
-
-    const desktopChat = document.querySelector("#desktopchatpanel");
-    if (!desktopChat) {
-      console.error("Could not find desktop panel");
-      return;
-    }
-
-    chatWatcher.observe(mobileChat, { childList: true, subtree: true });
-    chatWatcher.observe(desktopChat, { childList: true, subtree: true });
   },
 };

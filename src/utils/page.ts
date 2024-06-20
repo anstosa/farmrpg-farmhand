@@ -18,6 +18,15 @@ export enum Page {
   WORKSHOP = "workshop",
 }
 
+export enum WorkerGo {
+  GET_STATS = "getstats",
+  DEPOSIT_SILVER = "depositsilver",
+  WITHDRAW_SILVER = "withdrawalsilver",
+  COLLECT_ALL_MAIL_ITEMS = "collectallmailitems",
+  RESET_PERKS = "resetperks",
+  ACTIVATE_PERK_SET = "activateperkset",
+}
+
 // get page and parameters if any
 export const getPage = (): [Page | undefined, URLSearchParams] => {
   const currentPage = getCurrentPage();

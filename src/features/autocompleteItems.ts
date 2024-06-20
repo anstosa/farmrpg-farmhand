@@ -1,5 +1,5 @@
 import { Feature, FeatureSetting } from "./feature";
-import { getBasicItems } from "~/utils/buddyfarmApi";
+import { getBasicItems } from "~/api/buddyfarm/api";
 import { registerAutocomplete } from "~/utils/autocomplete";
 
 export const SETTING_AUTOCOMPLETE_ITEMS: FeatureSetting = {
@@ -12,15 +12,14 @@ export const SETTING_AUTOCOMPLETE_ITEMS: FeatureSetting = {
 
 export const autocompleteItems: Feature = {
   settings: [SETTING_AUTOCOMPLETE_ITEMS],
-  onInitialize: async (settings) => {
+  onInitialize: (settings) => {
     // make sure setting is enabled
     if (!settings[SETTING_AUTOCOMPLETE_ITEMS.id].value) {
       return;
     }
-    const items = await getBasicItems();
     registerAutocomplete({
       trigger: /\(\(([^]+)/,
-      getItems: async () => await items,
+      getItems: getBasicItems,
       prefix: "((",
       suffix: "))",
       bail: (text) => (text.match(/(\(\(|\)\))/g)?.length ?? 0) % 2 === 0,

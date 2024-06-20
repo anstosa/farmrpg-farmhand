@@ -10,6 +10,7 @@ interface BaseNotification {
   id: string;
   text: string;
   replacesHref?: string;
+  actions?: { text: string; handlerName: string }[];
 }
 
 export type Notification<T> = BaseNotification & { data?: T };
@@ -41,10 +42,12 @@ export const sendNotification = async <T>(
 };
 
 export const removeNotification = async (
-  notification: Notification<any>
+  notification: Notification<any> | Notification<any>["id"]
 ): Promise<void> => {
+  const notificationId =
+    typeof notification === "string" ? notification : notification.id;
   state.notifications = state.notifications.filter(
-    ({ id }) => id !== notification.id
+    ({ id }) => id !== notificationId
   );
   await setData(KEY_NOTIFICATIONS, state.notifications);
   renderNotifications();
@@ -78,24 +81,56 @@ const renderNotifications = (): void => {
     const notificationElement = document.createElement(
       notification.handlerName ? "a" : "span"
     );
-    notificationElement.classList.add("fh-notification");
     notificationElement.classList.add("button");
+    notificationElement.classList.add("fh-notification");
+    notificationElement.style.cursor = notification.handlerName
+      ? "pointer"
+      : "default";
     if (notification.class) {
       notificationElement.classList.add(notification.class);
     }
     notificationElement.textContent = notification.text;
-    notificationElement.addEventListener("click", async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const handler = notificationHandlers.get(notification.handlerName ?? "");
-      if (handler) {
-        await handler(notification);
-      } else {
-        console.error(`Handler not found: ${notification.handlerName}`);
-      }
-      removeNotification(notification);
-      renderNotifications();
-    });
+    if (notification.handlerName) {
+      notificationElement.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const handler = notificationHandlers.get(
+          notification.handlerName ?? ""
+        );
+        if (handler) {
+          await handler(notification);
+        } else {
+          console.error(`Handler not found: ${notification.handlerName}`);
+        }
+        removeNotification(notification);
+        renderNotifications();
+      });
+    }
+
+    for (const action of notification.actions ?? []) {
+      notificationElement.append(
+        document.createTextNode(
+          notification.actions?.indexOf(action) === 0 ? " " : " / "
+        )
+      );
+      const actionElement = document.createElement("a");
+      actionElement.classList.add("fh-notification-action");
+      actionElement.style.cursor = "pointer";
+      actionElement.textContent = action.text;
+      actionElement.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const handler = notificationHandlers.get(action.handlerName);
+        if (handler) {
+          await handler(notification);
+        } else {
+          console.error(`Handler not found: ${action.handlerName}`);
+        }
+        renderNotifications();
+      });
+      notificationElement.append(actionElement);
+    }
+
     if (
       pageContent.firstElementChild?.classList.contains("pull-to-refresh-layer")
     ) {
@@ -113,13 +148,8 @@ export const notifications: Feature = {
       []
     );
     state.notifications = savedNotifications;
-
-    const observer = new MutationObserver(renderNotifications);
-    const pages = document.querySelector(".view-main .pages");
-    if (!pages) {
-      console.error("Pages not found");
-      return;
-    }
-    observer.observe(pages, { childList: true, subtree: true });
+  },
+  onPageLoad: () => {
+    setTimeout(renderNotifications, 500);
   },
 };

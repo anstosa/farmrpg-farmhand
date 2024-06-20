@@ -16,29 +16,29 @@ export const compressChat: Feature = {
     document.head.insertAdjacentHTML(
       "beforeend",
       `
-      <style>
-        .page-content {
-          padding-right: 0 !important; 
-          margin-right: -2px !important;
-        }
-        #desktopchatpanel {
-          border-color: ${BORDER_GRAY};
-          border-top: 0 !important;
-        }
-        #mobilechatpanel .content-block,
-        #desktopchatpanel .content-block {
-          padding: 0 !important;
-        }
-        #mobilechatpanel .card,
-        #desktopchatpanel .card {
-          margin: 0 !important;
-        }
-        .chat-txt {
-          margin: 0 !important;
-          padding: 8px !important
-        }
-      <style>
-    `
+        <style>
+          .page-content {
+            padding-right: 0 !important; 
+            margin-right: -2px !important;
+          }
+          #desktopchatpanel {
+            border-color: ${BORDER_GRAY};
+            border-top: 0 !important;
+          }
+          #mobilechatpanel .content-block,
+          #desktopchatpanel .content-block {
+            padding: 0 !important;
+          }
+          #mobilechatpanel .card,
+          #desktopchatpanel .card {
+            margin: 0 !important;
+          }
+          .chat-txt {
+            margin: 0 !important;
+            padding: 8px !important
+          }
+        <style>
+      `
     );
 
     // make sure setting is enabled
@@ -49,20 +49,20 @@ export const compressChat: Feature = {
     document.head.insertAdjacentHTML(
       "beforeend",
       `
-      <style>
-        /* Reduce chat spacing */
-        .chat-txt {
-          margin: 0 !important;
-          padding: 4px !important
-        }
+        <style>
+          /* Reduce chat spacing */
+          .chat-txt {
+            margin: 0 !important;
+            padding: 4px !important
+          }
 
-        /* Hide timestamp */
-        .chat-txt span:first-of-type,
-        .chat-txt br:first-of-type {
-          display: none !important;
-        }
-      <style>
-    `
+          /* Hide timestamp */
+          .chat-txt span:first-of-type,
+          .chat-txt br:first-of-type {
+            display: none !important;
+          }
+        <style>
+      `
     );
   },
 };

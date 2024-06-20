@@ -20,11 +20,14 @@ import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
 import { quests } from "./features/quests";
 import { quicksellSafely } from "./features/quickSellSafely";
+import { versionManager } from "./features/versionManager";
+import { watchQueries } from "./api/state";
 
 const FEATURES = [
   // internal
   notifications,
   autocomplete,
+  versionManager,
 
   // home
   cleanupHome,
@@ -66,7 +69,7 @@ const FEATURES = [
 
 const watchSubtree = (
   selector: string,
-  handler: "onPageLoad" | "onChatLoad" | "onMenuLoad",
+  handler: "onPageLoad" | "onChatLoad" | "onMenuLoad" | "onQuestLoad",
   filter?: string
 ): void => {
   const target = document.querySelector(selector);
@@ -113,6 +116,8 @@ const watchSubtree = (
   "use strict";
   console.info("STARTING Farmhand by Ansel Santosa");
 
+  await watchQueries();
+
   // initialize
   const settings = await getSettings(FEATURES);
   for (const { onInitialize } of FEATURES) {
@@ -125,6 +130,8 @@ const watchSubtree = (
   // separating the handlers makes everything harder
   watchSubtree(".view-main .pages", "onPageLoad", ".page");
   watchSubtree(".view-main .navbar", "onPageLoad", ".navbar-inner");
+  // watch quest popup
+  watchSubtree(".view-main .toolbar", "onQuestLoad");
   // watch menu
   watchSubtree(".view-left", "onMenuLoad");
   // watch desktop and mobile versions of chat

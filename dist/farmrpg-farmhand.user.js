@@ -1,12 +1,16 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.8
+// @version 1.0.9
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
+// @match https://alpha.farmrpg.com/*
+// @connect greasyfork.org
+// @connect github.com
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM.setClipboard
+// @grant GM.xmlHttpRequest
 // @icon https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com
 // @license MIT
 // @namespace https://github.com/anstosa/farmrpg-farmhand
@@ -16,7 +20,7 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 477:
+/***/ 413:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -30,8 +34,689 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.pageDataState = exports.getBasicItems = exports.getItemByName = void 0;
+const state_1 = __webpack_require__(456);
+const state_2 = __webpack_require__(619);
+// TODO cache this
+const getItemByName = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    const response = yield fetch(`https://buddy.farm/page-data/i/${(0, state_1.nameToSlug)(itemName)}/page-data.json`);
+    const data = (yield response.json());
+    const item = (_d = (_c = (_b = (_a = data === null || data === void 0 ? void 0 : data.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.farmrpg) === null || _c === void 0 ? void 0 : _c.items) === null || _d === void 0 ? void 0 : _d[0];
+    if (!item) {
+        console.error(`Item ${itemName} not found`);
+        return;
+    }
+    return item;
+});
+exports.getItemByName = getItemByName;
+const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _e;
+    const { items } = (_e = (yield exports.pageDataState.get())) !== null && _e !== void 0 ? _e : {};
+    return items.map(({ name, image }) => ({ name, image }));
+});
+exports.getBasicItems = getBasicItems;
+exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, () => __awaiter(void 0, void 0, void 0, function* () {
+    const pages = {
+        townsfolk: [],
+        questlines: [],
+        quizzes: [],
+        quests: [],
+        items: [],
+        pages: [],
+    };
+    const response = yield fetch("https://buddy.farm/search.json");
+    const data = (yield response.json());
+    for (const page of data) {
+        // eslint-disable-next-line unicorn/prefer-switch
+        if (page.type === "Townsfolk") {
+            pages.townsfolk.push(page);
+        }
+        else if (page.type === "Questline") {
+            pages.questlines.push(page);
+        }
+        else if (page.type === "Schoolhouse Quiz") {
+            pages.quizzes.push(page);
+        }
+        else if (page.href.startsWith("/q/")) {
+            pages.quests.push(page);
+        }
+        else if (page.href.startsWith("/i/")) {
+            pages.items.push(page);
+        }
+        else {
+            pages.pages.push(page);
+        }
+    }
+    return pages;
+}), {
+    timeout: 60 * 60 * 24, // 1 day
+});
+
+
+/***/ }),
+
+/***/ 456:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.nameToSlug = void 0;
+const nameToSlug = (name) => name.toLowerCase().replaceAll(/[\s']/g, "-");
+exports.nameToSlug = nameToSlug;
+
+
+/***/ }),
+
+/***/ 126:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = exports.sendRequest = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+const sendRequest = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield fetch(`https://farmrpg.com/${page}.php?${query ? query.toString() : ""}`, {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+    });
+    return (0, utils_1.getDocument)(response);
+});
+exports.sendRequest = sendRequest;
+// export const recordHome = async (root?: HTMLElement): Promise<void> => {
+//   if (!root) {
+//     root = document.body;
+//   }
+//   let farm = state.get("farm");
+//   const farmLink = root.querySelector("a[href^='xfarm.php']");
+//   if (!farmLink) {
+//     console.error("failed to find farm link");
+//     return;
+//   }
+//   const farmId = Number(farmLink.getAttribute("href")?.split("=")[1]);
+//   if (farm) {
+//     farm.id = farmId;
+//   } else {
+//     farm = { id: farmId };
+//   }
+//   if (!farm.field) {
+//     farm.field = {};
+//   }
+//   const farmStatus =
+//     farmLink.querySelector(".item-after")?.textContent || undefined;
+//   farm.field.status = farmStatus;
+//   farm.field.plots = [];
+//   if (farmStatus) {
+//     const cropCount = Number(farmStatus.split(" ")[0]);
+//     const isGrowing = farmStatus.includes("GROWING");
+//     const isReady = farmStatus.includes("READY");
+//     for (let index = 0; index < cropCount; index++) {
+//       farm.field.plots.push({
+//         isGrowing,
+//         isReady,
+//         progress: isReady ? 100 : undefined,
+//       });
+//     }
+//   }
+//   const kitchen = state.get("kitchen") ?? ({} as KitchenState);
+//   const kitchenLink = root.querySelector("a[href='kitchen.php']");
+//   if (!kitchenLink) {
+//     console.error("failed to find kitchen link");
+//     return;
+//   }
+//   const kitchenStatus =
+//     kitchenLink.querySelector(".item-after")?.textContent || undefined;
+//   kitchen.status = kitchenStatus;
+//   kitchen.ovens = [];
+//   if (kitchenStatus) {
+//     const ovenCount = Number(kitchenStatus.split(" ")[0]);
+//     const isCooking = kitchenStatus.includes("COOKING");
+//     const isReady = kitchenStatus.includes("READY");
+//     for (let index = 0; index < ovenCount; index++) {
+//       kitchen.ovens.push({
+//         isCooking,
+//         isReady,
+//       });
+//     }
+//   }
+//   const town = state.get("town") ?? ({} as TownState);
+//   const townLink = root.querySelector("a[href='town.php']");
+//   if (!townLink) {
+//     console.error("failed to find town link");
+//     return;
+//   }
+//   const townStatus =
+//     townLink.querySelector(".item-after")?.textContent || undefined;
+//   town.status = townStatus;
+//   if (townStatus) {
+//     const isBorgenOpen = townStatus.includes("BORGEN");
+//     town.isBorgenOpen = isBorgenOpen;
+//   }
+//   let skills = state.get("skills");
+//   const skillsCard = getCardByTitle("My skills", root);
+//   if (!skillsCard) {
+//     console.error("failed to find skills card");
+//     return;
+//   }
+//   let cookingSkill = 0;
+//   let craftingSkill = 0;
+//   let exploringSkill = 0;
+//   let farmingSkill = 0;
+//   let fishingSkill = 0;
+//   let miningSkill = 0;
+//   for (const skillBlock of skillsCard.querySelectorAll(".col-33")) {
+//     let level = Number(skillBlock.textContent?.match(/Level (\d+)/)?.[1] ?? 0);
+//     if (!level) {
+//       console.error(`failed to read skill level ${skillBlock.textContent}`);
+//       return;
+//     }
+//     // add incremental level based on progress
+//     level +=
+//       Number(
+//         skillBlock.querySelector<HTMLDivElement>(".progressbar")?.dataset
+//           .progress || "0"
+//       ) / 100;
+//     if (skillBlock.textContent?.includes("Cooking")) {
+//       cookingSkill = level;
+//     } else if (skillBlock.textContent?.includes("Crafting")) {
+//       craftingSkill = level;
+//     } else if (skillBlock.textContent?.includes("Exploring")) {
+//       exploringSkill = level;
+//     } else if (skillBlock.textContent?.includes("Farming")) {
+//       farmingSkill = level;
+//     } else if (skillBlock.textContent?.includes("Fishing")) {
+//       fishingSkill = level;
+//     } else if (skillBlock.textContent?.includes("Mining")) {
+//       miningSkill = level;
+//     }
+//     skills = {
+//       cooking: cookingSkill,
+//       crafting: craftingSkill,
+//       exploring: exploringSkill,
+//       farming: farmingSkill,
+//       fishing: fishingSkill,
+//       mining: miningSkill,
+//     };
+//   }
+//   state.update({ farm, kitchen, town, skills });
+// };
+// export const scrapeToCache: Feature = {
+//   onPageLoad: (settings, page) => {
+//     if (page === Page.HOME) {
+//       recordHome();
+//     }
+//   },
+// };
+exports.usernameState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
+    var _a;
+    return Promise.resolve(((_a = document.querySelector("#logged_in_username")) === null || _a === void 0 ? void 0 : _a.textContent) || undefined);
+}, { timeout: 0 } // always check, no cost
+);
+exports.userIdState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
+    var _a;
+    const userIdRaw = (_a = document.querySelector("#logged_in_userid")) === null || _a === void 0 ? void 0 : _a.textContent;
+    return Promise.resolve(userIdRaw ? Number(userIdRaw) : undefined);
+}, { timeout: 0 } // always check, no cost
+);
+exports.betaState = new state_1.CachedState(state_1.StorageKey.IS_BETA, () => { var _a; return Promise.resolve(((_a = document.querySelector("#is_beta")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: 0, // always check, no cost
+    defaultState: false,
+});
+exports.darkModeState = new state_1.CachedState(state_1.StorageKey.IS_DARK_MODE, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: 0, // always check, no cost
+    defaultState: false,
+});
+exports.musicState = new state_1.CachedState(state_1.StorageKey.IS_MUSIC_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: 0, // always check, no cost
+    defaultState: true,
+});
+exports.chatState = new state_1.CachedState(state_1.StorageKey.IS_CHAT_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#chat")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: 0, // always check, no cost
+    defaultState: true,
+});
+
+
+/***/ }),
+
+/***/ 22:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.withdrawSilver = exports.depositSilver = exports.statsState = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+const page_1 = __webpack_require__(952);
+const api_1 = __webpack_require__(126);
+const processStats = (root) => {
+    var _a, _b, _c, _d, _e, _f;
+    const parameters = root.querySelectorAll("span");
+    const silver = Number((_b = (_a = parameters[0].textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", "")) !== null && _b !== void 0 ? _b : "0");
+    const gold = Number((_d = (_c = parameters[1].textContent) === null || _c === void 0 ? void 0 : _c.trim().replaceAll(",", "")) !== null && _d !== void 0 ? _d : "0");
+    const ancientCoins = Number((_f = (_e = parameters[2].textContent) === null || _e === void 0 ? void 0 : _e.trim().replaceAll(",", "")) !== null && _f !== void 0 ? _f : "0");
+    return { silver, gold, ancientCoins };
+};
+exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS }));
+    return processStats(response);
+}), {
+    interceptors: [
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS })],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                state.set(processStats(yield (0, utils_1.getDocument)(response)));
+            }),
+        },
+        {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER }),
+            ],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const previous = yield state.get();
+                const [_, query] = (0, state_1.parseUrl)(response.url);
+                state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver - Number(query.get("amt")) }));
+            }),
+        },
+        {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.WITHDRAW_SILVER }),
+            ],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const previous = yield state.get();
+                const [_, query] = (0, state_1.parseUrl)(response.url);
+                state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver + Number(query.get("amt")) }));
+            }),
+        },
+    ],
+});
+const depositSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield exports.statsState.get();
+    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER, amt: amount.toString() }));
+    stats.silver -= amount;
+    yield exports.statsState.set(stats);
+});
+exports.depositSilver = depositSilver;
+const withdrawSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield exports.statsState.get();
+    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({
+        go: page_1.WorkerGo.WITHDRAW_SILVER,
+        amt: amount.toString(),
+    }));
+    stats.silver += amount;
+    yield exports.statsState.set(stats);
+});
+exports.withdrawSilver = withdrawSilver;
+
+
+/***/ }),
+
+/***/ 771:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.activatePerkSet = exports.resetPerks = exports.isActivePerkSet = exports.getCurrentPerkSet = exports.getActivityPerksSet = exports.perksState = exports.PerkActivity = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+const page_1 = __webpack_require__(952);
+const api_1 = __webpack_require__(126);
+var PerkActivity;
+(function (PerkActivity) {
+    PerkActivity["DEFAULT"] = "Default";
+    PerkActivity["CRAFTING"] = "Crafting";
+    PerkActivity["FISHING"] = "Fishing";
+    PerkActivity["EXPLORING"] = "Exploring";
+    PerkActivity["SELLING"] = "Selling";
+    PerkActivity["FRIENDSHIP"] = "Friendship";
+    PerkActivity["TEMPLE"] = "Temple";
+    PerkActivity["LOCKSMITH"] = "Locksmith";
+    PerkActivity["WHEEL"] = "Wheel";
+    PerkActivity["UNKNOWN"] = "Unknown";
+})(PerkActivity || (exports.PerkActivity = PerkActivity = {}));
+const processPerks = (root) => {
+    var _a, _b;
+    const perkSets = [];
+    const setList = (0, page_1.getListByTitle)("My Perk Sets", root.body);
+    const setWrappers = (_a = setList === null || setList === void 0 ? void 0 : setList.querySelectorAll(".item-title")) !== null && _a !== void 0 ? _a : [];
+    let currentPerkSetId;
+    for (const setWrapper of setWrappers) {
+        const link = setWrapper.querySelector("a");
+        const name = (_b = link === null || link === void 0 ? void 0 : link.textContent) !== null && _b !== void 0 ? _b : "";
+        const id = Number(link === null || link === void 0 ? void 0 : link.dataset.id);
+        const isActive = setWrapper.querySelector(".fa-check");
+        if (isActive) {
+            currentPerkSetId = id;
+        }
+        perkSets.push({ name, id });
+    }
+    return { perkSets, currentPerkSetId };
+};
+exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_1.sendRequest)(page_1.Page.PERKS);
+    return processPerks(response);
+}), {
+    timeout: 60 * 60 * 24, // 1 day
+    interceptors: [
+        {
+            match: [page_1.Page.PERKS, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                state.set(processPerks(yield (0, utils_1.getDocument)(response)));
+            }),
+        },
+        {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.ACTIVATE_PERK_SET }),
+            ],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const previous = yield state.get();
+                const [_, query] = (0, state_1.parseUrl)(response.url);
+                state.set(Object.assign(Object.assign({}, previous), { currentPerkSetId: Number(query.get("id")) }));
+            }),
+        },
+    ],
+});
+const getActivityPerksSet = (activity, options) => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.perksState.get(options);
+    return state.perkSets.find(({ name }) => name === activity);
+});
+exports.getActivityPerksSet = getActivityPerksSet;
+const getCurrentPerkSet = (options) => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.perksState.get(options);
+    return state.perkSets.find(({ id }) => id === state.currentPerkSetId);
+});
+exports.getCurrentPerkSet = getCurrentPerkSet;
+const isActivePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, function* () {
+    const current = yield (0, exports.getCurrentPerkSet)(options);
+    return Boolean(current && current.id === set.id);
+});
+exports.isActivePerkSet = isActivePerkSet;
+const resetPerks = () => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.perksState.get();
+    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.RESET_PERKS }));
+    exports.perksState.set(Object.assign(Object.assign({}, state), { currentPerkSetId: undefined }));
+});
+exports.resetPerks = resetPerks;
+const activatePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, function* () {
+    if (yield (0, exports.isActivePerkSet)(set, options)) {
+        return;
+    }
+    console.debug(`Activating ${set.name} Perks`);
+    const state = yield exports.perksState.get();
+    yield (0, exports.resetPerks)();
+    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({
+        go: page_1.WorkerGo.ACTIVATE_PERK_SET,
+        id: set.id.toString(),
+    }));
+    exports.perksState.set(Object.assign(Object.assign({}, state), { currentPerkSetId: set.id }));
+});
+exports.activatePerkSet = activatePerkSet;
+
+
+/***/ }),
+
+/***/ 604:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.latestVersionState = exports.SCRIPT_URL = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+exports.SCRIPT_URL = "https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand";
+exports.latestVersionState = new state_1.CachedState(state_1.StorageKey.LATEST_VERSION, () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const response = yield (0, utils_1.corsFetch)(exports.SCRIPT_URL);
+    const htmlString = yield response.text();
+    const document = new DOMParser().parseFromString(htmlString, "text/html");
+    return (((_a = document.querySelector("dd.script-show-version")) === null || _a === void 0 ? void 0 : _a.textContent) || undefined);
+}), {
+    timeout: 60 * 60 * 24, // 1 day
+});
+
+
+/***/ }),
+
+/***/ 619:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CachedState = exports.watchQueries = exports.queryInterceptors = exports.StorageKey = exports.urlMatches = exports.parseUrl = void 0;
+const parseUrl = (url) => {
+    // https://farmrpg.com/worker.php?cachebuster=271544&go=getchat&room=giveaways
+    const truncatedUrl = url.replace("https://farmrpg.com/", "");
+    // worker.php?cachebuster=271544&go=getchat&room=giveaways
+    const [pageRaw, queryRaw] = truncatedUrl.split("?");
+    const page = pageRaw.replace(".php", "");
+    // worker
+    const query = new URLSearchParams(queryRaw);
+    // cachebuster=271544&go=getchat&room=giveaways
+    return [page, query];
+};
+exports.parseUrl = parseUrl;
+const urlMatches = (url, targetPage, targetQuery) => {
+    const [page, query] = (0, exports.parseUrl)(url);
+    if (page !== targetPage) {
+        return false;
+    }
+    for (const key of targetQuery.keys()) {
+        if (query.get(key) !== targetQuery.get(key)) {
+            return false;
+        }
+    }
+    return true;
+};
+exports.urlMatches = urlMatches;
+var StorageKey;
+(function (StorageKey) {
+    StorageKey["RECENT_UPDATE"] = "recentUpdate";
+    StorageKey["USERNAME"] = "username";
+    StorageKey["USER_ID"] = "userId";
+    StorageKey["PAGE_DATA"] = "pageData";
+    StorageKey["ITEM_DATA"] = "itemData";
+    StorageKey["LATEST_VERSION"] = "latestVersion";
+    StorageKey["CHAT_BANNERS"] = "chatBanners";
+    StorageKey["STATS"] = "stats";
+    StorageKey["MAILBOX"] = "mailbox";
+    StorageKey["PERKS_SETS"] = "perkSets";
+    StorageKey["CURRENT_PERKS_SET_ID"] = "currentPerksSetId";
+    StorageKey["IS_DARK_MODE"] = "isDarkMode";
+    StorageKey["IS_BETA"] = "isBeta";
+    StorageKey["IS_MUSIC_ENABLED"] = "isMusicEnabled";
+    StorageKey["IS_CHAT_ENABLED"] = "isChatEnabled";
+})(StorageKey || (exports.StorageKey = StorageKey = {}));
+const generateEmptyRootState = () => {
+    const rootState = {};
+    for (const [_, value] of Object.entries(StorageKey)) {
+        rootState[value] = JSON.stringify(undefined);
+    }
+    return rootState;
+};
+const rootState = generateEmptyRootState();
+exports.queryInterceptors = [];
+const watchQueries = () => {
+    (function (open) {
+        XMLHttpRequest.prototype.open = function () {
+            this.addEventListener("readystatechange", function () {
+                if (this.readyState !== 4) {
+                    return;
+                }
+                // only check farmrpg URLs
+                if (!this.responseURL.startsWith("https://farmrpg.com")) {
+                    return;
+                }
+                for (const [state, interceptor] of exports.queryInterceptors) {
+                    if ((0, exports.urlMatches)(this.responseURL, ...interceptor.match)) {
+                        interceptor.callback(state, {
+                            headers: new Headers(),
+                            ok: this.status >= 200 && this.status < 300,
+                            redirected: false,
+                            status: this.status,
+                            statusText: this.statusText,
+                            type: "default",
+                            url: this.responseURL,
+                            text: () => Promise.resolve(this.responseText),
+                            json: () => Promise.resolve(JSON.parse(this.responseText)),
+                            formData: () => Promise.resolve(new FormData()),
+                            arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+                            blob: () => Promise.resolve(new Blob([this.responseText])),
+                        });
+                    }
+                }
+            }, false);
+            // eslint-disable-next-line prefer-rest-params
+            Reflect.apply(open, this, arguments);
+        };
+    })(XMLHttpRequest.prototype.open);
+};
+exports.watchQueries = watchQueries;
+class CachedState {
+    constructor(key, fetch, { defaultState, timeout, updatedAt, interceptors = [], } = {}) {
+        this.key = key;
+        this.defaultState = defaultState;
+        this.updatedAt = updatedAt !== null && updatedAt !== void 0 ? updatedAt : new Date(0);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 60;
+        this.fetch = fetch;
+        for (const interceptor of interceptors) {
+            exports.queryInterceptors.push([this, interceptor]);
+        }
+        rootState[this.key] = JSON.stringify(defaultState || undefined);
+    }
+    get() {
+        return __awaiter(this, arguments, void 0, function* ({ ignoreCache } = {}) {
+            if (ignoreCache ||
+                this.updatedAt.getTime() + this.timeout * 1000 < Date.now()) {
+                yield this.set(yield this.fetch());
+            }
+            return JSON.parse(rootState[this.key]);
+        });
+    }
+    set(value) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const encoded = JSON.stringify(value);
+            yield GM.setValue(this.key, encoded);
+            this.updatedAt = new Date();
+            rootState[this.key] = encoded;
+        });
+    }
+    load() {
+        return __awaiter(this, void 0, void 0, function* () {
+            rootState[this.key] = yield GM.getValue(this.key, "undefined");
+        });
+    }
+    reset() {
+        return this.set(this.defaultState);
+    }
+}
+exports.CachedState = CachedState;
+
+
+/***/ }),
+
+/***/ 683:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getDocument = exports.corsFetch = void 0;
+const corsFetch = (url, options) => new Promise((resolve, reject) => {
+    var _a;
+    GM.xmlHttpRequest(Object.assign(Object.assign({}, options), { method: (_a = options === null || options === void 0 ? void 0 : options.method) !== null && _a !== void 0 ? _a : "GET", url, onload: (response) => {
+            resolve({
+                headers: new Headers(),
+                ok: response.status >= 200 && response.status < 300,
+                redirected: url !== response.finalUrl,
+                status: response.status,
+                statusText: response.statusText,
+                type: "default",
+                url: response.finalUrl,
+                text: () => Promise.resolve(response.responseText),
+                json: () => Promise.resolve(JSON.parse(response.responseText)),
+                formData: () => Promise.resolve(new FormData()),
+                arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+                blob: () => Promise.resolve(new Blob([response.responseText])),
+            });
+        }, onerror: reject, onabort: reject, ontimeout: reject }));
+});
+exports.corsFetch = corsFetch;
+const getDocument = (response) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    }
+    const htmlString = yield response.text();
+    return new DOMParser().parseFromString(htmlString, "text/html");
+});
+exports.getDocument = getDocument;
+
+
+/***/ }),
+
+/***/ 477:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.autocompleteItems = exports.SETTING_AUTOCOMPLETE_ITEMS = void 0;
-const buddyfarmApi_1 = __webpack_require__(651);
+const api_1 = __webpack_require__(413);
 const autocomplete_1 = __webpack_require__(67);
 exports.SETTING_AUTOCOMPLETE_ITEMS = {
     id: "autocompleteItems",
@@ -42,20 +727,19 @@ exports.SETTING_AUTOCOMPLETE_ITEMS = {
 };
 exports.autocompleteItems = {
     settings: [exports.SETTING_AUTOCOMPLETE_ITEMS],
-    onInitialize: (settings) => __awaiter(void 0, void 0, void 0, function* () {
+    onInitialize: (settings) => {
         // make sure setting is enabled
         if (!settings[exports.SETTING_AUTOCOMPLETE_ITEMS.id].value) {
             return;
         }
-        const items = yield (0, buddyfarmApi_1.getBasicItems)();
         (0, autocomplete_1.registerAutocomplete)({
             trigger: /\(\(([^]+)/,
-            getItems: () => __awaiter(void 0, void 0, void 0, function* () { return yield items; }),
+            getItems: api_1.getBasicItems,
             prefix: "((",
             suffix: "))",
             bail: (text) => { var _a, _b; return ((_b = (_a = text.match(/(\(\(|\)\))/g)) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) % 2 === 0; },
         });
-    }),
+    },
 };
 
 
@@ -132,7 +816,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.banker = exports.SETTING_BANKER = void 0;
-const farmrpgApi_1 = __webpack_require__(626);
+const bank_1 = __webpack_require__(22);
 const page_1 = __webpack_require__(952);
 const confirmation_1 = __webpack_require__(906);
 const popup_1 = __webpack_require__(469);
@@ -229,8 +913,11 @@ exports.banker = {
                     return;
                 }
                 (0, confirmation_1.showConfirmation)(`Deposit ${formatter.format(missingFromTarget)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
-                    yield (0, farmrpgApi_1.depositSilver)(missingFromTarget);
-                    yield (0, popup_1.showPopup)("Success!", "You deposited Silver!");
+                    yield (0, bank_1.depositSilver)(missingFromTarget);
+                    yield (0, popup_1.showPopup)({
+                        title: "Success!",
+                        contentHTML: "You deposited Silver!",
+                    });
                     window.location.reload();
                 }));
             });
@@ -265,8 +952,11 @@ exports.banker = {
                     return;
                 }
                 (0, confirmation_1.showConfirmation)(`Withdraw ${formatter.format(availableInterest)} Silver?`, () => __awaiter(void 0, void 0, void 0, function* () {
-                    yield (0, farmrpgApi_1.withdrawSilver)(availableInterest);
-                    yield (0, popup_1.showPopup)("Success!", "You withdrew Silver!");
+                    yield (0, bank_1.withdrawSilver)(availableInterest);
+                    yield (0, popup_1.showPopup)({
+                        title: "Success!",
+                        contentHTML: "You withdrew Silver!",
+                    });
                     window.location.reload();
                 }));
             });
@@ -287,7 +977,7 @@ exports.banker = {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.buddyFarm = exports.SETTING_BUDDY_FARM = void 0;
 const page_1 = __webpack_require__(952);
-const buddyfarmApi_1 = __webpack_require__(651);
+const state_1 = __webpack_require__(456);
 exports.SETTING_BUDDY_FARM = {
     id: "buddyFarm",
     title: "Item: Buddy's Almanac",
@@ -320,7 +1010,7 @@ exports.buddyFarm = {
         }
         // get name and link for item
         const itemName = (_a = itemHeader.textContent) !== null && _a !== void 0 ? _a : "";
-        const itemLink = `https://buddy.farm/i/${(0, buddyfarmApi_1.nameToSlug)(itemName)}`;
+        const itemLink = `https://buddy.farm/i/${(0, state_1.nameToSlug)(itemName)}`;
         // use title to find item details section
         const titles = currentPage.querySelectorAll(".content-block-title");
         const itemDetailsTitle = [...titles].find((title) => title.textContent === "Item Details");
@@ -525,35 +1215,35 @@ exports.cleanupHome = {
     onInitialize: (settings) => {
         if (settings[exports.SETTING_HIDE_PLAYERS.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
-      <style>
-        /* Hide players card */
-        .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
-        .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
-          display: none !important;
-        }
-      <style>
-    `);
+          <style>
+            /* Hide players card */
+            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
+            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
+              display: none !important;
+            }
+          <style>
+        `);
         }
         if (settings[exports.SETTING_HIDE_THEME.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
-      <style>
-        /* Hide theme switcher */
-        [data-page="index-1"] .page-content > p:nth-of-type(1),
-        [data-page="index-1"] .page-content > p:nth-of-type(2) {
-          display: none !important;
-        }
-      <style>
-    `);
+          <style>
+            /* Hide theme switcher */
+            [data-page="index-1"] .page-content > p:nth-of-type(1),
+            [data-page="index-1"] .page-content > p:nth-of-type(2) {
+              display: none !important;
+            }
+          <style>
+        `);
         }
         if (settings[exports.SETTING_HIDE_FOOTER.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
-      <style>
-        [data-page="index-1"] .page-content > p:last-of-type,
-        [data-page="index-1"] .page-content > div:last-of-type {
-          display: none !important;
-        }
-      <style>
-    `);
+          <style>
+            [data-page="index-1"] .page-content > p:last-of-type,
+            [data-page="index-1"] .page-content > div:last-of-type {
+              display: none !important;
+            }
+          <style>
+        `);
         }
     },
     onPageLoad: (settings, page) => {
@@ -626,18 +1316,18 @@ exports.collapseItemImage = {
     onInitialize: (settings) => {
         if (settings[exports.SETTING_COLLAPSE_ITEM.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
-        <style>
-          /* Hide item image and description */
-          [data-page="item"] #img {
-            display: none !important;
-          }
-          
-          /* Hide first section title */
-          [data-page="item"] #img + .content-block-title {
-            display: none !important;
-          }
-        </style>
-      `);
+          <style>
+            /* Hide item image and description */
+            [data-page="item"] #img {
+              display: none !important;
+            }
+            
+            /* Hide first section title */
+            [data-page="item"] #img + .content-block-title {
+              display: none !important;
+            }
+          </style>
+        `);
         }
     },
     onPageLoad: (settings, page) => {
@@ -690,48 +1380,48 @@ exports.compressChat = {
     onInitialize: (settings) => {
         // move spacing from panel margin to message padding regardless of setting
         document.head.insertAdjacentHTML("beforeend", `
-      <style>
-        .page-content {
-          padding-right: 0 !important; 
-          margin-right: -2px !important;
-        }
-        #desktopchatpanel {
-          border-color: ${theme_1.BORDER_GRAY};
-          border-top: 0 !important;
-        }
-        #mobilechatpanel .content-block,
-        #desktopchatpanel .content-block {
-          padding: 0 !important;
-        }
-        #mobilechatpanel .card,
-        #desktopchatpanel .card {
-          margin: 0 !important;
-        }
-        .chat-txt {
-          margin: 0 !important;
-          padding: 8px !important
-        }
-      <style>
-    `);
+        <style>
+          .page-content {
+            padding-right: 0 !important; 
+            margin-right: -2px !important;
+          }
+          #desktopchatpanel {
+            border-color: ${theme_1.BORDER_GRAY};
+            border-top: 0 !important;
+          }
+          #mobilechatpanel .content-block,
+          #desktopchatpanel .content-block {
+            padding: 0 !important;
+          }
+          #mobilechatpanel .card,
+          #desktopchatpanel .card {
+            margin: 0 !important;
+          }
+          .chat-txt {
+            margin: 0 !important;
+            padding: 8px !important
+          }
+        <style>
+      `);
         // make sure setting is enabled
         if (!settings[exports.SETTING_CHAT_COMPRESS.id].value) {
             return;
         }
         document.head.insertAdjacentHTML("beforeend", `
-      <style>
-        /* Reduce chat spacing */
-        .chat-txt {
-          margin: 0 !important;
-          padding: 4px !important
-        }
+        <style>
+          /* Reduce chat spacing */
+          .chat-txt {
+            margin: 0 !important;
+            padding: 4px !important
+          }
 
-        /* Hide timestamp */
-        .chat-txt span:first-of-type,
-        .chat-txt br:first-of-type {
-          display: none !important;
-        }
-      <style>
-    `);
+          /* Hide timestamp */
+          .chat-txt span:first-of-type,
+          .chat-txt br:first-of-type {
+            display: none !important;
+          }
+        <style>
+      `);
     },
 };
 
@@ -792,35 +1482,35 @@ exports.navigationStyle = {
       `);
         // align toolbar more consistently
         document.head.insertAdjacentHTML("beforeend", `
-          <style>
-            .toolbar-inner {
-              display: flex !important;
-              justify-content: end !important;
-              padding: 0 !important;
-            }
+        <style>
+          .toolbar-inner {
+            display: flex !important;
+            justify-content: end !important;
+            padding: 0 !important;
+          }
 
-            .toolbar-inner .link {
+          .toolbar-inner .link {
+            display: none !important;
+          }
+
+          @media (min-width: 768px) {
+            .fh-menu {
               display: none !important;
             }
+          }
 
-            @media (min-width: 768px) {
-              .fh-menu {
-                display: none !important;
-              }
-            }
-
-            .toolbar-inner a {
-              height: 100%;
-              border: 0;
-              background: transparent;
-              display: flex;
-              align-items: center;
-              gap: 5px;
-              padding: 15px !important;
-              border-radius: 0 !important;
-            }
-          <style>
-        `);
+          .toolbar-inner a {
+            height: 100%;
+            border: 0;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 15px !important;
+            border-radius: 0 !important;
+          }
+        <style>
+      `);
         if (settings[exports.SETTING_NAVIGATION_COMPRESS.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
@@ -997,7 +1687,7 @@ const icons = (() => {
     }
     return icons.sort();
 })();
-const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
+const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (force = false) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     const navigationData = yield (0, farmhandSettings_1.getData)(exports.SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
     const navigationList = document.querySelector(".panel-left ul");
@@ -1005,7 +1695,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
         console.error("Could not find navigation list");
         return;
     }
-    if (navigationList.dataset.isCustomized) {
+    if (!force && navigationList.dataset.isCustomized) {
         // already rendered
         return;
     }
@@ -1025,13 +1715,14 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             (0, confirmation_1.showConfirmation)("Reset Navigation?", () => __awaiter(void 0, void 0, void 0, function* () {
                 yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
                 state.isEditing = false;
-                renderNavigation();
+                renderNavigation(true);
             }));
         });
         navigationTitleLeft.append(resetButton);
     }
     navigationList.innerHTML = "";
     navigationList.dataset.isCustomized = "true";
+    navigationList.dataset.isEditing = String(state.isEditing);
     for (const item of navigationData) {
         const currentIndex = navigationData.indexOf(item);
         const navigationItem = document.createElement("li");
@@ -1158,7 +1849,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             }
             item.icon = (_l = event.target.dataset.icon) !== null && _l !== void 0 ? _l : "";
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            renderNavigation();
+            renderNavigation(true);
         }));
         (_b = navigationItem
             .querySelector(".fh-text")) === null || _b === void 0 ? void 0 : _b.addEventListener("click", (event) => {
@@ -1171,7 +1862,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             event.stopPropagation();
             item.text = event.target.value;
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            renderNavigation();
+            renderNavigation(true);
         }));
         (_d = navigationItem
             .querySelector(".fh-text")) === null || _d === void 0 ? void 0 : _d.addEventListener("keyup", (event) => {
@@ -1194,7 +1885,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             event.stopPropagation();
             item.path = event.target.value;
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            renderNavigation();
+            renderNavigation(true);
         }));
         (_g = navigationItem
             .querySelector(".fh-up")) === null || _g === void 0 ? void 0 : _g.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1207,7 +1898,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             navigationData.splice(currentIndex - 1, 0, item);
             state.editingIndex = currentIndex - 1;
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            renderNavigation();
+            renderNavigation(true);
         }));
         (_h = navigationItem
             .querySelector(".fh-down")) === null || _h === void 0 ? void 0 : _h.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1220,7 +1911,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             navigationData.splice(currentIndex + 1, 0, item);
             state.editingIndex = currentIndex + 1;
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            renderNavigation();
+            renderNavigation(true);
         }));
         (_j = navigationItem
             .querySelector(".fh-edit")) === null || _j === void 0 ? void 0 : _j.addEventListener("click", (event) => {
@@ -1232,7 +1923,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             else {
                 state.editingIndex = currentIndex;
             }
-            renderNavigation();
+            renderNavigation(true);
         });
         (_k = navigationItem
             .querySelector(".fh-delete")) === null || _k === void 0 ? void 0 : _k.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1240,7 +1931,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             event.stopPropagation();
             navigationData.splice(currentIndex, 1);
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            renderNavigation();
+            renderNavigation(true);
         }));
         navigationList.append(navigationItem);
     }
@@ -1287,7 +1978,7 @@ const renderNavigation = () => __awaiter(void 0, void 0, void 0, function* () {
             });
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
             state.editingIndex = navigationData.length - 1;
-            renderNavigation();
+            renderNavigation(true);
         }));
         navigationList.append(addNavigationItem);
     }
@@ -1321,7 +2012,7 @@ exports.customNavigation = {
                     configurationButton.classList.remove("fa-check");
                     configurationButton.classList.add("fa-cog");
                 }
-                renderNavigation();
+                renderNavigation(true);
             });
             navigationTitleRight.append(configurationButton);
         }
@@ -1348,6 +2039,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.dismissableChatBanners = exports.SETTING_CHAT_DISMISSABLE_BANNERS = void 0;
 const popup_1 = __webpack_require__(469);
+const state_1 = __webpack_require__(619);
 exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     id: "dismissableChatBanners",
     title: "Chat: Dismissable Banners",
@@ -1359,11 +2051,14 @@ exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     buttonAction: () => __awaiter(void 0, void 0, void 0, function* () {
         const keys = yield GM.listValues();
         for (const key of keys) {
-            if (key.startsWith(exports.SETTING_CHAT_DISMISSABLE_BANNERS.id)) {
+            if (key.startsWith(state_1.StorageKey.CHAT_BANNERS)) {
                 yield GM.deleteValue(key);
             }
         }
-        yield (0, popup_1.showPopup)("Chat banners reset", "Previously dismissed chat banners will be shown again");
+        yield (0, popup_1.showPopup)({
+            title: "Chat banners reset",
+            contentHTML: "Previously dismissed chat banners will be shown again",
+        });
     }),
     type: "boolean",
     defaultValue: true,
@@ -1385,53 +2080,39 @@ const hashBanner = (banner) => {
 };
 exports.dismissableChatBanners = {
     settings: [exports.SETTING_CHAT_DISMISSABLE_BANNERS],
-    onInitialize: (settings) => {
+    onChatLoad: (settings) => __awaiter(void 0, void 0, void 0, function* () {
         // make sure setting is enabled
         if (!settings[exports.SETTING_CHAT_DISMISSABLE_BANNERS.id].value) {
             return;
         }
-        const chatWatcher = new MutationObserver(() => __awaiter(void 0, void 0, void 0, function* () {
-            const banners = document.querySelectorAll("#desktopchatpanel .card, #mobilechatpanel .card");
-            for (const banner of banners) {
-                const bannerKey = `${exports.SETTING_CHAT_DISMISSABLE_BANNERS.id}_${hashBanner(banner)}`;
-                // hide banner if dismissed
-                const isDismissed = yield GM.getValue(bannerKey, false);
-                if (isDismissed) {
-                    banner.remove();
-                    continue;
-                }
-                // skip adding close button if it already exists
-                if (banner.querySelector(".fh-close")) {
-                    continue;
-                }
-                // add close button
-                const closeButton = document.createElement("div");
-                closeButton.classList.add("fh-close");
-                closeButton.textContent = "×";
-                closeButton.style.position = "absolute";
-                closeButton.style.top = "2px";
-                closeButton.style.right = "2px";
-                closeButton.style.cursor = "pointer";
-                closeButton.addEventListener("click", () => {
-                    banner.remove();
-                    GM.setValue(bannerKey, true);
-                });
-                banner.append(closeButton);
+        const banners = document.querySelectorAll("#desktopchatpanel .card, #mobilechatpanel .card");
+        for (const banner of banners) {
+            const bannerKey = `${state_1.StorageKey.CHAT_BANNERS}_${hashBanner(banner)}`;
+            // hide banner if dismissed
+            const isDismissed = yield GM.getValue(bannerKey, false);
+            if (isDismissed) {
+                banner.remove();
+                continue;
             }
-        }));
-        const mobileChat = document.querySelector("#mobilechatpanel");
-        if (!mobileChat) {
-            console.error("Could not find mobile panel");
-            return;
+            // skip adding close button if it already exists
+            if (banner.querySelector(".fh-close")) {
+                continue;
+            }
+            // add close button
+            const closeButton = document.createElement("div");
+            closeButton.classList.add("fh-close");
+            closeButton.textContent = "×";
+            closeButton.style.position = "absolute";
+            closeButton.style.top = "2px";
+            closeButton.style.right = "2px";
+            closeButton.style.cursor = "pointer";
+            closeButton.addEventListener("click", () => {
+                banner.remove();
+                GM.setValue(bannerKey, true);
+            });
+            banner.append(closeButton);
         }
-        const desktopChat = document.querySelector("#desktopchatpanel");
-        if (!desktopChat) {
-            console.error("Could not find desktop panel");
-            return;
-        }
-        chatWatcher.observe(mobileChat, { childList: true, subtree: true });
-        chatWatcher.observe(desktopChat, { childList: true, subtree: true });
-    },
+    }),
 };
 
 
@@ -1619,7 +2300,10 @@ exports.SETTING_EXPORT = {
         }
         const exportString = JSON.stringify(exportedSettings);
         GM.setClipboard(exportString);
-        (0, popup_1.showPopup)("Settings Exported to clipboard", "Open Farm RPG on another device with Farmhand installed to import");
+        (0, popup_1.showPopup)({
+            title: "Settings Exported to clipboard",
+            contentHTML: "Open Farm RPG on another device with Farmhand installed to import",
+        });
         const input = settingWrapper.querySelector(".fh-input");
         if (input) {
             input.value = exportString;
@@ -1644,7 +2328,10 @@ exports.SETTING_IMPORT = {
                 yield (0, exports.setData)(setting, setting.data);
             }
         }
-        yield (0, popup_1.showPopup)("Farmhand Settings Imported!", "Page will reload to apply");
+        yield (0, popup_1.showPopup)({
+            title: "Farmhand Settings Imported!",
+            contentHTML: "Page will reload to apply",
+        });
         window.location.reload();
     }),
 };
@@ -1781,15 +2468,15 @@ exports.fishinInBarrel = {
             return;
         }
         document.head.insertAdjacentHTML("beforeend", `
-      <style>
-        /* Move fish to middle */
-        .fish {
-          position: absolute;
-          top: calc(50% - 30px);
-          left: calc(50% - 30px);
-        }
-      <style>
-    `);
+        <style>
+          /* Move fish to middle */
+          .fish {
+            position: absolute;
+            top: calc(50% - 30px);
+            left: calc(50% - 30px);
+          }
+        <style>
+      `);
     },
 };
 
@@ -1797,12 +2484,22 @@ exports.fishinInBarrel = {
 /***/ }),
 
 /***/ 454:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.highlightSelfInChat = exports.SETTING_CHAT_HIGHLIGHT_SELF = void 0;
 const theme_1 = __webpack_require__(178);
+const api_1 = __webpack_require__(126);
 exports.SETTING_CHAT_HIGHLIGHT_SELF = {
     id: "highlightSelfInChat",
     title: "Chat: Highlight self",
@@ -1812,13 +2509,13 @@ exports.SETTING_CHAT_HIGHLIGHT_SELF = {
 };
 exports.highlightSelfInChat = {
     settings: [exports.SETTING_CHAT_HIGHLIGHT_SELF],
-    onChatLoad: (settings) => {
-        var _a, _b;
+    onChatLoad: (settings) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         // make sure setting is enabled
         if (!settings[exports.SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
             return;
         }
-        const username = (_a = document.querySelector("#logged_in_username")) === null || _a === void 0 ? void 0 : _a.textContent;
+        const username = yield api_1.usernameState.get();
         if (!username) {
             console.error("Could not find username");
             return;
@@ -1826,7 +2523,7 @@ exports.highlightSelfInChat = {
         const tags = document.querySelectorAll(`span a[href='profile.php?user_name=${username}']`);
         for (const tag of tags) {
             tag.style.color = theme_1.TEXT_WARNING;
-            const message = (_b = tag.parentElement) === null || _b === void 0 ? void 0 : _b.parentElement;
+            const message = (_a = tag.parentElement) === null || _a === void 0 ? void 0 : _a.parentElement;
             if (!message) {
                 console.error("Could not find message");
                 continue;
@@ -1834,7 +2531,7 @@ exports.highlightSelfInChat = {
             message.style.backgroundColor = theme_1.ALERT_YELLOW_BACKGROUND;
             message.style.border = `1px solid ${theme_1.ALERT_YELLOW_BORDER}`;
         }
-    },
+    }),
 };
 
 
@@ -1856,7 +2553,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.linkifyQuickCraft = void 0;
 const page_1 = __webpack_require__(952);
-const buddyfarmApi_1 = __webpack_require__(651);
+const api_1 = __webpack_require__(413);
 exports.linkifyQuickCraft = {
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         // make sure we're on the item page
@@ -1873,7 +2570,7 @@ exports.linkifyQuickCraft = {
             if (!ingredientName) {
                 continue;
             }
-            const data = yield (0, buddyfarmApi_1.getItemData)(ingredientName);
+            const data = yield (0, api_1.getItemByName)(ingredientName);
             if (!data) {
                 console.error(`No data for ${ingredientName}`);
                 continue;
@@ -1907,7 +2604,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.moveUpdateToTop = void 0;
 const page_1 = __webpack_require__(952);
-const KEY_RECENT = "recentUpdate";
+const state_1 = __webpack_require__(619);
 exports.moveUpdateToTop = {
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
@@ -1927,7 +2624,7 @@ exports.moveUpdateToTop = {
             return;
         }
         // check if it's newer
-        const latestRead = yield GM.getValue(KEY_RECENT, "");
+        const latestRead = yield GM.getValue(state_1.StorageKey.RECENT_UPDATE, "");
         if (latestUpdate === latestRead) {
             return;
         }
@@ -1952,7 +2649,7 @@ exports.moveUpdateToTop = {
             hideButton.textContent = "Hide";
             hideButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
                 // mark current as read
-                yield GM.setValue(KEY_RECENT, latestUpdate);
+                yield GM.setValue(state_1.StorageKey.RECENT_UPDATE, latestUpdate);
                 window.location.reload();
             }));
             recentUpdatesTitle.append(hideButton);
@@ -1978,7 +2675,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.perkManagment = exports.SETTING_PERK_MANAGER = void 0;
-const farmrpgApi_1 = __webpack_require__(626);
+const perks_1 = __webpack_require__(771);
 const page_1 = __webpack_require__(952);
 const notifications_1 = __webpack_require__(783);
 const quickSellSafely_1 = __webpack_require__(760);
@@ -1993,38 +2690,30 @@ exports.SETTING_PERK_MANAGER = {
     type: "boolean",
     defaultValue: true,
 };
-const state = {
-    perkSets: [],
-};
+const KEY_NOTIFICATIONS = "activeperks";
 const getNotification = (activity) => ({
     class: "btnorange",
-    id: `activeperks`,
+    id: KEY_NOTIFICATIONS,
     text: `${activity} perks activated`,
 });
 exports.perkManagment = {
     settings: [exports.SETTING_PERK_MANAGER],
-    onInitialize: (settings) => __awaiter(void 0, void 0, void 0, function* () {
-        if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
-            return;
-        }
-        state.perkSets = yield (0, farmrpgApi_1.getPerkSets)();
-    }),
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b, _c, _d;
         // make sure the setting is enabled
         if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
             return;
         }
-        const defaultPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.DEFAULT);
+        const defaultPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.DEFAULT);
         // make sure we have a default perk set
         if (!defaultPerks) {
             console.warn("Default perk set not found");
             return;
         }
-        const craftingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.CRAFTING);
+        const craftingPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.CRAFTING);
         if (craftingPerks && page === page_1.Page.WORKSHOP) {
-            yield (0, farmrpgApi_1.activatePerkSet)(craftingPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.CRAFTING));
+            yield (0, perks_1.activatePerkSet)(craftingPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.CRAFTING));
             return;
         }
         if (craftingPerks) {
@@ -2037,49 +2726,49 @@ exports.perkManagment = {
                 proxyButton.style.height = "28px;";
                 proxyButton.textContent = "CRAFT";
                 proxyButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
-                    yield (0, farmrpgApi_1.activatePerkSet)(craftingPerks);
-                    (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.CRAFTING));
+                    yield (0, perks_1.activatePerkSet)(craftingPerks);
+                    (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.CRAFTING));
                     quickcraftButton.click();
-                    yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
-                    (0, notifications_1.removeNotification)(getNotification());
+                    yield (0, perks_1.activatePerkSet)(defaultPerks);
+                    (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
                 }));
                 (_b = quickcraftButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quickcraftButton);
             }
         }
-        const fishingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.FISHING);
+        const fishingPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.FISHING);
         if (fishingPerks && page === page_1.Page.FISHING) {
-            yield (0, farmrpgApi_1.activatePerkSet)(fishingPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FISHING));
+            yield (0, perks_1.activatePerkSet)(fishingPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.FISHING));
             return;
         }
-        const exploringPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.EXPLORING);
+        const exploringPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.EXPLORING);
         if (exploringPerks && page === page_1.Page.AREA) {
-            yield (0, farmrpgApi_1.activatePerkSet)(exploringPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.EXPLORING));
+            yield (0, perks_1.activatePerkSet)(exploringPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.EXPLORING));
             return;
         }
-        const sellingPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.SELLING);
+        const sellingPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.SELLING);
         if (sellingPerks && page === page_1.Page.FARMERS_MARKET) {
-            yield (0, farmrpgApi_1.activatePerkSet)(sellingPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.SELLING));
+            yield (0, perks_1.activatePerkSet)(sellingPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.SELLING));
             return;
         }
         if (sellingPerks) {
             (0, quickSellSafely_1.onQuicksellClick)(() => __awaiter(void 0, void 0, void 0, function* () {
-                yield (0, farmrpgApi_1.activatePerkSet)(sellingPerks);
-                (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.SELLING));
+                yield (0, perks_1.activatePerkSet)(sellingPerks);
+                (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.SELLING));
                 setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
-                    yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
-                    (0, notifications_1.removeNotification)(getNotification());
+                    yield (0, perks_1.activatePerkSet)(defaultPerks);
+                    (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
                 }), 1000);
                 return true;
             }));
         }
-        const friendshipPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.FRIENDSHIP);
+        const friendshipPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.FRIENDSHIP);
         if (friendshipPerks &&
             (page === page_1.Page.FRIENDSHIP || page === page_1.Page.MAILBOX)) {
-            yield (0, farmrpgApi_1.activatePerkSet)(friendshipPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FRIENDSHIP));
+            yield (0, perks_1.activatePerkSet)(friendshipPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.FRIENDSHIP));
             return;
         }
         if (friendshipPerks) {
@@ -2092,35 +2781,35 @@ exports.perkManagment = {
                 proxyButton.style.height = "28px;";
                 proxyButton.textContent = "GIVE";
                 proxyButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
-                    yield (0, farmrpgApi_1.activatePerkSet)(friendshipPerks);
-                    (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.FRIENDSHIP));
+                    yield (0, perks_1.activatePerkSet)(friendshipPerks);
+                    (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.FRIENDSHIP));
                     quickgiveButton.click();
-                    yield (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
-                    (0, notifications_1.removeNotification)(getNotification());
+                    yield (0, perks_1.activatePerkSet)(defaultPerks);
+                    (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
                 }));
                 (_d = quickgiveButton.parentElement) === null || _d === void 0 ? void 0 : _d.insertBefore(proxyButton, quickgiveButton);
             }
         }
-        const templePerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.TEMPLE);
+        const templePerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.TEMPLE);
         if (templePerks && page === page_1.Page.TEMPLE) {
-            yield (0, farmrpgApi_1.activatePerkSet)(templePerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.TEMPLE));
+            yield (0, perks_1.activatePerkSet)(templePerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.TEMPLE));
             return;
         }
-        const locksmithPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.LOCKSMITH);
+        const locksmithPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.LOCKSMITH);
         if (locksmithPerks && page === page_1.Page.LOCKSMITH) {
-            yield (0, farmrpgApi_1.activatePerkSet)(locksmithPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.LOCKSMITH));
+            yield (0, perks_1.activatePerkSet)(locksmithPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.LOCKSMITH));
             return;
         }
-        const wheelPerks = yield (0, farmrpgApi_1.getActivityPerksSet)(farmrpgApi_1.PerkActivity.WHEEL);
+        const wheelPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.WHEEL);
         if (wheelPerks && page === page_1.Page.WHEEL) {
-            yield (0, farmrpgApi_1.activatePerkSet)(wheelPerks);
-            (0, notifications_1.sendNotification)(getNotification(farmrpgApi_1.PerkActivity.WHEEL));
+            yield (0, perks_1.activatePerkSet)(wheelPerks);
+            (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.WHEEL));
             return;
         }
-        (0, farmrpgApi_1.activatePerkSet)(defaultPerks);
-        (0, notifications_1.removeNotification)(getNotification());
+        (0, perks_1.activatePerkSet)(defaultPerks);
+        (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
     }),
 };
 
@@ -2146,6 +2835,43 @@ exports.quests = {
         }
       <style>
     `);
+    },
+    onQuestLoad: () => {
+        var _a;
+        const popup = document.querySelector(".aqp");
+        if (!popup) {
+            console.error("quest popup not found");
+            return;
+        }
+        popup.dataset.isMinimized = (_a = popup.dataset.isMinimized) !== null && _a !== void 0 ? _a : "false";
+        // skip adding close button if it already exists
+        if (popup.querySelector(".fh-minimize")) {
+            return;
+        }
+        const minimizeButton = document.createElement("i");
+        minimizeButton.classList.add("fh-minimize");
+        minimizeButton.classList.add("fa");
+        minimizeButton.classList.add("fw");
+        minimizeButton.classList.add("fa-chevron-down");
+        minimizeButton.style.position = "absolute";
+        minimizeButton.style.top = "10px";
+        minimizeButton.style.right = "10px";
+        minimizeButton.style.cursor = "pointer";
+        minimizeButton.addEventListener("click", () => {
+            if (popup.dataset.isMinimized === "true") {
+                minimizeButton.classList.remove("fa-chevron-up");
+                minimizeButton.classList.add("fa-chevron-down");
+                popup.style.top = "auto";
+                popup.dataset.isMinimized = "false";
+            }
+            else {
+                minimizeButton.classList.remove("fa-chevron-down");
+                minimizeButton.classList.add("fa-chevron-up");
+                popup.style.top = "70px";
+                popup.dataset.isMinimized = "true";
+            }
+        });
+        popup.append(minimizeButton);
     },
 };
 
@@ -2231,6 +2957,97 @@ exports.quicksellSafely = {
 
 /***/ }),
 
+/***/ 70:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.versionManager = void 0;
+const utils_1 = __webpack_require__(683);
+const api_1 = __webpack_require__(604);
+const notifications_1 = __webpack_require__(783);
+const popup_1 = __webpack_require__(469);
+const isVersion = (version) => version.split(".").length === 3;
+const normalizeVersion = (version) => version.split("-")[0];
+const isVersionHigher = (test, current) => {
+    const testParts = test.split(".");
+    const currentParts = current.split(".");
+    for (const [index, testPart] of testParts.entries()) {
+        if (Number.parseInt(currentParts[index]) < Number.parseInt(testPart)) {
+            return true;
+        }
+    }
+    return false;
+};
+const currentVersion = normalizeVersion( true && "1.0.9" !== void 0 ? "1.0.9" : "1.0.0");
+const KEY_UPDATE_NOTIFICATION = "newversion";
+const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
+const HANDLER_CHANGES = "updateView";
+(0, notifications_1.registerNotificationHandler)(HANDLER_CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const response = yield (0, utils_1.corsFetch)(README_URL);
+    const htmlString = yield response.text();
+    const document = new DOMParser().parseFromString(htmlString, "text/html");
+    const body = document.querySelector(".markdown-body");
+    if (!body) {
+        console.error("Failed to get README body");
+        return;
+    }
+    let contentHTML = "";
+    for (const child of body.children) {
+        if (child.classList.contains("markdown-heading")) {
+            const version = normalizeVersion((_a = child.textContent) !== null && _a !== void 0 ? _a : "1.0.0");
+            if (isVersion(version) && isVersionHigher(version, currentVersion)) {
+                contentHTML += `
+          <h2>${version}</h2>
+          <ul>${(_b = child.nextElementSibling) === null || _b === void 0 ? void 0 : _b.innerHTML}</ul>
+        `;
+            }
+        }
+    }
+    (0, popup_1.showPopup)({ title: "Farmhand Changelog", contentHTML, align: "left" });
+}));
+const HANDLER_UPDATE = "updateFarmhand";
+(0, notifications_1.registerNotificationHandler)(HANDLER_UPDATE, () => window.open(api_1.SCRIPT_URL));
+exports.versionManager = {
+    onInitialize: () => __awaiter(void 0, void 0, void 0, function* () {
+        var _c;
+        const latestVersion = normalizeVersion((_c = (yield api_1.latestVersionState.get())) !== null && _c !== void 0 ? _c : "1.0.0");
+        if (isVersionHigher(latestVersion, currentVersion)) {
+            (0, notifications_1.sendNotification)({
+                class: "btnblue",
+                id: KEY_UPDATE_NOTIFICATION,
+                text: `Farmhand update available: ${currentVersion} → ${latestVersion}`,
+                actions: [
+                    {
+                        text: "View Changes",
+                        handlerName: HANDLER_CHANGES,
+                    },
+                    {
+                        text: "Update",
+                        handlerName: HANDLER_UPDATE,
+                    },
+                ],
+            });
+        }
+        else {
+            (0, notifications_1.removeNotification)(KEY_UPDATE_NOTIFICATION);
+        }
+    }),
+};
+
+
+/***/ }),
+
 /***/ 217:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -2267,10 +3084,13 @@ const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
 const quests_1 = __webpack_require__(710);
 const quickSellSafely_1 = __webpack_require__(760);
+const versionManager_1 = __webpack_require__(70);
+const state_1 = __webpack_require__(619);
 const FEATURES = [
     // internal
     notifications_1.notifications,
     autocomplete_1.autocomplete,
+    versionManager_1.versionManager,
     // home
     cleanupHome_1.cleanupHome,
     moveUpdateToTop_1.moveUpdateToTop,
@@ -2346,6 +3166,7 @@ const watchSubtree = (selector, handler, filter) => {
         // eslint-disable-next-line unicorn/prefer-module
         "use strict";
         console.info("STARTING Farmhand by Ansel Santosa");
+        yield (0, state_1.watchQueries)();
         // initialize
         const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
         for (const { onInitialize } of FEATURES) {
@@ -2357,6 +3178,8 @@ const watchSubtree = (selector, handler, filter) => {
         // separating the handlers makes everything harder
         watchSubtree(".view-main .pages", "onPageLoad", ".page");
         watchSubtree(".view-main .navbar", "onPageLoad", ".navbar-inner");
+        // watch quest popup
+        watchSubtree(".view-main .toolbar", "onQuestLoad");
         // watch menu
         watchSubtree(".view-left", "onMenuLoad");
         // watch desktop and mobile versions of chat
@@ -2568,90 +3391,6 @@ exports.autocomplete = {
 
 /***/ }),
 
-/***/ 651:
-/***/ (function(__unused_webpack_module, exports) {
-
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getBasicItems = exports.getItemData = exports.getPageData = exports.nameToSlug = void 0;
-const state = {
-    itemData: {},
-};
-const nameToSlug = (name) => name.toLowerCase().replaceAll(/[\s']/g, "-");
-exports.nameToSlug = nameToSlug;
-const getPageData = () => __awaiter(void 0, void 0, void 0, function* () {
-    if (state.pageData) {
-        return state.pageData;
-    }
-    state.pageData = {
-        townsfolk: [],
-        questlines: [],
-        quizzes: [],
-        quests: [],
-        items: [],
-        pages: [],
-    };
-    const response = yield fetch("https://buddy.farm/search.json");
-    const data = (yield response.json());
-    for (const page of data) {
-        // eslint-disable-next-line unicorn/prefer-switch
-        if (page.type === "Townsfolk") {
-            state.pageData.townsfolk.push(page);
-        }
-        else if (page.type === "Questline") {
-            state.pageData.questlines.push(page);
-        }
-        else if (page.type === "Schoolhouse Quiz") {
-            state.pageData.quizzes.push(page);
-        }
-        else if (page.href.startsWith("/q/")) {
-            state.pageData.quests.push(page);
-        }
-        else if (page.href.startsWith("/i/")) {
-            state.pageData.items.push(page);
-        }
-        else {
-            state.pageData.pages.push(page);
-        }
-    }
-    return state.pageData;
-});
-exports.getPageData = getPageData;
-const getItemData = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
-    if (state.itemData[itemName]) {
-        return state.itemData[itemName];
-    }
-    const response = yield fetch(`https://buddy.farm/page-data/i/${(0, exports.nameToSlug)(itemName)}/page-data.json`);
-    const data = (yield response.json());
-    const item = (_d = (_c = (_b = (_a = data === null || data === void 0 ? void 0 : data.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.farmrpg) === null || _c === void 0 ? void 0 : _c.items) === null || _d === void 0 ? void 0 : _d[0];
-    if (!item) {
-        console.error(`Item ${itemName} not found`);
-        return;
-    }
-    // eslint-disable-next-line require-atomic-updates
-    state.itemData[itemName] = item;
-    return item;
-});
-exports.getItemData = getItemData;
-const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
-    const { items } = yield (0, exports.getPageData)();
-    return items.map(({ name, image }) => ({ name, image }));
-});
-exports.getBasicItems = getBasicItems;
-
-
-/***/ }),
-
 /***/ 906:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -2693,139 +3432,6 @@ exports.showConfirmation = showConfirmation;
 
 /***/ }),
 
-/***/ 626:
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.activatePerkSet = exports.resetPerks = exports.isActivePerkSet = exports.getCurrentPerkSet = exports.getActivityPerksSet = exports.getPerkSets = exports.PerkActivity = exports.collectMailbox = exports.getMailboxContents = exports.getMailboxCount = exports.withdrawSilver = exports.depositSilver = exports.getStats = exports.sendRequest = void 0;
-const page_1 = __webpack_require__(952);
-const state = {};
-const sendRequest = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch(`https://farmrpg.com/${page}.php?${query ? query.toString() : ""}`, {
-        method: "POST",
-        mode: "cors",
-        credentials: "include",
-    });
-    if (!response.ok) {
-        throw new Error(response.statusText);
-    }
-    const htmlString = yield response.text();
-    return new DOMParser().parseFromString(htmlString, "text/html");
-});
-exports.sendRequest = sendRequest;
-const getStats = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
-    const response = yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "getstats" }));
-    const parameters = response.querySelectorAll("span");
-    const silver = Number((_b = (_a = parameters[0].textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", "")) !== null && _b !== void 0 ? _b : "0");
-    const gold = Number((_d = (_c = parameters[1].textContent) === null || _c === void 0 ? void 0 : _c.trim().replaceAll(",", "")) !== null && _d !== void 0 ? _d : "0");
-    const ancientCoins = Number((_f = (_e = parameters[2].textContent) === null || _e === void 0 ? void 0 : _e.trim().replaceAll(",", "")) !== null && _f !== void 0 ? _f : "0");
-    return { silver, gold, ancientCoins };
-});
-exports.getStats = getStats;
-const depositSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "depositsilver", amt: amount.toString() }));
-});
-exports.depositSilver = depositSilver;
-const withdrawSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "withdrawalsilver", amt: amount.toString() }));
-});
-exports.withdrawSilver = withdrawSilver;
-const getMailboxCount = () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "mbcount" }));
-    return Number(response.body.textContent);
-});
-exports.getMailboxCount = getMailboxCount;
-const getMailboxContents = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _g, _h, _j, _k, _l, _m, _o, _p;
-    const response = yield (0, exports.sendRequest)(page_1.Page.POST_OFFICE);
-    const mailboxList = (0, page_1.getListByTitle)("Your Mailbox", response.body);
-    const itemWrappers = (_g = mailboxList === null || mailboxList === void 0 ? void 0 : mailboxList.querySelectorAll(".collectbtnnc")) !== null && _g !== void 0 ? _g : [];
-    const mailboxContents = [];
-    for (const itemWrapper of itemWrappers) {
-        const from = (_j = (_h = itemWrapper.querySelector("span")) === null || _h === void 0 ? void 0 : _h.textContent) !== null && _j !== void 0 ? _j : "";
-        const item = (_l = (_k = itemWrapper.querySelector("b")) === null || _k === void 0 ? void 0 : _k.textContent) !== null && _l !== void 0 ? _l : "";
-        const count = Number((_p = (_o = (_m = itemWrapper.querySelector("font")) === null || _m === void 0 ? void 0 : _m.textContent) === null || _o === void 0 ? void 0 : _o.replaceAll(",", "")) !== null && _p !== void 0 ? _p : "0");
-        mailboxContents.push({ from, item, count });
-    }
-    return mailboxContents;
-});
-exports.getMailboxContents = getMailboxContents;
-const collectMailbox = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "collectallmailitems" }));
-});
-exports.collectMailbox = collectMailbox;
-var PerkActivity;
-(function (PerkActivity) {
-    PerkActivity["DEFAULT"] = "Default";
-    PerkActivity["CRAFTING"] = "Crafting";
-    PerkActivity["FISHING"] = "Fishing";
-    PerkActivity["EXPLORING"] = "Exploring";
-    PerkActivity["SELLING"] = "Selling";
-    PerkActivity["FRIENDSHIP"] = "Friendship";
-    PerkActivity["TEMPLE"] = "Temple";
-    PerkActivity["LOCKSMITH"] = "Locksmith";
-    PerkActivity["WHEEL"] = "Wheel";
-    PerkActivity["UNKNOWN"] = "Unknown";
-})(PerkActivity || (exports.PerkActivity = PerkActivity = {}));
-const getPerkSets = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _q, _r;
-    if (state.perkSets) {
-        return state.perkSets;
-    }
-    const response = yield (0, exports.sendRequest)(page_1.Page.PERKS);
-    const setList = (0, page_1.getListByTitle)("My Perk Sets", response.body);
-    const setWrappers = (_q = setList === null || setList === void 0 ? void 0 : setList.querySelectorAll(".item-title")) !== null && _q !== void 0 ? _q : [];
-    const sets = [];
-    for (const setWrapper of setWrappers) {
-        const link = setWrapper.querySelector("a");
-        const name = (_r = link === null || link === void 0 ? void 0 : link.textContent) !== null && _r !== void 0 ? _r : "";
-        const id = Number(link === null || link === void 0 ? void 0 : link.dataset.id);
-        sets.push({ name, id });
-    }
-    // eslint-disable-next-line require-atomic-updates
-    state.perkSets = sets;
-    return sets;
-});
-exports.getPerkSets = getPerkSets;
-const getActivityPerksSet = (activity) => __awaiter(void 0, void 0, void 0, function* () {
-    const sets = yield (0, exports.getPerkSets)();
-    return sets.find((set) => set.name === activity);
-});
-exports.getActivityPerksSet = getActivityPerksSet;
-const getCurrentPerkSet = () => state.currentPerksSet;
-exports.getCurrentPerkSet = getCurrentPerkSet;
-const isActivePerkSet = (set) => { var _a; return ((_a = (0, exports.getCurrentPerkSet)()) === null || _a === void 0 ? void 0 : _a.id) === set.id; };
-exports.isActivePerkSet = isActivePerkSet;
-const resetPerks = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "resetperks" }));
-});
-exports.resetPerks = resetPerks;
-const activatePerkSet = (set) => __awaiter(void 0, void 0, void 0, function* () {
-    if ((0, exports.isActivePerkSet)(set)) {
-        return;
-    }
-    console.debug(`Activating ${set.name} Perks`);
-    state.currentPerksSet = set;
-    yield (0, exports.resetPerks)();
-    yield (0, exports.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: "activateperkset", id: set.id.toString() }));
-    // eslint-disable-next-line require-atomic-updates
-});
-exports.activatePerkSet = activatePerkSet;
-
-
-/***/ }),
-
 /***/ 783:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -2862,13 +3468,14 @@ const sendNotification = (notification) => __awaiter(void 0, void 0, void 0, fun
 });
 exports.sendNotification = sendNotification;
 const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
-    state.notifications = state.notifications.filter(({ id }) => id !== notification.id);
+    const notificationId = typeof notification === "string" ? notification : notification.id;
+    state.notifications = state.notifications.filter(({ id }) => id !== notificationId);
     yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
     renderNotifications();
 });
 exports.removeNotification = removeNotification;
 const renderNotifications = () => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f;
     const pageContent = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".page-content");
     if (!pageContent) {
         console.error("Page content not found");
@@ -2888,27 +3495,52 @@ const renderNotifications = () => {
             (_c = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(`a[href="${notification.replacesHref}"]`)) === null || _c === void 0 ? void 0 : _c.remove();
         }
         const notificationElement = document.createElement(notification.handlerName ? "a" : "span");
-        notificationElement.classList.add("fh-notification");
         notificationElement.classList.add("button");
+        notificationElement.classList.add("fh-notification");
+        notificationElement.style.cursor = notification.handlerName
+            ? "pointer"
+            : "default";
         if (notification.class) {
             notificationElement.classList.add(notification.class);
         }
         notificationElement.textContent = notification.text;
-        notificationElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
-            var _e;
-            event.preventDefault();
-            event.stopPropagation();
-            const handler = notificationHandlers.get((_e = notification.handlerName) !== null && _e !== void 0 ? _e : "");
-            if (handler) {
-                yield handler(notification);
-            }
-            else {
-                console.error(`Handler not found: ${notification.handlerName}`);
-            }
-            (0, exports.removeNotification)(notification);
-            renderNotifications();
-        }));
-        if ((_d = pageContent.firstElementChild) === null || _d === void 0 ? void 0 : _d.classList.contains("pull-to-refresh-layer")) {
+        if (notification.handlerName) {
+            notificationElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+                var _g;
+                event.preventDefault();
+                event.stopPropagation();
+                const handler = notificationHandlers.get((_g = notification.handlerName) !== null && _g !== void 0 ? _g : "");
+                if (handler) {
+                    yield handler(notification);
+                }
+                else {
+                    console.error(`Handler not found: ${notification.handlerName}`);
+                }
+                (0, exports.removeNotification)(notification);
+                renderNotifications();
+            }));
+        }
+        for (const action of (_d = notification.actions) !== null && _d !== void 0 ? _d : []) {
+            notificationElement.append(document.createTextNode(((_e = notification.actions) === null || _e === void 0 ? void 0 : _e.indexOf(action)) === 0 ? " " : " / "));
+            const actionElement = document.createElement("a");
+            actionElement.classList.add("fh-notification-action");
+            actionElement.style.cursor = "pointer";
+            actionElement.textContent = action.text;
+            actionElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+                event.preventDefault();
+                event.stopPropagation();
+                const handler = notificationHandlers.get(action.handlerName);
+                if (handler) {
+                    yield handler(notification);
+                }
+                else {
+                    console.error(`Handler not found: ${action.handlerName}`);
+                }
+                renderNotifications();
+            }));
+            notificationElement.append(actionElement);
+        }
+        if ((_f = pageContent.firstElementChild) === null || _f === void 0 ? void 0 : _f.classList.contains("pull-to-refresh-layer")) {
             pageContent.insertBefore(notificationElement, pageContent.children[1]);
         }
         else {
@@ -2920,14 +3552,10 @@ exports.notifications = {
     onInitialize: () => __awaiter(void 0, void 0, void 0, function* () {
         const savedNotifications = yield (0, farmhandSettings_1.getData)(KEY_NOTIFICATIONS, []);
         state.notifications = savedNotifications;
-        const observer = new MutationObserver(renderNotifications);
-        const pages = document.querySelector(".view-main .pages");
-        if (!pages) {
-            console.error("Pages not found");
-            return;
-        }
-        observer.observe(pages, { childList: true, subtree: true });
     }),
+    onPageLoad: () => {
+        setTimeout(renderNotifications, 500);
+    },
 };
 
 
@@ -2938,7 +3566,7 @@ exports.notifications = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getListByTitle = exports.getCardByTitle = exports.getTitle = exports.setTitle = exports.getCurrentPage = exports.getPreviousPage = exports.getPage = exports.Page = void 0;
+exports.getListByTitle = exports.getCardByTitle = exports.getTitle = exports.setTitle = exports.getCurrentPage = exports.getPreviousPage = exports.getPage = exports.WorkerGo = exports.Page = void 0;
 var Page;
 (function (Page) {
     Page["AREA"] = "area";
@@ -2959,6 +3587,15 @@ var Page;
     Page["WORKER"] = "worker";
     Page["WORKSHOP"] = "workshop";
 })(Page || (exports.Page = Page = {}));
+var WorkerGo;
+(function (WorkerGo) {
+    WorkerGo["GET_STATS"] = "getstats";
+    WorkerGo["DEPOSIT_SILVER"] = "depositsilver";
+    WorkerGo["WITHDRAW_SILVER"] = "withdrawalsilver";
+    WorkerGo["COLLECT_ALL_MAIL_ITEMS"] = "collectallmailitems";
+    WorkerGo["RESET_PERKS"] = "resetperks";
+    WorkerGo["ACTIVATE_PERK_SET"] = "activateperkset";
+})(WorkerGo || (exports.WorkerGo = WorkerGo = {}));
 // get page and parameters if any
 const getPage = () => {
     const currentPage = (0, exports.getCurrentPage)();
@@ -3025,7 +3662,7 @@ exports.getListByTitle = getListByTitle;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.showPopup = void 0;
-const showPopup = (title, description) => new Promise((resolve) => {
+const showPopup = ({ title, contentHTML, align, okText, }) => new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.classList.add("modal-overlay");
     overlay.classList.add("modal-overlay-visible");
@@ -3034,16 +3671,32 @@ const showPopup = (title, description) => new Promise((resolve) => {
     modal.classList.add("modal");
     modal.classList.add("modal-in");
     modal.style.display = "block";
-    modal.style.marginTop = "-62px";
+    modal.style.width = "auto";
+    modal.style.maxWidth = "75vw";
+    modal.style.maxHeight = "75vh";
     modal.innerHTML = `
-    <div class="modal-inner">
-      <div class="modal-title">${title}</div>
-      <div class="modal-text">${description}</div>
-    </div>
-    <div class="modal-buttons modal-buttons-1">
-      <span class="modal-button modal-button-bold">OK</span>
-    </div>
-  `;
+      <div
+        class="modal-inner"
+        style="
+          text-align: ${align !== null && align !== void 0 ? align : "center"};
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        "
+      >
+        <div class="modal-title">${title}</div>
+        <div
+          class="modal-text"
+          style="
+            overflow-y: auto;
+            flex: 1;
+          "
+        >${contentHTML}</div>
+      </div>
+      <div class="modal-buttons modal-buttons-1">
+        <span class="modal-button modal-button-bold">${okText !== null && okText !== void 0 ? okText : "OK"}</span>
+      </div>
+    `;
     const okButton = modal.querySelector(".modal-button");
     okButton === null || okButton === void 0 ? void 0 : okButton.addEventListener("click", () => {
         overlay === null || overlay === void 0 ? void 0 : overlay.classList.remove("modal-overlay-visible");
@@ -3051,6 +3704,9 @@ const showPopup = (title, description) => new Promise((resolve) => {
         resolve();
     });
     document.body.append(modal);
+    const offset = modal.getBoundingClientRect();
+    modal.style.marginTop = `-${offset.height / 2}px`;
+    modal.style.marginLeft = `-${offset.width / 2}px`;
 });
 exports.showPopup = showPopup;
 

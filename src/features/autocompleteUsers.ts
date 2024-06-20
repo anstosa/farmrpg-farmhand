@@ -1,4 +1,4 @@
-import { BasicEntity } from "~/utils/buddyfarmApi";
+import { BasicEntity } from "~/api/buddyfarm/state";
 import { Feature, FeatureSetting } from "./feature";
 import { registerAutocomplete } from "~/utils/autocomplete";
 

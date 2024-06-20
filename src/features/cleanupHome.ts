@@ -45,14 +45,14 @@ export const cleanupHome: Feature = {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
-      <style>
-        /* Hide players card */
-        .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
-        .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
-          display: none !important;
-        }
-      <style>
-    `
+          <style>
+            /* Hide players card */
+            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
+            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
+              display: none !important;
+            }
+          <style>
+        `
       );
     }
 
@@ -60,14 +60,14 @@ export const cleanupHome: Feature = {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
-      <style>
-        /* Hide theme switcher */
-        [data-page="index-1"] .page-content > p:nth-of-type(1),
-        [data-page="index-1"] .page-content > p:nth-of-type(2) {
-          display: none !important;
-        }
-      <style>
-    `
+          <style>
+            /* Hide theme switcher */
+            [data-page="index-1"] .page-content > p:nth-of-type(1),
+            [data-page="index-1"] .page-content > p:nth-of-type(2) {
+              display: none !important;
+            }
+          <style>
+        `
       );
     }
 
@@ -75,13 +75,13 @@ export const cleanupHome: Feature = {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
-      <style>
-        [data-page="index-1"] .page-content > p:last-of-type,
-        [data-page="index-1"] .page-content > div:last-of-type {
-          display: none !important;
-        }
-      <style>
-    `
+          <style>
+            [data-page="index-1"] .page-content > p:last-of-type,
+            [data-page="index-1"] .page-content > div:last-of-type {
+              display: none !important;
+            }
+          <style>
+        `
       );
     }
   },

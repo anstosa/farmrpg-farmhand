@@ -191,10 +191,11 @@ export const SETTING_EXPORT: FeatureSetting = {
     }
     const exportString = JSON.stringify(exportedSettings);
     GM.setClipboard(exportString);
-    showPopup(
-      "Settings Exported to clipboard",
-      "Open Farm RPG on another device with Farmhand installed to import"
-    );
+    showPopup({
+      title: "Settings Exported to clipboard",
+      contentHTML:
+        "Open Farm RPG on another device with Farmhand installed to import",
+    });
     const input = settingWrapper.querySelector<HTMLInputElement>(".fh-input");
     if (input) {
       input.value = exportString;
@@ -220,7 +221,10 @@ export const SETTING_IMPORT: FeatureSetting = {
         await setData(setting, setting.data);
       }
     }
-    await showPopup("Farmhand Settings Imported!", "Page will reload to apply");
+    await showPopup({
+      title: "Farmhand Settings Imported!",
+      contentHTML: "Page will reload to apply",
+    });
     window.location.reload();
   },
 };

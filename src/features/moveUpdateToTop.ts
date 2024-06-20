@@ -1,7 +1,6 @@
 import { Feature } from "./feature";
 import { getCardByTitle, getCurrentPage, getTitle, Page } from "~/utils/page";
-
-const KEY_RECENT = "recentUpdate";
+import { StorageKey } from "~/api/state";
 
 export const moveUpdateToTop: Feature = {
   onPageLoad: async (settings, page) => {
@@ -24,7 +23,7 @@ export const moveUpdateToTop: Feature = {
     }
 
     // check if it's newer
-    const latestRead = await GM.getValue(KEY_RECENT, "");
+    const latestRead = await GM.getValue(StorageKey.RECENT_UPDATE, "");
     if (latestUpdate === latestRead) {
       return;
     }
@@ -52,7 +51,7 @@ export const moveUpdateToTop: Feature = {
       hideButton.textContent = "Hide";
       hideButton.addEventListener("click", async () => {
         // mark current as read
-        await GM.setValue(KEY_RECENT, latestUpdate);
+        await GM.setValue(StorageKey.RECENT_UPDATE, latestUpdate);
         window.location.reload();
       });
       recentUpdatesTitle.append(hideButton);

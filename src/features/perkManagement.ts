@@ -1,10 +1,8 @@
 import {
   activatePerkSet,
   getActivityPerksSet,
-  getPerkSets,
   PerkActivity,
-  PerkSet,
-} from "~/utils/farmrpgApi";
+} from "~/api/farmrpg/perks";
 import { Feature, FeatureSetting } from "./feature";
 import { getCurrentPage, Page } from "~/utils/page";
 import {
@@ -26,24 +24,16 @@ export const SETTING_PERK_MANAGER: FeatureSetting = {
   defaultValue: true,
 };
 
-const state: { currentPerkSet?: PerkSet; perkSets: PerkSet[] } = {
-  perkSets: [],
-};
+const KEY_NOTIFICATIONS = "activeperks";
 
-const getNotification = (activity?: PerkActivity): Notification<never> => ({
+const getNotification = (activity: PerkActivity): Notification<never> => ({
   class: "btnorange",
-  id: `activeperks`,
+  id: KEY_NOTIFICATIONS,
   text: `${activity} perks activated`,
 });
 
 export const perkManagment: Feature = {
   settings: [SETTING_PERK_MANAGER],
-  onInitialize: async (settings) => {
-    if (!settings[SETTING_PERK_MANAGER.id].value) {
-      return;
-    }
-    state.perkSets = await getPerkSets();
-  },
   onPageLoad: async (settings, page) => {
     // make sure the setting is enabled
     if (!settings[SETTING_PERK_MANAGER.id].value) {
@@ -80,7 +70,7 @@ export const perkManagment: Feature = {
           sendNotification(getNotification(PerkActivity.CRAFTING));
           quickcraftButton.click();
           await activatePerkSet(defaultPerks);
-          removeNotification(getNotification());
+          removeNotification(KEY_NOTIFICATIONS);
         });
         quickcraftButton.parentElement?.insertBefore(
           proxyButton,
@@ -116,7 +106,7 @@ export const perkManagment: Feature = {
         sendNotification(getNotification(PerkActivity.SELLING));
         setTimeout(async () => {
           await activatePerkSet(defaultPerks);
-          removeNotification(getNotification());
+          removeNotification(KEY_NOTIFICATIONS);
         }, 1000);
         return true;
       });
@@ -147,7 +137,7 @@ export const perkManagment: Feature = {
           sendNotification(getNotification(PerkActivity.FRIENDSHIP));
           quickgiveButton.click();
           await activatePerkSet(defaultPerks);
-          removeNotification(getNotification());
+          removeNotification(KEY_NOTIFICATIONS);
         });
         quickgiveButton.parentElement?.insertBefore(
           proxyButton,
@@ -178,6 +168,6 @@ export const perkManagment: Feature = {
     }
 
     activatePerkSet(defaultPerks);
-    removeNotification(getNotification());
+    removeNotification(KEY_NOTIFICATIONS);
   },
 };

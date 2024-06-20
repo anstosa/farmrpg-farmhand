@@ -16,18 +16,18 @@ export const collapseItemImage: Feature = {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
-        <style>
-          /* Hide item image and description */
-          [data-page="item"] #img {
-            display: none !important;
-          }
-          
-          /* Hide first section title */
-          [data-page="item"] #img + .content-block-title {
-            display: none !important;
-          }
-        </style>
-      `
+          <style>
+            /* Hide item image and description */
+            [data-page="item"] #img {
+              display: none !important;
+            }
+            
+            /* Hide first section title */
+            [data-page="item"] #img + .content-block-title {
+              display: none !important;
+            }
+          </style>
+        `
       );
     }
   },

@@ -67,7 +67,7 @@ const icons = ((): string[] => {
   return icons.sort();
 })();
 
-const renderNavigation = async (): Promise<void> => {
+const renderNavigation = async (force: boolean = false): Promise<void> => {
   const navigationData = await getData<NavigationItem[]>(
     SETTING_CUSTOM_NAVIGATION,
     DEFAULT_NAVIGATION
@@ -79,7 +79,7 @@ const renderNavigation = async (): Promise<void> => {
     return;
   }
 
-  if (navigationList.dataset.isCustomized) {
+  if (!force && navigationList.dataset.isCustomized) {
     // already rendered
     return;
   }
@@ -103,7 +103,7 @@ const renderNavigation = async (): Promise<void> => {
       showConfirmation("Reset Navigation?", async () => {
         await setData(SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
         state.isEditing = false;
-        renderNavigation();
+        renderNavigation(true);
       });
     });
     navigationTitleLeft.append(resetButton);
@@ -111,6 +111,7 @@ const renderNavigation = async (): Promise<void> => {
 
   navigationList.innerHTML = "";
   navigationList.dataset.isCustomized = "true";
+  navigationList.dataset.isEditing = String(state.isEditing);
   for (const item of navigationData) {
     const currentIndex = navigationData.indexOf(item);
     const navigationItem = document.createElement("li");
@@ -245,7 +246,7 @@ const renderNavigation = async (): Promise<void> => {
         }
         item.icon = (event.target as HTMLElement).dataset.icon ?? "";
         await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationItem
       .querySelector(".fh-text")
@@ -260,7 +261,7 @@ const renderNavigation = async (): Promise<void> => {
         event.stopPropagation();
         item.text = (event.target as HTMLInputElement).value;
         await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationItem
       .querySelector(".fh-text")
@@ -286,7 +287,7 @@ const renderNavigation = async (): Promise<void> => {
         event.stopPropagation();
         item.path = (event.target as HTMLInputElement).value;
         await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationItem
       .querySelector(".fh-up")
@@ -300,7 +301,7 @@ const renderNavigation = async (): Promise<void> => {
         navigationData.splice(currentIndex - 1, 0, item);
         state.editingIndex = currentIndex - 1;
         await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationItem
       .querySelector(".fh-down")
@@ -314,7 +315,7 @@ const renderNavigation = async (): Promise<void> => {
         navigationData.splice(currentIndex + 1, 0, item);
         state.editingIndex = currentIndex + 1;
         await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationItem
       .querySelector(".fh-edit")
@@ -326,7 +327,7 @@ const renderNavigation = async (): Promise<void> => {
         } else {
           state.editingIndex = currentIndex;
         }
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationItem
       .querySelector(".fh-delete")
@@ -335,7 +336,7 @@ const renderNavigation = async (): Promise<void> => {
         event.stopPropagation();
         navigationData.splice(currentIndex, 1);
         await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-        renderNavigation();
+        renderNavigation(true);
       });
     navigationList.append(navigationItem);
   }
@@ -382,7 +383,7 @@ const renderNavigation = async (): Promise<void> => {
       });
       await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
       state.editingIndex = navigationData.length - 1;
-      renderNavigation();
+      renderNavigation(true);
     });
     navigationList.append(addNavigationItem);
   }
@@ -419,7 +420,7 @@ export const customNavigation: Feature = {
           configurationButton.classList.remove("fa-check");
           configurationButton.classList.add("fa-cog");
         }
-        renderNavigation();
+        renderNavigation(true);
       });
       navigationTitleRight.append(configurationButton);
     }

@@ -1,5 +1,5 @@
 import { BACKGROUND_DARK, BUTTON_BLUE_BACKGROUND } from "./theme";
-import { BasicEntity } from "./buddyfarmApi";
+import { BasicEntity } from "../api/buddyfarm/state";
 import { Feature } from "~/features/feature";
 
 interface AutocompleteConfig {

@@ -3,8 +3,9 @@ import { HeadersProps, UserscriptPlugin } from "webpack-userscript";
 import { Configuration as WebpackDevelopmentServerConfiguration } from "webpack-dev-server";
 import ESLintPlugin from "eslint-webpack-plugin";
 import ForkTSCheckerPlugin from "fork-ts-checker-webpack-plugin";
+import manifest from "package.json";
 import path from "node:path";
-import webpack from "webpack";
+import webpack, { DefinePlugin } from "webpack";
 
 interface Configuration extends webpack.Configuration {
   devServer?: WebpackDevelopmentServerConfiguration;
@@ -105,18 +106,28 @@ const config: Configuration = {
       extensions: ["js", "ts", "json"],
     }),
 
+    new DefinePlugin({
+      __VERSION__: JSON.stringify(manifest.version),
+    }),
+
     // performant type checking
     new ForkTSCheckerPlugin({}),
 
     new UserscriptPlugin({
       headers(original) {
         const overrides: HeadersProps = {
-          grant: ["GM.getValue", "GM.setValue", "GM.setClipboard"],
+          grant: [
+            "GM.getValue",
+            "GM.setValue",
+            "GM.setClipboard",
+            "GM.xmlHttpRequest",
+          ],
           icon: "https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com",
           license: "MIT",
-          match: "https://farmrpg.com/*",
+          match: ["https://farmrpg.com/*", "https://alpha.farmrpg.com/*"],
           name: "Farm RPG Farmhand",
           namespace: "https://github.com/anstosa/farmrpg-farmhand",
+          connect: ["greasyfork.org", "github.com"],
           // from package.json
           //   description
           //   version

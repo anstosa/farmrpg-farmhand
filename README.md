@@ -117,9 +117,7 @@ Future features under consideration or development
 * Show collected items in success popup when collecting from pets
 * Quick collect link in mailbox notification like with pets that shows collected items in success popup
 * Contextual status information in custom navigation items (e.g. crops growing for farm, chores completed for Chores, items exchanged for exchange, etc)
-* Persistent notification for meal countdowns
 * Notification for wine at max value
-* Notification for crops complete that allows you to harvest and/or replant without going to farm page
 * Compressed view for home and town pages (square tiles)
 
 ## Tip
@@ -127,6 +125,11 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.11
+
+* Fixed: Sending messages with user tags
+* Fixed: Stable notification sort
 
 ### 1.0.10
 

@@ -36,6 +36,7 @@ export const autocompleteUsers: Feature = {
       getItems: async () => await getUsers(),
       prefix: "@",
       suffix: ":",
+      bail: (text) => (text.match(/(@|:)/g)?.length ?? 0) % 2 === 0,
     });
   },
 };

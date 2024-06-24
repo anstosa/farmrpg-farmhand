@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.10
+// @version 1.0.11
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -1281,6 +1281,7 @@ exports.autocompleteUsers = {
             getItems: () => __awaiter(void 0, void 0, void 0, function* () { return yield (0, exports.getUsers)(); }),
             prefix: "@",
             suffix: ":",
+            bail: (text) => { var _a, _b; return ((_b = (_a = text.match(/(@|:)/g)) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) % 2 === 0; },
         });
     },
 };
@@ -3793,7 +3794,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.10" !== void 0 ? "1.0.10" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.11" !== void 0 ? "1.0.11" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4354,7 +4355,7 @@ const renderNotifications = (force = false) => {
         notification.remove();
     }
     // add new notifications
-    for (const notification of state.notifications) {
+    for (const notification of state.notifications.toSorted((a, b) => a.id.localeCompare(b.id) || 0)) {
         if (notification.replacesHref) {
             (_c = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(`a[href="${notification.replacesHref}"]`)) === null || _c === void 0 ? void 0 : _c.remove();
         }

@@ -129,7 +129,9 @@ const renderNotifications = (force: boolean = false): void => {
   }
 
   // add new notifications
-  for (const notification of state.notifications) {
+  for (const notification of state.notifications.toSorted(
+    (a, b) => a.id.localeCompare(b.id) || 0
+  )) {
     if (notification.replacesHref) {
       getCurrentPage()
         ?.querySelector<HTMLAnchorElement>(

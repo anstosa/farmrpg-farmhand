@@ -6,7 +6,7 @@ import {
   WorkerGo,
 } from "../../utils/page";
 import { getDocument } from "../utils";
-import { sendRequest } from "./api";
+import { requestHTML } from "./api";
 
 export interface MailboxContent {
   from: string;
@@ -45,10 +45,14 @@ const processPostoffice = (root: Document): MailboxState => {
 export const mailboxState = new CachedState<MailboxState>(
   StorageKey.MAILBOX,
   async () => {
-    const response = await sendRequest(Page.POST_OFFICE);
+    const response = await requestHTML(Page.POST_OFFICE);
     return processPostoffice(response);
   },
   {
+    defaultState: {
+      contents: [],
+      size: 5,
+    },
     interceptors: [
       {
         match: [Page.POST_OFFICE, new URLSearchParams()],
@@ -70,10 +74,8 @@ export const mailboxState = new CachedState<MailboxState>(
 );
 
 export const collectMailbox = async (): Promise<void> => {
-  const mailbox = await mailboxState.get();
-  await sendRequest(
+  await requestHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MAIL_ITEMS })
   );
-  await mailboxState.set({ ...mailbox, contents: [] });
 };

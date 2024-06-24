@@ -7,6 +7,7 @@ import { Feature, FeatureSetting } from "./feature";
 import { getCurrentPage, Page } from "~/utils/page";
 import {
   Notification,
+  NotificationId,
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
@@ -24,11 +25,9 @@ export const SETTING_PERK_MANAGER: FeatureSetting = {
   defaultValue: true,
 };
 
-const KEY_NOTIFICATIONS = "activeperks";
-
 const getNotification = (activity: PerkActivity): Notification<never> => ({
   class: "btnorange",
-  id: KEY_NOTIFICATIONS,
+  id: NotificationId.PERKS,
   text: `${activity} perks activated`,
 });
 
@@ -37,6 +36,11 @@ export const perkManagment: Feature = {
   onPageLoad: async (settings, page) => {
     // make sure the setting is enabled
     if (!settings[SETTING_PERK_MANAGER.id].value) {
+      return;
+    }
+
+    // don't change anything on perks page so you can edit
+    if (page === Page.PERKS) {
       return;
     }
 
@@ -70,7 +74,7 @@ export const perkManagment: Feature = {
           sendNotification(getNotification(PerkActivity.CRAFTING));
           quickcraftButton.click();
           await activatePerkSet(defaultPerks);
-          removeNotification(KEY_NOTIFICATIONS);
+          removeNotification(NotificationId.PERKS);
         });
         quickcraftButton.parentElement?.insertBefore(
           proxyButton,
@@ -106,7 +110,7 @@ export const perkManagment: Feature = {
         sendNotification(getNotification(PerkActivity.SELLING));
         setTimeout(async () => {
           await activatePerkSet(defaultPerks);
-          removeNotification(KEY_NOTIFICATIONS);
+          removeNotification(NotificationId.PERKS);
         }, 1000);
         return true;
       });
@@ -137,7 +141,7 @@ export const perkManagment: Feature = {
           sendNotification(getNotification(PerkActivity.FRIENDSHIP));
           quickgiveButton.click();
           await activatePerkSet(defaultPerks);
-          removeNotification(KEY_NOTIFICATIONS);
+          removeNotification(NotificationId.PERKS);
         });
         quickgiveButton.parentElement?.insertBefore(
           proxyButton,
@@ -168,6 +172,6 @@ export const perkManagment: Feature = {
     }
 
     activatePerkSet(defaultPerks);
-    removeNotification(KEY_NOTIFICATIONS);
+    removeNotification(NotificationId.PERKS);
   },
 };

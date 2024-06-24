@@ -1,11 +1,13 @@
 import { corsFetch } from "~/api/utils";
 import { Feature } from "~/features/feature";
-import { latestVersionState, SCRIPT_URL } from "~/api/greasyfork/api";
 import {
+  Handler,
+  NotificationId,
   registerNotificationHandler,
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
+import { latestVersionState, SCRIPT_URL } from "~/api/greasyfork/api";
 import { showPopup } from "~/utils/popup";
 
 // created by DefinePlugin in webpack
@@ -28,13 +30,10 @@ const isVersionHigher = (test: string, current: string): boolean => {
 
 const currentVersion = normalizeVersion(__VERSION__ ?? "1.0.0");
 
-const KEY_UPDATE_NOTIFICATION = "newversion";
-
 const README_URL =
   "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 
-const HANDLER_CHANGES = "updateView";
-registerNotificationHandler(HANDLER_CHANGES, async () => {
+registerNotificationHandler(Handler.CHANGES, async () => {
   const response = await corsFetch(README_URL);
   const htmlString = await response.text();
   const document = new DOMParser().parseFromString(htmlString, "text/html");
@@ -58,32 +57,33 @@ registerNotificationHandler(HANDLER_CHANGES, async () => {
   showPopup({ title: "Farmhand Changelog", contentHTML, align: "left" });
 });
 
-const HANDLER_UPDATE = "updateFarmhand";
-registerNotificationHandler(HANDLER_UPDATE, () => window.open(SCRIPT_URL));
+registerNotificationHandler(Handler.UPDATE, () => window.open(SCRIPT_URL));
 
 export const versionManager: Feature = {
   onInitialize: async () => {
-    const latestVersion = normalizeVersion(
-      (await latestVersionState.get()) ?? "1.0.0"
-    );
+    const latestVersion = await latestVersionState.get();
+    if (!latestVersion) {
+      console.error("Failed to get latest version");
+      return;
+    }
     if (isVersionHigher(latestVersion, currentVersion)) {
       sendNotification({
         class: "btnblue",
-        id: KEY_UPDATE_NOTIFICATION,
+        id: NotificationId.UPDATE,
         text: `Farmhand update available: ${currentVersion} → ${latestVersion}`,
         actions: [
           {
             text: "View Changes",
-            handlerName: HANDLER_CHANGES,
+            handler: Handler.CHANGES,
           },
           {
             text: "Update",
-            handlerName: HANDLER_UPDATE,
+            handler: Handler.CHANGES,
           },
         ],
       });
     } else {
-      removeNotification(KEY_UPDATE_NOTIFICATION);
+      removeNotification(NotificationId.UPDATE);
     }
   },
 };

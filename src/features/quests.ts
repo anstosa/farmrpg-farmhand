@@ -3,15 +3,19 @@ import { Feature } from "./feature";
 
 export const quests: Feature = {
   onInitialize: () => {
-    // move spacing from panel margin to message padding regardless of setting
     document.head.insertAdjacentHTML(
       "beforeend",
       `
       <style>
+        /* make room for minimize button */
+        #statszone > div {
+          padding-right: 15px;
+        }
+        /* make line prettier */
         #statszone hr {
-            height: 1px;
-            background-color: ${BORDER_GRAY};
-            border: none;
+          height: 1px;
+          background-color: ${BORDER_GRAY};
+          border: none;
         }
       <style>
     `
@@ -20,7 +24,6 @@ export const quests: Feature = {
   onQuestLoad: () => {
     const popup = document.querySelector<HTMLDivElement>(".aqp");
     if (!popup) {
-      console.error("quest popup not found");
       return;
     }
     popup.dataset.isMinimized = popup.dataset.isMinimized ?? "false";

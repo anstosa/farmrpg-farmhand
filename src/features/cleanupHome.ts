@@ -47,8 +47,8 @@ export const cleanupHome: Feature = {
         `
           <style>
             /* Hide players card */
-            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
-            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
+            [data-page="${Page.HOME_PAGE}"] .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
+            [data-page="${Page.HOME_PAGE}"] .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
               display: none !important;
             }
           <style>
@@ -62,8 +62,8 @@ export const cleanupHome: Feature = {
         `
           <style>
             /* Hide theme switcher */
-            [data-page="index-1"] .page-content > p:nth-of-type(1),
-            [data-page="index-1"] .page-content > p:nth-of-type(2) {
+            [data-page="${Page.HOME_PAGE}"] .page-content > p:nth-of-type(1),
+            [data-page="${Page.HOME_PAGE}"] .page-content > p:nth-of-type(2) {
               display: none !important;
             }
           <style>
@@ -76,8 +76,8 @@ export const cleanupHome: Feature = {
         "beforeend",
         `
           <style>
-            [data-page="index-1"] .page-content > p:last-of-type,
-            [data-page="index-1"] .page-content > div:last-of-type {
+            [data-page="${Page.HOME_PAGE}"] .page-content > p:last-of-type,
+            [data-page="${Page.HOME_PAGE}"] .page-content > div:last-of-type {
               display: none !important;
             }
           <style>
@@ -86,7 +86,7 @@ export const cleanupHome: Feature = {
     }
   },
   onPageLoad: (settings, page) => {
-    if (page !== Page.HOME) {
+    if (page !== Page.HOME_PAGE) {
       return;
     }
     if (!settings[SETTING_COMPRESS_SKILLS.id].value) {
@@ -94,7 +94,7 @@ export const cleanupHome: Feature = {
     }
 
     // get wrappers
-    const skillsCard = getCardByTitle("My skills");
+    const skillsCard = getCardByTitle(/my skills/i);
     const skillsTitle = skillsCard?.previousElementSibling as
       | HTMLDivElement
       | undefined;

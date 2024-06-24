@@ -44,12 +44,17 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 * Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
 * Locks Quick Sell for locked items
 * Make missing ingredients in Quick Carft links
+* Show ongoing notifications for meals
 
 ### Banker
 
 * Automatically calculates your target balance (minimum balance required to maximize your daily interest)
 * Adds an option *Deposit Target Balance* which deposits up to your target balance
 * Adds an option to *Withdraw Interest* which withdraws any earnings on top of your target balance
+
+### Vault
+
+* Prefills vault code with recommended guess
 
 ### Chat
 
@@ -78,6 +83,17 @@ This frees up points from many activity specific perks to be re-invested in perk
 ### Fishing
 
 * Fish always appear in middle of pond
+
+### Farming
+
+* Crop ready notifications
+* Field empty notifications
+* Popup showing items harvested
+
+### Cooking
+
+* Ovens empty notification
+* Meals ready notification
 
 ### UI Cleanup
 
@@ -111,6 +127,20 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.10
+
+* Added: Crops ready notification
+* Added: Field empty notification
+* Added: Ovens empty notification
+* Added: Meals ready notification
+* Added: Ongoing meal effect notifications
+* Added: Popup listing all items harvested
+* Added: Pre-fills vault code with recommended guess
+* Fixed: Some perk categories not visible
+* Fixed: Perk sets chaning on perks screen
+* Fixed: Quest minimize button from overlapping
+* Fixed: Missing ingredient links broke for multiple ingredients
 
 ### 1.0.9
 

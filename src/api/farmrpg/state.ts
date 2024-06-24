@@ -1,17 +1,3 @@
-export interface FarmState {
-  id: number;
-  field?: {
-    rows?: number;
-    status?: string;
-    plots?: {
-      cropName?: string;
-      isGrowing: boolean;
-      isReady: boolean;
-      progress?: number;
-    }[];
-  };
-}
-
 export interface KitchenState {
   status?: string;
   ovens?: {

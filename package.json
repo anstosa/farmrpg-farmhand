@@ -1,6 +1,6 @@
 {
   "name": "farmrpg-farmhand",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Your helper around the RPG Farm",
   "main": "index.js",
   "repository": "git@github.com:anstosa/farmrpg-farmhand.git",
@@ -46,6 +46,7 @@
     "lint": "npx eslint --ext .js,.jsx,.ts,.tsx,.json src/",
     "lint:fix": "npx eslint --fix --ext .js,.jsx,.ts,.tsx,.json src/",
     "start": "NODE_OPTIONS=\"--import tsx\" NODE_ENV=development webpack serve --color --progress",
+    "test:vault": "npx tsx ./src/utils/vault.test.ts",
     "type-check": "npx tsc --noEmit"
   }
 }

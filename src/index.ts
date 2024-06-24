@@ -7,31 +7,44 @@ import { chatNav } from "./features/chatNav";
 import { cleanupHome } from "./features/cleanupHome";
 import { collapseItemImage } from "./features/collapseItemImage";
 import { compressChat } from "./features/compressChat";
+import { confirmations } from "./utils/confirmation";
 import { customNavigation } from "./features/customNavigation";
 import { dismissableChatBanners } from "./features/dismissableChatBanners";
 import { farmhandSettings, getSettings } from "./features/farmhandSettings";
+import { fieldNotifications } from "./features/harvestNotifications";
 import { fishinInBarrel } from "./features/fishInBarrel";
 import { getPage } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
+import { kitchenNotifications } from "./features/kitchenNotifications";
 import { linkifyQuickCraft } from "./features/linkifyQuickCraft";
+import { mealNotifications } from "./features/mealNotifications";
 import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
 import { quests } from "./features/quests";
 import { quicksellSafely } from "./features/quickSellSafely";
+import { vaultSolver } from "./features/vaultSolver";
 import { versionManager } from "./features/versionManager";
 import { watchQueries } from "./api/state";
 
 const FEATURES = [
   // internal
   notifications,
+  confirmations,
   autocomplete,
   versionManager,
 
   // home
   cleanupHome,
   moveUpdateToTop,
+
+  // kitchen
+  kitchenNotifications,
+  mealNotifications,
+
+  // farm,
+  fieldNotifications,
 
   // items
   buddyFarm,
@@ -44,6 +57,9 @@ const FEATURES = [
 
   // bank
   banker,
+
+  // vault
+  vaultSolver,
 
   // fishing
   fishinInBarrel,
@@ -80,7 +96,7 @@ const watchSubtree = (
   const handle = async (): Promise<void> => {
     const settings = await getSettings(FEATURES);
     const [page, parameters] = getPage();
-    console.debug(`${selector} Load`, page, parameters);
+    // console.debug(`${selector} Load`, page, parameters);
     for (const feature of FEATURES) {
       feature[handler]?.(settings, page, parameters);
     }

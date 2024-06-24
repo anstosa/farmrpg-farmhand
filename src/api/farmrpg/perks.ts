@@ -1,7 +1,7 @@
 import { CachedState, parseUrl, StateQueryOptions, StorageKey } from "../state";
 import { getDocument } from "../utils";
 import { getListByTitle, Page, WorkerGo } from "../../utils/page";
-import { sendRequest } from "./api";
+import { requestHTML } from "./api";
 
 export enum PerkActivity {
   DEFAULT = "Default",
@@ -47,11 +47,15 @@ const processPerks = (root: Document): PerksState => {
 export const perksState = new CachedState<PerksState>(
   StorageKey.PERKS_SETS,
   async () => {
-    const response = await sendRequest(Page.PERKS);
+    const response = await requestHTML(Page.PERKS);
     return processPerks(response);
   },
   {
     timeout: 60 * 60 * 24, // 1 day
+    defaultState: {
+      perkSets: [],
+      currentPerkSetId: undefined,
+    },
     interceptors: [
       {
         match: [Page.PERKS, new URLSearchParams()],
@@ -82,14 +86,14 @@ export const getActivityPerksSet = async (
   options?: StateQueryOptions
 ): Promise<PerkSet | undefined> => {
   const state = await perksState.get(options);
-  return state.perkSets.find(({ name }) => name === activity);
+  return state?.perkSets.find(({ name }) => name === activity);
 };
 
 export const getCurrentPerkSet = async (
   options?: StateQueryOptions
 ): Promise<PerkSet | undefined> => {
   const state = await perksState.get(options);
-  return state.perkSets.find(({ id }) => id === state.currentPerkSetId);
+  return state?.perkSets.find(({ id }) => id === state?.currentPerkSetId);
 };
 
 export const isActivePerkSet = async (
@@ -102,11 +106,14 @@ export const isActivePerkSet = async (
 
 export const resetPerks = async (): Promise<void> => {
   const state = await perksState.get();
-  await sendRequest(
+  await requestHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.RESET_PERKS })
   );
-  perksState.set({ ...state, currentPerkSetId: undefined });
+  perksState.set({
+    perkSets: state?.perkSets ?? [],
+    currentPerkSetId: undefined,
+  });
 };
 
 export const activatePerkSet = async (
@@ -117,14 +124,12 @@ export const activatePerkSet = async (
     return;
   }
   console.debug(`Activating ${set.name} Perks`);
-  const state = await perksState.get();
   await resetPerks();
-  await sendRequest(
+  await requestHTML(
     Page.WORKER,
     new URLSearchParams({
       go: WorkerGo.ACTIVATE_PERK_SET,
       id: set.id.toString(),
     })
   );
-  perksState.set({ ...state, currentPerkSetId: set.id });
 };

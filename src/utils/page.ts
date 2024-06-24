@@ -1,11 +1,14 @@
 export enum Page {
   AREA = "area",
   BANK = "bank",
+  FARM = "xfarm",
   FARMERS_MARKET = "market",
   FISHING = "fishing",
   FRIENDSHIP = "npclevels",
-  HOME = "index-1", // not a typo
+  HOME_PAGE = "index-1", // not a typo
+  HOME_PATH = "index",
   ITEM = "item",
+  KITCHEN = "kitchen",
   LOCKSMITH = "locksmith",
   MAILBOX = "mailbox",
   PERKS = "perks",
@@ -13,18 +16,25 @@ export enum Page {
   SETTINGS = "settings",
   SETTINGS_OPTIONS = "settings_options",
   TEMPLE = "mailitems", // not a typo
+  VAULT = "crack",
   WHEEL = "spin",
   WORKER = "worker",
   WORKSHOP = "workshop",
 }
 
 export enum WorkerGo {
-  GET_STATS = "getstats",
-  DEPOSIT_SILVER = "depositsilver",
-  WITHDRAW_SILVER = "withdrawalsilver",
-  COLLECT_ALL_MAIL_ITEMS = "collectallmailitems",
-  RESET_PERKS = "resetperks",
   ACTIVATE_PERK_SET = "activateperkset",
+  COLLECT_ALL_MAIL_ITEMS = "collectallmailitems",
+  COLLECT_ALL_MEALS = "cookreadyall",
+  COOK_ALL = "cookitemall",
+  DEPOSIT_SILVER = "depositsilver",
+  GET_STATS = "getstats",
+  FARM_STATUS = "farmstatus",
+  READY_COUNT = "readycount",
+  RESET_PERKS = "resetperks",
+  WITHDRAW_SILVER = "withdrawalsilver",
+  HARVEST_ALL = "harvestall",
+  PLANT_ALL = "plantall",
 }
 
 // get page and parameters if any
@@ -58,7 +68,7 @@ export const setTitle = (title: string): void => {
 };
 
 export const getTitle = (
-  searchTitle: string,
+  searchTitle: string | RegExp,
   root?: HTMLElement
 ): HTMLElement | null => {
   const currentPage = root ?? getCurrentPage();
@@ -67,14 +77,16 @@ export const getTitle = (
     return null;
   }
   const titles = currentPage.querySelectorAll(".content-block-title");
-  const targetTitle = [...titles].find(
-    (title) => title.textContent === searchTitle
+  const targetTitle = [...titles].find((title) =>
+    searchTitle instanceof RegExp
+      ? searchTitle.test(title.textContent || "")
+      : title.textContent === searchTitle
   );
   return (targetTitle as HTMLElement | undefined) ?? null;
 };
 
 export const getCardByTitle = (
-  searchTitle: string,
+  searchTitle: string | RegExp,
   root?: HTMLElement
 ): HTMLElement | null => {
   const targetTitle = getTitle(searchTitle, root);
@@ -86,9 +98,9 @@ export const getCardByTitle = (
 };
 
 export const getListByTitle = (
-  searchTitle: string,
+  searchTitle: string | RegExp,
   root?: HTMLElement
-): HTMLElement | null => {
+): HTMLUListElement | null => {
   const targetCard = getCardByTitle(searchTitle, root);
   if (!targetCard) {
     console.error(`${searchTitle} card not found`);

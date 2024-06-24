@@ -1,3 +1,5 @@
+import { Feature } from "~/features/feature";
+
 export const showConfirmation = (
   message: string,
   onYes: () => void,
@@ -32,4 +34,20 @@ export const showConfirmation = (
     onNo?.();
   });
   document.body.append(modal);
+};
+
+export const confirmations: Feature = {
+  onInitialize: () => {
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `
+        <style>
+          /* fix confirmation position */
+          .actions-modal-group {
+            margin-bottom: 0 !important;
+          }
+        <style>
+      `
+    );
+  },
 };

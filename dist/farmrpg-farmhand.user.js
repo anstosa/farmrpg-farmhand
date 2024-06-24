@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.9
+// @version 1.0.10
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -51,9 +51,9 @@ const getItemByName = (itemName) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.getItemByName = getItemByName;
 const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _e, _f;
     const { items } = (_e = (yield exports.pageDataState.get())) !== null && _e !== void 0 ? _e : {};
-    return items.map(({ name, image }) => ({ name, image }));
+    return (_f = items === null || items === void 0 ? void 0 : items.map(({ name, image }) => ({ name, image }))) !== null && _f !== void 0 ? _f : [];
 });
 exports.getBasicItems = getBasicItems;
 exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, () => __awaiter(void 0, void 0, void 0, function* () {
@@ -91,6 +91,14 @@ exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, ()
     return pages;
 }), {
     timeout: 60 * 60 * 24, // 1 day
+    defaultState: {
+        townsfolk: [],
+        questlines: [],
+        quizzes: [],
+        quests: [],
+        items: [],
+        pages: [],
+    },
 });
 
 
@@ -122,53 +130,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = exports.sendRequest = void 0;
+exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = exports.timestampToDate = exports.requestJSON = exports.requestHTML = void 0;
 const state_1 = __webpack_require__(619);
 const utils_1 = __webpack_require__(683);
-const sendRequest = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch(`https://farmrpg.com/${page}.php?${query ? query.toString() : ""}`, {
+const requestHTML = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield fetch((0, state_1.toUrl)(page, query), {
         method: "POST",
         mode: "cors",
         credentials: "include",
     });
     return (0, utils_1.getDocument)(response);
 });
-exports.sendRequest = sendRequest;
-// export const recordHome = async (root?: HTMLElement): Promise<void> => {
-//   if (!root) {
-//     root = document.body;
-//   }
-//   let farm = state.get("farm");
-//   const farmLink = root.querySelector("a[href^='xfarm.php']");
-//   if (!farmLink) {
-//     console.error("failed to find farm link");
-//     return;
-//   }
-//   const farmId = Number(farmLink.getAttribute("href")?.split("=")[1]);
-//   if (farm) {
-//     farm.id = farmId;
-//   } else {
-//     farm = { id: farmId };
-//   }
-//   if (!farm.field) {
-//     farm.field = {};
-//   }
-//   const farmStatus =
-//     farmLink.querySelector(".item-after")?.textContent || undefined;
-//   farm.field.status = farmStatus;
-//   farm.field.plots = [];
-//   if (farmStatus) {
-//     const cropCount = Number(farmStatus.split(" ")[0]);
-//     const isGrowing = farmStatus.includes("GROWING");
-//     const isReady = farmStatus.includes("READY");
-//     for (let index = 0; index < cropCount; index++) {
-//       farm.field.plots.push({
-//         isGrowing,
-//         isReady,
-//         progress: isReady ? 100 : undefined,
-//       });
-//     }
-//   }
+exports.requestHTML = requestHTML;
+const requestJSON = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield fetch((0, state_1.toUrl)(page, query), {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+    });
+    (0, state_1.onFetchResponse)(response);
+    return yield response.json();
+});
+exports.requestJSON = requestJSON;
+const timestampToDate = (timestamp) => new Date(`${timestamp}-05:00`);
+exports.timestampToDate = timestampToDate;
 //   const kitchen = state.get("kitchen") ?? ({} as KitchenState);
 //   const kitchenLink = root.querySelector("a[href='kitchen.php']");
 //   if (!kitchenLink) {
@@ -249,40 +234,41 @@ exports.sendRequest = sendRequest;
 //       mining: miningSkill,
 //     };
 //   }
-//   state.update({ farm, kitchen, town, skills });
-// };
-// export const scrapeToCache: Feature = {
-//   onPageLoad: (settings, page) => {
-//     if (page === Page.HOME) {
-//       recordHome();
-//     }
-//   },
-// };
 exports.usernameState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
     var _a;
     return Promise.resolve(((_a = document.querySelector("#logged_in_username")) === null || _a === void 0 ? void 0 : _a.textContent) || undefined);
-}, { timeout: 0 } // always check, no cost
-);
+}, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: "",
+});
 exports.userIdState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
     var _a;
     const userIdRaw = (_a = document.querySelector("#logged_in_userid")) === null || _a === void 0 ? void 0 : _a.textContent;
     return Promise.resolve(userIdRaw ? Number(userIdRaw) : undefined);
-}, { timeout: 0 } // always check, no cost
-);
+}, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: -1,
+});
 exports.betaState = new state_1.CachedState(state_1.StorageKey.IS_BETA, () => { var _a; return Promise.resolve(((_a = document.querySelector("#is_beta")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: false,
 });
 exports.darkModeState = new state_1.CachedState(state_1.StorageKey.IS_DARK_MODE, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: false,
 });
 exports.musicState = new state_1.CachedState(state_1.StorageKey.IS_MUSIC_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: true,
 });
 exports.chatState = new state_1.CachedState(state_1.StorageKey.IS_CHAT_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#chat")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: true,
 });
 
@@ -309,15 +295,19 @@ const utils_1 = __webpack_require__(683);
 const page_1 = __webpack_require__(952);
 const api_1 = __webpack_require__(126);
 const processStats = (root) => {
-    var _a, _b, _c, _d, _e, _f;
-    const parameters = root.querySelectorAll("span");
-    const silver = Number((_b = (_a = parameters[0].textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", "")) !== null && _b !== void 0 ? _b : "0");
-    const gold = Number((_d = (_c = parameters[1].textContent) === null || _c === void 0 ? void 0 : _c.trim().replaceAll(",", "")) !== null && _d !== void 0 ? _d : "0");
-    const ancientCoins = Number((_f = (_e = parameters[2].textContent) === null || _e === void 0 ? void 0 : _e.trim().replaceAll(",", "")) !== null && _f !== void 0 ? _f : "0");
+    var _a;
+    const matches = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/[^\d,]+([\d,]+)[^\d,]+([\d,]+)[^\d,]+([\d,]+)/);
+    if (!matches || matches.length < 4) {
+        return { silver: 0, gold: 0, ancientCoins: 0 };
+    }
+    const [_, silverMatch, goldMatch, ancientCoinsMatch] = matches;
+    const silver = Number(silverMatch.replaceAll(",", ""));
+    const gold = Number(goldMatch.replaceAll(",", ""));
+    const ancientCoins = Number(ancientCoinsMatch.replaceAll(",", ""));
     return { silver, gold, ancientCoins };
 };
 exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS }));
+    const response = yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS }));
     return processStats(response);
 }), {
     interceptors: [
@@ -335,6 +325,9 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
             callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const previous = yield state.get();
                 const [_, query] = (0, state_1.parseUrl)(response.url);
+                if (!previous) {
+                    return;
+                }
                 state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver - Number(query.get("amt")) }));
             }),
         },
@@ -346,28 +339,412 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
             callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const previous = yield state.get();
                 const [_, query] = (0, state_1.parseUrl)(response.url);
+                if (!previous) {
+                    return;
+                }
                 state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver + Number(query.get("amt")) }));
             }),
         },
     ],
+    defaultState: {
+        silver: 0,
+        gold: 0,
+        ancientCoins: 0,
+    },
 });
 const depositSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    const stats = yield exports.statsState.get();
-    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER, amt: amount.toString() }));
-    stats.silver -= amount;
-    yield exports.statsState.set(stats);
+    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER, amt: amount.toString() }));
 });
 exports.depositSilver = depositSilver;
 const withdrawSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    const stats = yield exports.statsState.get();
-    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({
+    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
         go: page_1.WorkerGo.WITHDRAW_SILVER,
         amt: amount.toString(),
     }));
-    stats.silver += amount;
-    yield exports.statsState.set(stats);
 });
 exports.withdrawSilver = withdrawSilver;
+
+
+/***/ }),
+
+/***/ 888:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.harvestAll = exports.farmIdState = exports.farmStatusState = exports.CropStatus = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+const page_1 = __webpack_require__(952);
+const api_1 = __webpack_require__(126);
+const popup_1 = __webpack_require__(469);
+var CropStatus;
+(function (CropStatus) {
+    CropStatus["EMPTY"] = "empty";
+    CropStatus["GROWING"] = "growing";
+    CropStatus["READY"] = "ready";
+})(CropStatus || (exports.CropStatus = CropStatus = {}));
+const processFarmStatus = (root) => {
+    const statusText = root.textContent;
+    if (!statusText) {
+        return {
+            status: CropStatus.EMPTY,
+            count: 0,
+        };
+    }
+    // 36 READY!
+    const count = Number(statusText.split(" ")[0]);
+    let status = CropStatus.EMPTY;
+    if (statusText.toLowerCase().includes("growing")) {
+        status = CropStatus.GROWING;
+    }
+    else if (statusText.toLowerCase().includes("ready")) {
+        status = CropStatus.READY;
+    }
+    return { status, count };
+};
+const processFarmPage = (root) => {
+    const plots = root.querySelectorAll("#croparea #crops .col-25");
+    const count = plots.length;
+    let status = CropStatus.EMPTY;
+    for (const plot of plots) {
+        const image = plot.querySelector("img");
+        if ((image === null || image === void 0 ? void 0 : image.style.opacity) === "1") {
+            status = CropStatus.READY;
+        }
+        else if (status === CropStatus.EMPTY) {
+            status = CropStatus.GROWING;
+        }
+    }
+    return { status, count };
+};
+exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_1.requestHTML)(page_1.Page.FARM, new URLSearchParams());
+    return processFarmPage(response.body);
+}), {
+    timeout: 5,
+    defaultState: {
+        status: CropStatus.EMPTY,
+        count: 4,
+    },
+    interceptors: [
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.READY_COUNT })],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                state.set(processFarmStatus(root.body));
+            }),
+        },
+        {
+            match: [page_1.Page.FARM, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                state.set(processFarmPage(root.body));
+            }),
+        },
+        {
+            match: [page_1.Page.HOME_PATH, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                const linkStatus = root.body.querySelector("a[href^='xfarm.php'] .item-after");
+                if (!linkStatus) {
+                    return;
+                }
+                state.set(processFarmStatus(linkStatus));
+            }),
+        },
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.FARM_STATUS })],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a;
+                const previous = yield state.get();
+                const raw = yield response.text();
+                const rawPlots = raw.split(";");
+                if (rawPlots.length < ((_a = previous === null || previous === void 0 ? void 0 : previous.count) !== null && _a !== void 0 ? _a : 4)) {
+                    yield state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.EMPTY }));
+                    return;
+                }
+                let status = CropStatus.EMPTY;
+                for (const plot of rawPlots) {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const [plotId, percent, secondsLeft, secondsSince] = plot.split("-");
+                    const percentReady = Number(percent);
+                    if (percentReady === 100) {
+                        status = CropStatus.READY;
+                        break;
+                    }
+                    else if (percentReady > 0) {
+                        status = CropStatus.GROWING;
+                    }
+                }
+                state.set(Object.assign(Object.assign({}, previous), { status }));
+            }),
+        },
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL })],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const previous = yield state.get();
+                state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.EMPTY }));
+                const { drops } = (yield response.json());
+                (0, popup_1.showPopup)({
+                    title: "Harvested Crops",
+                    contentHTML: `
+              ${Object.values(drops)
+                        .map((drop) => `
+                    <img
+                      src="${drop.img}"
+                      style="
+                        vertical-align: middle;
+                        width: 18px;
+                      "
+                    >
+                    (x${drop.qty})
+                  `)
+                        .join("&nbsp;")}
+            `,
+                });
+            }),
+        },
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.PLANT_ALL })],
+            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
+                const previous = yield state.get();
+                state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.GROWING }));
+            }),
+        },
+    ],
+});
+const processFarmId = (root) => {
+    var _a;
+    const farmIdRaw = (_a = root.querySelector("#farm")) === null || _a === void 0 ? void 0 : _a.textContent;
+    return farmIdRaw ? Number(farmIdRaw) : undefined;
+};
+exports.farmIdState = new state_1.CachedState(state_1.StorageKey.FARM_ID, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_1.requestHTML)(page_1.Page.FARM, new URLSearchParams());
+    return processFarmId(response.body);
+}), {
+    timeout: Number.POSITIVE_INFINITY,
+    defaultState: -1,
+    interceptors: [
+        {
+            match: [page_1.Page.FARM, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                state.set(processFarmId(root.body));
+            }),
+        },
+        {
+            match: [page_1.Page.HOME_PATH, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                const status = root.body.querySelector("a[href^='xfarm.php'] .item-after span");
+                if (!status) {
+                    return;
+                }
+                state.set(Number(status.dataset.id));
+            }),
+        },
+    ],
+});
+const harvestAll = () => __awaiter(void 0, void 0, void 0, function* () {
+    const farmId = yield exports.farmIdState.get();
+    yield (0, api_1.requestJSON)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL, id: String(farmId) }));
+});
+exports.harvestAll = harvestAll;
+
+
+/***/ }),
+
+/***/ 182:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.collectAll = exports.kitchenStatusState = exports.OvenStatus = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+const page_1 = __webpack_require__(952);
+const api_1 = __webpack_require__(126);
+var OvenStatus;
+(function (OvenStatus) {
+    OvenStatus["EMPTY"] = "empty";
+    OvenStatus["COOKING"] = "cooking";
+    OvenStatus["ATTENTION"] = "attention";
+    OvenStatus["READY"] = "complete";
+})(OvenStatus || (exports.OvenStatus = OvenStatus = {}));
+const processKitchenStatus = (root) => {
+    const statusText = root === null || root === void 0 ? void 0 : root.textContent;
+    if (!statusText) {
+        return {
+            status: OvenStatus.EMPTY,
+            count: 0,
+        };
+    }
+    // 36 READY!
+    const count = Number(statusText.split(" ")[0]);
+    let status = OvenStatus.EMPTY;
+    if (statusText.toLowerCase().includes("cooking")) {
+        status = OvenStatus.COOKING;
+    }
+    else if (statusText.toLowerCase().includes("attention")) {
+        status = OvenStatus.ATTENTION;
+    }
+    else if (statusText.toLowerCase().includes("ready")) {
+        status = OvenStatus.READY;
+    }
+    return { status, count };
+};
+const processKitchenPage = (root) => {
+    const ovens = root.querySelectorAll("a[href^='oven.php']");
+    const count = ovens.length;
+    let status = OvenStatus.EMPTY;
+    for (const oven of ovens) {
+        const statusText = oven.querySelector(".item-after span");
+        if (!(statusText === null || statusText === void 0 ? void 0 : statusText.dataset.countdownTo)) {
+            continue;
+        }
+        const doneDate = (0, api_1.timestampToDate)(statusText.dataset.countdownTo);
+        const now = new Date();
+        if (doneDate < now) {
+            status = OvenStatus.READY;
+            break;
+        }
+        const images = oven.querySelectorAll("img");
+        if (images.length > 1 &&
+            [OvenStatus.EMPTY, OvenStatus.COOKING].includes(status)) {
+            status = OvenStatus.ATTENTION;
+        }
+        else if (status === OvenStatus.EMPTY) {
+            status = OvenStatus.COOKING;
+        }
+    }
+    return { status, count };
+};
+exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_1.requestHTML)(page_1.Page.KITCHEN, new URLSearchParams());
+    return processKitchenPage(response.body);
+}), {
+    timeout: 5,
+    defaultState: {
+        status: OvenStatus.EMPTY,
+        count: 0,
+    },
+    interceptors: [
+        {
+            match: [page_1.Page.HOME_PATH, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                const kitchenStatus = root === null || root === void 0 ? void 0 : root.querySelector("a[href='kitchen.php'] .item-after span");
+                state.set(processKitchenStatus(kitchenStatus || undefined));
+            }),
+        },
+        {
+            match: [page_1.Page.KITCHEN, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                state.set(processKitchenPage(root.body));
+            }),
+        },
+        {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }),
+            ],
+            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set({ status: OvenStatus.EMPTY });
+            }),
+        },
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COOK_ALL })],
+            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set({ status: OvenStatus.COOKING });
+            }),
+        },
+    ],
+});
+const collectAll = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }));
+});
+exports.collectAll = collectAll;
+
+
+/***/ }),
+
+/***/ 250:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.mealsStatusState = void 0;
+const state_1 = __webpack_require__(619);
+const utils_1 = __webpack_require__(683);
+const page_1 = __webpack_require__(952);
+const api_1 = __webpack_require__(126);
+const processMealStatus = (root) => {
+    var _a;
+    const mealList = (0, page_1.getListByTitle)(/Time-based Effects/, root);
+    if (!mealList) {
+        return { meals: [] };
+    }
+    const meals = [];
+    for (const mealWrapper of mealList.children) {
+        const mealName = (_a = mealWrapper.querySelector("strong")) === null || _a === void 0 ? void 0 : _a.textContent;
+        if (!mealName) {
+            continue;
+        }
+        const meal = mealName;
+        const countdown = mealWrapper.querySelector("[data-countdown-to]");
+        const finishedAt = (countdown === null || countdown === void 0 ? void 0 : countdown.dataset.countdownTo)
+            ? (0, api_1.timestampToDate)(countdown.dataset.countdownTo).getTime()
+            : Date.now();
+        meals.push({ meal, finishedAt });
+    }
+    return { meals };
+};
+exports.mealsStatusState = new state_1.CachedState(state_1.StorageKey.MEALS_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_1.requestHTML)(page_1.Page.HOME_PATH);
+    return processMealStatus(response.body);
+}), {
+    defaultState: {
+        meals: [],
+    },
+    interceptors: [
+        {
+            match: [page_1.Page.HOME_PATH, new URLSearchParams()],
+            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, utils_1.getDocument)(response);
+                state.set(processMealStatus(root.body));
+            }),
+        },
+    ],
+});
 
 
 /***/ }),
@@ -423,10 +800,14 @@ const processPerks = (root) => {
     return { perkSets, currentPerkSetId };
 };
 exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.sendRequest)(page_1.Page.PERKS);
+    const response = yield (0, api_1.requestHTML)(page_1.Page.PERKS);
     return processPerks(response);
 }), {
     timeout: 60 * 60 * 24, // 1 day
+    defaultState: {
+        perkSets: [],
+        currentPerkSetId: undefined,
+    },
     interceptors: [
         {
             match: [page_1.Page.PERKS, new URLSearchParams()],
@@ -449,12 +830,12 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
 });
 const getActivityPerksSet = (activity, options) => __awaiter(void 0, void 0, void 0, function* () {
     const state = yield exports.perksState.get(options);
-    return state.perkSets.find(({ name }) => name === activity);
+    return state === null || state === void 0 ? void 0 : state.perkSets.find(({ name }) => name === activity);
 });
 exports.getActivityPerksSet = getActivityPerksSet;
 const getCurrentPerkSet = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const state = yield exports.perksState.get(options);
-    return state.perkSets.find(({ id }) => id === state.currentPerkSetId);
+    return state === null || state === void 0 ? void 0 : state.perkSets.find(({ id }) => id === (state === null || state === void 0 ? void 0 : state.currentPerkSetId));
 });
 exports.getCurrentPerkSet = getCurrentPerkSet;
 const isActivePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, function* () {
@@ -463,9 +844,13 @@ const isActivePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, func
 });
 exports.isActivePerkSet = isActivePerkSet;
 const resetPerks = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const state = yield exports.perksState.get();
-    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.RESET_PERKS }));
-    exports.perksState.set(Object.assign(Object.assign({}, state), { currentPerkSetId: undefined }));
+    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.RESET_PERKS }));
+    exports.perksState.set({
+        perkSets: (_a = state === null || state === void 0 ? void 0 : state.perkSets) !== null && _a !== void 0 ? _a : [],
+        currentPerkSetId: undefined,
+    });
 });
 exports.resetPerks = resetPerks;
 const activatePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, function* () {
@@ -473,13 +858,11 @@ const activatePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, func
         return;
     }
     console.debug(`Activating ${set.name} Perks`);
-    const state = yield exports.perksState.get();
     yield (0, exports.resetPerks)();
-    yield (0, api_1.sendRequest)(page_1.Page.WORKER, new URLSearchParams({
+    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
         go: page_1.WorkerGo.ACTIVATE_PERK_SET,
         id: set.id.toString(),
     }));
-    exports.perksState.set(Object.assign(Object.assign({}, state), { currentPerkSetId: set.id }));
 });
 exports.activatePerkSet = activatePerkSet;
 
@@ -509,16 +892,17 @@ exports.latestVersionState = new state_1.CachedState(state_1.StorageKey.LATEST_V
     const response = yield (0, utils_1.corsFetch)(exports.SCRIPT_URL);
     const htmlString = yield response.text();
     const document = new DOMParser().parseFromString(htmlString, "text/html");
-    return (((_a = document.querySelector("dd.script-show-version")) === null || _a === void 0 ? void 0 : _a.textContent) || undefined);
+    return (((_a = document.querySelector("dd.script-show-version")) === null || _a === void 0 ? void 0 : _a.textContent) || "1.0.0");
 }), {
     timeout: 60 * 60 * 24, // 1 day
+    defaultState: "1.0.0",
 });
 
 
 /***/ }),
 
 /***/ 619:
-/***/ (function(__unused_webpack_module, exports) {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -531,7 +915,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CachedState = exports.watchQueries = exports.queryInterceptors = exports.StorageKey = exports.urlMatches = exports.parseUrl = void 0;
+exports.CachedState = exports.watchQueries = exports.onFetchResponse = exports.queryInterceptors = exports.StorageKey = exports.toUrl = exports.urlMatches = exports.parseUrl = void 0;
+const object_1 = __webpack_require__(968);
 const parseUrl = (url) => {
     // https://farmrpg.com/worker.php?cachebuster=271544&go=getchat&room=giveaways
     const truncatedUrl = url.replace("https://farmrpg.com/", "");
@@ -557,33 +942,57 @@ const urlMatches = (url, targetPage, targetQuery) => {
     return true;
 };
 exports.urlMatches = urlMatches;
+const toUrl = (page, query) => {
+    query = query !== null && query !== void 0 ? query : new URLSearchParams();
+    query.set("cachebuster", Date.now().toString());
+    return `https://farmrpg.com/${page}.php?${query.toString()}`;
+};
+exports.toUrl = toUrl;
 var StorageKey;
 (function (StorageKey) {
+    StorageKey["CHAT_BANNERS"] = "chatBanners";
+    StorageKey["CURRENT_PERKS_SET_ID"] = "currentPerksSetId";
+    StorageKey["FARM_ID"] = "farmId";
+    StorageKey["FARM_STATE"] = "farmState";
+    StorageKey["FARM_STATUS"] = "farmStatus";
+    StorageKey["IS_BETA"] = "isBeta";
+    StorageKey["IS_CHAT_ENABLED"] = "isChatEnabled";
+    StorageKey["IS_DARK_MODE"] = "isDarkMode";
+    StorageKey["IS_MUSIC_ENABLED"] = "isMusicEnabled";
+    StorageKey["ITEM_DATA"] = "itemData";
+    StorageKey["KITHCEN_STATUS"] = "kitchenStatus";
+    StorageKey["LATEST_VERSION"] = "latestVersion";
+    StorageKey["MAILBOX"] = "mailbox";
+    StorageKey["MEALS_STATUS"] = "mealsStatus";
+    StorageKey["PAGE_DATA"] = "pageData";
+    StorageKey["PERKS_SETS"] = "perkSets";
     StorageKey["RECENT_UPDATE"] = "recentUpdate";
+    StorageKey["STATS"] = "stats";
     StorageKey["USERNAME"] = "username";
     StorageKey["USER_ID"] = "userId";
-    StorageKey["PAGE_DATA"] = "pageData";
-    StorageKey["ITEM_DATA"] = "itemData";
-    StorageKey["LATEST_VERSION"] = "latestVersion";
-    StorageKey["CHAT_BANNERS"] = "chatBanners";
-    StorageKey["STATS"] = "stats";
-    StorageKey["MAILBOX"] = "mailbox";
-    StorageKey["PERKS_SETS"] = "perkSets";
-    StorageKey["CURRENT_PERKS_SET_ID"] = "currentPerksSetId";
-    StorageKey["IS_DARK_MODE"] = "isDarkMode";
-    StorageKey["IS_BETA"] = "isBeta";
-    StorageKey["IS_MUSIC_ENABLED"] = "isMusicEnabled";
-    StorageKey["IS_CHAT_ENABLED"] = "isChatEnabled";
 })(StorageKey || (exports.StorageKey = StorageKey = {}));
 const generateEmptyRootState = () => {
-    const rootState = {};
+    const state = {};
     for (const [_, value] of Object.entries(StorageKey)) {
-        rootState[value] = JSON.stringify(undefined);
+        state[value] = JSON.stringify(undefined);
     }
-    return rootState;
+    return state;
 };
 const rootState = generateEmptyRootState();
 exports.queryInterceptors = [];
+const onFetchResponse = (response) => {
+    // only check farmrpg URLs
+    if (!response.url.startsWith("https://farmrpg.com")) {
+        return;
+    }
+    for (const [state, interceptor] of exports.queryInterceptors) {
+        if ((0, exports.urlMatches)(response.url, ...interceptor.match)) {
+            console.debug(`[STATE] fetch intercepted ${response.url}`, interceptor);
+            interceptor.callback(state, response.clone());
+        }
+    }
+};
+exports.onFetchResponse = onFetchResponse;
 const watchQueries = () => {
     (function (open) {
         XMLHttpRequest.prototype.open = function () {
@@ -597,6 +1006,7 @@ const watchQueries = () => {
                 }
                 for (const [state, interceptor] of exports.queryInterceptors) {
                     if ((0, exports.urlMatches)(this.responseURL, ...interceptor.match)) {
+                        console.debug(`[STATE] XMLHttpRequest intercepted ${this.responseURL}`, interceptor);
                         interceptor.callback(state, {
                             headers: new Headers(),
                             ok: this.status >= 200 && this.status < 300,
@@ -618,40 +1028,117 @@ const watchQueries = () => {
             Reflect.apply(open, this, arguments);
         };
     })(XMLHttpRequest.prototype.open);
+    const originalFetch = window.fetch;
+    window.fetch = (input, init) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield originalFetch(input, init);
+        if (response.hasBeenIntercepted) {
+            response.hasBeenIntercepted = true;
+            (0, exports.onFetchResponse)(response);
+        }
+        return response;
+    });
+    const originalFetchWorker = fetchWorker;
+    fetchWorker = (action, parameters) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield originalFetchWorker(action, parameters);
+        if (response.hasBeenIntercepted) {
+            response.hasBeenIntercepted = true;
+            (0, exports.onFetchResponse)(response);
+        }
+        return response;
+    });
 };
 exports.watchQueries = watchQueries;
 class CachedState {
-    constructor(key, fetch, { defaultState, timeout, updatedAt, interceptors = [], } = {}) {
+    constructor(key, fetch, { defaultState, timeout, updatedAt, interceptors = [], persist = true, }) {
         this.key = key;
         this.defaultState = defaultState;
         this.updatedAt = updatedAt !== null && updatedAt !== void 0 ? updatedAt : new Date(0);
         this.timeout = timeout !== null && timeout !== void 0 ? timeout : 60;
         this.fetch = fetch;
+        this.updateListeners = [];
+        this.persist = persist;
         for (const interceptor of interceptors) {
             exports.queryInterceptors.push([this, interceptor]);
         }
         rootState[this.key] = JSON.stringify(defaultState || undefined);
+        this.load();
+    }
+    onUpdate(callback) {
+        this.updateListeners.push(callback);
     }
     get() {
         return __awaiter(this, arguments, void 0, function* ({ ignoreCache } = {}) {
-            if (ignoreCache ||
-                this.updatedAt.getTime() + this.timeout * 1000 < Date.now()) {
-                yield this.set(yield this.fetch());
+            if (this.getting) {
+                console.debug(`[STATE] Waiting for ${this.key} fetch`, this.getting);
+                return yield this.getting;
             }
-            return JSON.parse(rootState[this.key]);
+            this.getting = new Promise((resolve) => {
+                if (!rootState[this.key] ||
+                    ignoreCache ||
+                    this.updatedAt.getTime() + this.timeout * 1000 < Date.now()) {
+                    console.debug(`[STATE] Fetching ${this.key}`, {
+                        ignoreCache,
+                        updatedAt: this.updatedAt,
+                        timeout: this.timeout,
+                        previous: rootState[this.key],
+                    });
+                    this.fetch().then((result) => {
+                        this.set(result);
+                        resolve(result);
+                    });
+                }
+                else {
+                    // console.debug(`[STATE] Returning cached ${this.key}`, {
+                    //   ignoreCache,
+                    //   updatedAt: this.updatedAt,
+                    //   timeout: this.timeout,
+                    //   previous: rootState[this.key],
+                    // });
+                    const raw = rootState[this.key];
+                    resolve(raw ? JSON.parse(raw) : undefined);
+                }
+            });
+            const result = yield this.getting;
+            this.getting = undefined;
+            return result;
         });
     }
-    set(value) {
+    set(input) {
         return __awaiter(this, void 0, void 0, function* () {
+            const value = (0, object_1.isObject)(this.defaultState)
+                ? Object.assign(Object.assign({}, this.defaultState), input) : (input !== null && input !== void 0 ? input : this.defaultState);
+            console.debug(`[STATE] Setting ${this.key}`, value);
             const encoded = JSON.stringify(value);
-            yield GM.setValue(this.key, encoded);
-            this.updatedAt = new Date();
+            this.updatedAt = value === undefined ? new Date(0) : new Date();
             rootState[this.key] = encoded;
+            for (const listener of this.updateListeners) {
+                listener(value);
+            }
+            if (this.persist) {
+                yield GM.setValue(this.key, JSON.stringify([this.updatedAt.getTime(), encoded]));
+            }
         });
     }
     load() {
         return __awaiter(this, void 0, void 0, function* () {
-            rootState[this.key] = yield GM.getValue(this.key, "undefined");
+            if (!this.persist) {
+                return;
+            }
+            const raw = (yield GM.getValue(this.key));
+            if (!raw) {
+                return;
+            }
+            const result = JSON.parse(raw);
+            if (!Array.isArray(result) ||
+                result.length !== 2 ||
+                typeof result[0] !== "number" ||
+                typeof result[1] !== "string") {
+                yield this.set(this.defaultState);
+                return;
+            }
+            const [timestamp, encoded] = result;
+            this.updatedAt = new Date(timestamp);
+            rootState[this.key] = encoded;
         });
     }
     reset() {
@@ -1217,8 +1704,8 @@ exports.cleanupHome = {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Hide players card */
-            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
-            .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
+            [data-page="${page_1.Page.HOME_PAGE}"] .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title,
+            [data-page="${page_1.Page.HOME_PAGE}"] .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title ~ .content-block-title + .card {
               display: none !important;
             }
           <style>
@@ -1228,8 +1715,8 @@ exports.cleanupHome = {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Hide theme switcher */
-            [data-page="index-1"] .page-content > p:nth-of-type(1),
-            [data-page="index-1"] .page-content > p:nth-of-type(2) {
+            [data-page="${page_1.Page.HOME_PAGE}"] .page-content > p:nth-of-type(1),
+            [data-page="${page_1.Page.HOME_PAGE}"] .page-content > p:nth-of-type(2) {
               display: none !important;
             }
           <style>
@@ -1238,8 +1725,8 @@ exports.cleanupHome = {
         if (settings[exports.SETTING_HIDE_FOOTER.id].value) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
-            [data-page="index-1"] .page-content > p:last-of-type,
-            [data-page="index-1"] .page-content > div:last-of-type {
+            [data-page="${page_1.Page.HOME_PAGE}"] .page-content > p:last-of-type,
+            [data-page="${page_1.Page.HOME_PAGE}"] .page-content > div:last-of-type {
               display: none !important;
             }
           <style>
@@ -1248,14 +1735,14 @@ exports.cleanupHome = {
     },
     onPageLoad: (settings, page) => {
         var _a, _b;
-        if (page !== page_1.Page.HOME) {
+        if (page !== page_1.Page.HOME_PAGE) {
             return;
         }
         if (!settings[exports.SETTING_COMPRESS_SKILLS.id].value) {
             return;
         }
         // get wrappers
-        const skillsCard = (0, page_1.getCardByTitle)("My skills");
+        const skillsCard = (0, page_1.getCardByTitle)(/my skills/i);
         const skillsTitle = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.previousElementSibling;
         const skillsCardInner = skillsCard === null || skillsCard === void 0 ? void 0 : skillsCard.querySelector(".card-content-inner");
         if (skillsCard && skillsTitle && skillsCardInner) {
@@ -2483,6 +2970,92 @@ exports.fishinInBarrel = {
 
 /***/ }),
 
+/***/ 894:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fieldNotifications = void 0;
+const farm_1 = __webpack_require__(888);
+const notifications_1 = __webpack_require__(783);
+const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(619);
+const SETTING_HARVEST_NOTIFICATIONS = {
+    id: "harvestNotifications",
+    title: "Farm: Harvest Notifications",
+    description: `
+    Show notification when crops are ready to harvest
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+const SETTING_EMPTY_NOTIFICATIONS = {
+    id: "emptyNotifications",
+    title: "Farm: Empty Notifications",
+    description: `
+    Show notification when fields are empty
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+(0, notifications_1.registerNotificationHandler)(notifications_1.Handler.HARVEST, farm_1.harvestAll);
+const checkFields = (settings) => __awaiter(void 0, void 0, void 0, function* () {
+    const farmId = yield farm_1.farmIdState.get();
+    const farmStatus = yield farm_1.farmStatusState.get();
+    if (!farmStatus) {
+        return;
+    }
+    if (farmStatus.status === farm_1.CropStatus.EMPTY &&
+        settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
+        (0, notifications_1.sendNotification)({
+            class: "btnorange",
+            id: notifications_1.NotificationId.FIELD,
+            text: "Fields are empty!",
+            href: (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) })),
+        });
+    }
+    else if (farmStatus.status === farm_1.CropStatus.READY &&
+        settings[SETTING_HARVEST_NOTIFICATIONS.id].value) {
+        const farmUrl = (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) }));
+        (0, notifications_1.sendNotification)({
+            class: "btngreen",
+            id: notifications_1.NotificationId.FIELD,
+            text: "Crops are ready!",
+            href: farmUrl,
+            actions: [
+                { text: "View", href: farmUrl },
+                {
+                    text: "Harvest",
+                    handler: notifications_1.Handler.HARVEST,
+                },
+            ],
+        });
+    }
+    else {
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.FIELD);
+    }
+});
+exports.fieldNotifications = {
+    settings: [SETTING_HARVEST_NOTIFICATIONS, SETTING_EMPTY_NOTIFICATIONS],
+    onInitialize: (settings) => {
+        checkFields(settings);
+        setInterval(() => checkFields(settings), 5 * 1000);
+        farm_1.farmStatusState.onUpdate(() => checkFields(settings));
+    },
+};
+
+
+/***/ }),
+
 /***/ 454:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -2537,6 +3110,112 @@ exports.highlightSelfInChat = {
 
 /***/ }),
 
+/***/ 737:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.kitchenNotifications = void 0;
+const kitchen_1 = __webpack_require__(182);
+const notifications_1 = __webpack_require__(783);
+const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(619);
+const SETTING_COMPLETE_NOTIFICATIONS = {
+    id: "harvestNotifications",
+    title: "Kitchen: Meals ready notification",
+    description: `
+    Show notification when meals are ready to collect
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+const SETTING_ATTENTION_NOTIFICATIONS = {
+    id: "attentionNotifications",
+    title: "Kitchen: Ovens attention notification",
+    description: `
+    Show notification when ovens need attention
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+const SETTING_EMPTY_NOTIFICATIONS = {
+    id: "emptyNotifications",
+    title: "Kitchen: Ovens empty notification",
+    description: `
+    Show notification when ovens are empty
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+(0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_MEALS, kitchen_1.collectAll);
+const checkOvens = (settings) => __awaiter(void 0, void 0, void 0, function* () {
+    const kitchenStatus = yield kitchen_1.kitchenStatusState.get();
+    if (!kitchenStatus) {
+        return;
+    }
+    if (kitchenStatus.status === kitchen_1.OvenStatus.EMPTY &&
+        settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
+        (0, notifications_1.sendNotification)({
+            class: "btnorange",
+            id: notifications_1.NotificationId.OVEN,
+            text: "Ovens are empty!",
+            href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+        });
+    }
+    else if (kitchenStatus.status === kitchen_1.OvenStatus.ATTENTION &&
+        settings[SETTING_ATTENTION_NOTIFICATIONS.id].value) {
+        (0, notifications_1.sendNotification)({
+            class: "btnorange",
+            id: notifications_1.NotificationId.OVEN,
+            text: "Ovens need attention",
+            href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+        });
+    }
+    else if (kitchenStatus.status === kitchen_1.OvenStatus.READY &&
+        settings[SETTING_COMPLETE_NOTIFICATIONS.id].value) {
+        (0, notifications_1.sendNotification)({
+            class: "btngreen",
+            id: notifications_1.NotificationId.OVEN,
+            text: "Meals are ready!",
+            href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+            actions: [
+                { text: "View", href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()) },
+                {
+                    text: "Collect",
+                    handler: notifications_1.Handler.COLLECT_MEALS,
+                },
+            ],
+        });
+    }
+    else {
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.OVEN);
+    }
+});
+exports.kitchenNotifications = {
+    settings: [
+        SETTING_COMPLETE_NOTIFICATIONS,
+        SETTING_ATTENTION_NOTIFICATIONS,
+        SETTING_EMPTY_NOTIFICATIONS,
+    ],
+    onInitialize: (settings) => {
+        checkOvens(settings);
+        setInterval(() => checkOvens(settings), 5 * 1000);
+        kitchen_1.kitchenStatusState.onUpdate(() => checkOvens(settings));
+    },
+};
+
+
+/***/ }),
+
 /***/ 711:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -2556,6 +3235,7 @@ const page_1 = __webpack_require__(952);
 const api_1 = __webpack_require__(413);
 exports.linkifyQuickCraft = {
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         // make sure we're on the item page
         if (page !== page_1.Page.ITEM) {
             return;
@@ -2564,25 +3244,96 @@ exports.linkifyQuickCraft = {
         if (!currentPage) {
             return;
         }
-        const missingIngredients = currentPage.querySelectorAll("span[style='color:red']");
-        for (const ingredient of missingIngredients) {
-            const ingredientName = ingredient.textContent;
-            if (!ingredientName) {
-                continue;
-            }
-            const data = yield (0, api_1.getItemByName)(ingredientName);
+        const missingIngredientsWrapper = currentPage.querySelector("span[style='color:red']");
+        if (!missingIngredientsWrapper) {
+            return;
+        }
+        const missingIngredients = (_a = missingIngredientsWrapper.textContent) === null || _a === void 0 ? void 0 : _a.split(", ");
+        missingIngredientsWrapper.textContent = "";
+        for (const ingredient of missingIngredients !== null && missingIngredients !== void 0 ? missingIngredients : []) {
+            const data = yield (0, api_1.getItemByName)(ingredient);
             if (!data) {
-                console.error(`No data for ${ingredientName}`);
+                console.error(`No data for ${ingredient}`);
                 continue;
             }
             const link = document.createElement("a");
             link.dataset.view = ".view-main";
             link.href = `item.php?id=${data.id}`;
-            link.textContent = ingredientName;
+            link.textContent = ingredient;
             link.style.color = "red";
-            ingredient.replaceWith(link);
+            link.style.marginRight = "5px";
+            link.style.display = "block";
+            missingIngredientsWrapper.append(link);
         }
     }),
+};
+
+
+/***/ }),
+
+/***/ 792:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.mealNotifications = void 0;
+const meals_1 = __webpack_require__(250);
+const notifications_1 = __webpack_require__(783);
+const SETTING_MEAL_NOTIFICATIONS = {
+    id: "mealNotifications",
+    title: "Meal Notifications",
+    description: `
+    Show notification when meals are active with their countdowns
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+let mealInterval;
+const checkMeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    const mealStatus = yield meals_1.mealsStatusState.get();
+    if (!mealStatus || mealStatus.meals.length === 0) {
+        clearInterval(mealInterval);
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.MEAL);
+        return;
+    }
+    (0, notifications_1.sendNotification)({
+        class: "btnorange",
+        id: notifications_1.NotificationId.MEAL,
+        text: `${mealStatus.meals.length} meal${mealStatus.meals.length === 1 ? "" : "s"} active: ${mealStatus.meals
+            .map((active) => {
+            const now = new Date();
+            const diffSeconds = active.finishedAt / 1000 - now.getTime() / 1000;
+            const minutes = Math.floor(diffSeconds / 60);
+            const seconds = Math.floor(diffSeconds % 60);
+            const timeRemaining = `${minutes}:${seconds
+                .toString()
+                .padStart(2, "0")}`;
+            return `${active.meal} (${timeRemaining})`;
+        })
+            .join(", ")}`,
+    });
+    if (!mealInterval) {
+        mealInterval = setInterval(checkMeals, 1 * 1000);
+    }
+});
+exports.mealNotifications = {
+    settings: [SETTING_MEAL_NOTIFICATIONS],
+    onInitialize: (settings) => {
+        if (!settings[SETTING_MEAL_NOTIFICATIONS.id].value) {
+            return;
+        }
+        checkMeals();
+        meals_1.mealsStatusState.onUpdate(checkMeals);
+    },
 };
 
 
@@ -2609,7 +3360,7 @@ exports.moveUpdateToTop = {
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         // make sure we're on the home page
-        if (page !== page_1.Page.HOME) {
+        if (page !== page_1.Page.HOME_PAGE) {
             return;
         }
         // get the recent card and title
@@ -2690,10 +3441,9 @@ exports.SETTING_PERK_MANAGER = {
     type: "boolean",
     defaultValue: true,
 };
-const KEY_NOTIFICATIONS = "activeperks";
 const getNotification = (activity) => ({
     class: "btnorange",
-    id: KEY_NOTIFICATIONS,
+    id: notifications_1.NotificationId.PERKS,
     text: `${activity} perks activated`,
 });
 exports.perkManagment = {
@@ -2702,6 +3452,10 @@ exports.perkManagment = {
         var _a, _b, _c, _d;
         // make sure the setting is enabled
         if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
+            return;
+        }
+        // don't change anything on perks page so you can edit
+        if (page === page_1.Page.PERKS) {
             return;
         }
         const defaultPerks = yield (0, perks_1.getActivityPerksSet)(perks_1.PerkActivity.DEFAULT);
@@ -2730,7 +3484,7 @@ exports.perkManagment = {
                     (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.CRAFTING));
                     quickcraftButton.click();
                     yield (0, perks_1.activatePerkSet)(defaultPerks);
-                    (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
+                    (0, notifications_1.removeNotification)(notifications_1.NotificationId.PERKS);
                 }));
                 (_b = quickcraftButton.parentElement) === null || _b === void 0 ? void 0 : _b.insertBefore(proxyButton, quickcraftButton);
             }
@@ -2759,7 +3513,7 @@ exports.perkManagment = {
                 (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.SELLING));
                 setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
                     yield (0, perks_1.activatePerkSet)(defaultPerks);
-                    (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
+                    (0, notifications_1.removeNotification)(notifications_1.NotificationId.PERKS);
                 }), 1000);
                 return true;
             }));
@@ -2785,7 +3539,7 @@ exports.perkManagment = {
                     (0, notifications_1.sendNotification)(getNotification(perks_1.PerkActivity.FRIENDSHIP));
                     quickgiveButton.click();
                     yield (0, perks_1.activatePerkSet)(defaultPerks);
-                    (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
+                    (0, notifications_1.removeNotification)(notifications_1.NotificationId.PERKS);
                 }));
                 (_d = quickgiveButton.parentElement) === null || _d === void 0 ? void 0 : _d.insertBefore(proxyButton, quickgiveButton);
             }
@@ -2809,7 +3563,7 @@ exports.perkManagment = {
             return;
         }
         (0, perks_1.activatePerkSet)(defaultPerks);
-        (0, notifications_1.removeNotification)(KEY_NOTIFICATIONS);
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.PERKS);
     }),
 };
 
@@ -2825,13 +3579,17 @@ exports.quests = void 0;
 const theme_1 = __webpack_require__(178);
 exports.quests = {
     onInitialize: () => {
-        // move spacing from panel margin to message padding regardless of setting
         document.head.insertAdjacentHTML("beforeend", `
       <style>
+        /* make room for minimize button */
+        #statszone > div {
+          padding-right: 15px;
+        }
+        /* make line prettier */
         #statszone hr {
-            height: 1px;
-            background-color: ${theme_1.BORDER_GRAY};
-            border: none;
+          height: 1px;
+          background-color: ${theme_1.BORDER_GRAY};
+          border: none;
         }
       <style>
     `);
@@ -2840,7 +3598,6 @@ exports.quests = {
         var _a;
         const popup = document.querySelector(".aqp");
         if (!popup) {
-            console.error("quest popup not found");
             return;
         }
         popup.dataset.isMinimized = (_a = popup.dataset.isMinimized) !== null && _a !== void 0 ? _a : "false";
@@ -2957,6 +3714,54 @@ exports.quicksellSafely = {
 
 /***/ }),
 
+/***/ 26:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.vaultSolver = void 0;
+const vault_1 = __webpack_require__(279);
+const page_1 = __webpack_require__(952);
+exports.vaultSolver = {
+    onPageLoad: (settings, page) => {
+        var _a;
+        if (page !== page_1.Page.VAULT) {
+            return;
+        }
+        const input = document.querySelector("#vaultcode");
+        if (!input) {
+            console.error("Input not found");
+            return;
+        }
+        let info = (0, vault_1.generateDigitInfo)();
+        const guessElements = document.querySelectorAll("[data-page='crack'] .row");
+        const guesses = [];
+        for (const [, guessElement] of guessElements.entries()) {
+            const digitElements = guessElement.querySelectorAll(".col-25");
+            if (digitElements.length > 0) {
+                const guess = [0, 0, 0, 0];
+                const hints = [vault_1.Hint.NONE, vault_1.Hint.NONE, vault_1.Hint.NONE, vault_1.Hint.NONE];
+                for (const [position, digitElement] of digitElements.entries()) {
+                    guess[position] = Number((_a = digitElement.textContent) === null || _a === void 0 ? void 0 : _a.slice(-1));
+                    hints[position] =
+                        // eslint-disable-next-line no-nested-ternary
+                        digitElement.dataset.type === "B"
+                            ? vault_1.Hint.CORRECT
+                            : digitElement.dataset.type === "Y"
+                                ? vault_1.Hint.CLOSE
+                                : vault_1.Hint.NONE;
+                }
+                guesses.push(guess);
+                info = (0, vault_1.applyGuess)(info, guess, hints);
+            }
+        }
+        input.value = (0, vault_1.generateGuess)(info, guesses.length).join("");
+    },
+};
+
+
+/***/ }),
+
 /***/ 70:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -2973,8 +3778,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.versionManager = void 0;
 const utils_1 = __webpack_require__(683);
-const api_1 = __webpack_require__(604);
 const notifications_1 = __webpack_require__(783);
+const api_1 = __webpack_require__(604);
 const popup_1 = __webpack_require__(469);
 const isVersion = (version) => version.split(".").length === 3;
 const normalizeVersion = (version) => version.split("-")[0];
@@ -2988,11 +3793,9 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.9" !== void 0 ? "1.0.9" : "1.0.0");
-const KEY_UPDATE_NOTIFICATION = "newversion";
+const currentVersion = normalizeVersion( true && "1.0.10" !== void 0 ? "1.0.10" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
-const HANDLER_CHANGES = "updateView";
-(0, notifications_1.registerNotificationHandler)(HANDLER_CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
+(0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const response = yield (0, utils_1.corsFetch)(README_URL);
     const htmlString = yield response.text();
@@ -3016,31 +3819,33 @@ const HANDLER_CHANGES = "updateView";
     }
     (0, popup_1.showPopup)({ title: "Farmhand Changelog", contentHTML, align: "left" });
 }));
-const HANDLER_UPDATE = "updateFarmhand";
-(0, notifications_1.registerNotificationHandler)(HANDLER_UPDATE, () => window.open(api_1.SCRIPT_URL));
+(0, notifications_1.registerNotificationHandler)(notifications_1.Handler.UPDATE, () => window.open(api_1.SCRIPT_URL));
 exports.versionManager = {
     onInitialize: () => __awaiter(void 0, void 0, void 0, function* () {
-        var _c;
-        const latestVersion = normalizeVersion((_c = (yield api_1.latestVersionState.get())) !== null && _c !== void 0 ? _c : "1.0.0");
+        const latestVersion = yield api_1.latestVersionState.get();
+        if (!latestVersion) {
+            console.error("Failed to get latest version");
+            return;
+        }
         if (isVersionHigher(latestVersion, currentVersion)) {
             (0, notifications_1.sendNotification)({
                 class: "btnblue",
-                id: KEY_UPDATE_NOTIFICATION,
+                id: notifications_1.NotificationId.UPDATE,
                 text: `Farmhand update available: ${currentVersion} → ${latestVersion}`,
                 actions: [
                     {
                         text: "View Changes",
-                        handlerName: HANDLER_CHANGES,
+                        handler: notifications_1.Handler.CHANGES,
                     },
                     {
                         text: "Update",
-                        handlerName: HANDLER_UPDATE,
+                        handler: notifications_1.Handler.CHANGES,
                     },
                 ],
             });
         }
         else {
-            (0, notifications_1.removeNotification)(KEY_UPDATE_NOTIFICATION);
+            (0, notifications_1.removeNotification)(notifications_1.NotificationId.UPDATE);
         }
     }),
 };
@@ -3071,29 +3876,40 @@ const chatNav_1 = __webpack_require__(922);
 const cleanupHome_1 = __webpack_require__(870);
 const collapseItemImage_1 = __webpack_require__(56);
 const compressChat_1 = __webpack_require__(223);
+const confirmation_1 = __webpack_require__(906);
 const customNavigation_1 = __webpack_require__(224);
 const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
+const harvestNotifications_1 = __webpack_require__(894);
 const fishInBarrel_1 = __webpack_require__(100);
 const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
+const kitchenNotifications_1 = __webpack_require__(737);
 const linkifyQuickCraft_1 = __webpack_require__(711);
+const mealNotifications_1 = __webpack_require__(792);
 const moveUpdateToTop_1 = __webpack_require__(417);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
 const quests_1 = __webpack_require__(710);
 const quickSellSafely_1 = __webpack_require__(760);
+const vaultSolver_1 = __webpack_require__(26);
 const versionManager_1 = __webpack_require__(70);
 const state_1 = __webpack_require__(619);
 const FEATURES = [
     // internal
     notifications_1.notifications,
+    confirmation_1.confirmations,
     autocomplete_1.autocomplete,
     versionManager_1.versionManager,
     // home
     cleanupHome_1.cleanupHome,
     moveUpdateToTop_1.moveUpdateToTop,
+    // kitchen
+    kitchenNotifications_1.kitchenNotifications,
+    mealNotifications_1.mealNotifications,
+    // farm,
+    harvestNotifications_1.fieldNotifications,
     // items
     buddyfarm_1.buddyFarm,
     collapseItemImage_1.collapseItemImage,
@@ -3103,6 +3919,8 @@ const FEATURES = [
     quests_1.quests,
     // bank
     banker_1.banker,
+    // vault
+    vaultSolver_1.vaultSolver,
     // fishing
     fishInBarrel_1.fishinInBarrel,
     // explore
@@ -3130,7 +3948,7 @@ const watchSubtree = (selector, handler, filter) => {
         var _a;
         const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
         const [page, parameters] = (0, page_1.getPage)();
-        console.debug(`${selector} Load`, page, parameters);
+        // console.debug(`${selector} Load`, page, parameters);
         for (const feature of FEATURES) {
             (_a = feature[handler]) === null || _a === void 0 ? void 0 : _a.call(feature, settings, page, parameters);
         }
@@ -3187,6 +4005,18 @@ const watchSubtree = (selector, handler, filter) => {
         watchSubtree("#desktopchatpanel", "onChatLoad");
     });
 })();
+
+
+/***/ }),
+
+/***/ 818:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getRandom = void 0;
+const getRandom = (array) => array[Math.floor(Math.random() * array.length)];
+exports.getRandom = getRandom;
 
 
 /***/ }),
@@ -3396,7 +4226,7 @@ exports.autocomplete = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.showConfirmation = void 0;
+exports.confirmations = exports.showConfirmation = void 0;
 const showConfirmation = (message, onYes, onNo) => {
     const overlay = document.createElement("div");
     overlay.classList.add("modal-overlay");
@@ -3428,6 +4258,18 @@ const showConfirmation = (message, onYes, onNo) => {
     document.body.append(modal);
 };
 exports.showConfirmation = showConfirmation;
+exports.confirmations = {
+    onInitialize: () => {
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          /* fix confirmation position */
+          .actions-modal-group {
+            margin-bottom: 0 !important;
+          }
+        <style>
+      `);
+    },
+};
 
 
 /***/ }),
@@ -3446,10 +4288,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = void 0;
+exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = exports.Handler = exports.NotificationId = void 0;
 const page_1 = __webpack_require__(952);
 const farmhandSettings_1 = __webpack_require__(973);
+const object_1 = __webpack_require__(968);
 const KEY_NOTIFICATIONS = "notifications";
+var NotificationId;
+(function (NotificationId) {
+    NotificationId["FIELD"] = "field";
+    NotificationId["MEAL"] = "meal";
+    NotificationId["OVEN"] = "oven";
+    NotificationId["PERKS"] = "perks";
+    NotificationId["UPDATE"] = "update";
+})(NotificationId || (exports.NotificationId = NotificationId = {}));
+var Handler;
+(function (Handler) {
+    Handler["CHANGES"] = "updateChanges";
+    Handler["COLLECT_MEALS"] = "collectMeals";
+    Handler["HARVEST"] = "harvest";
+    Handler["UPDATE"] = "update";
+})(Handler || (exports.Handler = Handler = {}));
+const isHandlerNotificationAction = (action) => "handler" in action;
+const isHandlerNotification = (notification) => "handler" in notification;
+const isLinkNotification = (notification) => "href" in notification;
+const isTextNotification = (notification) => !isHandlerNotification(notification) && !isLinkNotification(notification);
 const state = {
     notifications: [],
 };
@@ -3464,17 +4326,19 @@ const sendNotification = (notification) => __awaiter(void 0, void 0, void 0, fun
         notification,
     ];
     yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
-    renderNotifications();
+    renderNotifications(true);
 });
 exports.sendNotification = sendNotification;
 const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
-    const notificationId = typeof notification === "string" ? notification : notification.id;
+    const notificationId = (0, object_1.isObject)(notification)
+        ? notification.id
+        : notification;
     state.notifications = state.notifications.filter(({ id }) => id !== notificationId);
     yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
     renderNotifications();
 });
 exports.removeNotification = removeNotification;
-const renderNotifications = () => {
+const renderNotifications = (force = false) => {
     var _a, _b, _c, _d, _e, _f;
     const pageContent = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".page-content");
     if (!pageContent) {
@@ -3483,7 +4347,7 @@ const renderNotifications = () => {
     }
     // remove existing notifications
     const notifications = document.querySelectorAll(".fh-notification");
-    if (notifications.length === state.notifications.length) {
+    if (!force && notifications.length === state.notifications.length) {
         return;
     }
     for (const notification of notifications) {
@@ -3494,31 +4358,33 @@ const renderNotifications = () => {
         if (notification.replacesHref) {
             (_c = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(`a[href="${notification.replacesHref}"]`)) === null || _c === void 0 ? void 0 : _c.remove();
         }
-        const notificationElement = document.createElement(notification.handlerName ? "a" : "span");
+        const notificationElement = document.createElement(isTextNotification(notification) ? "span" : "a");
         notificationElement.classList.add("button");
         notificationElement.classList.add("fh-notification");
-        notificationElement.style.cursor = notification.handlerName
-            ? "pointer"
-            : "default";
+        notificationElement.style.cursor = isTextNotification(notification)
+            ? "default"
+            : "pointer";
         if (notification.class) {
             notificationElement.classList.add(notification.class);
         }
         notificationElement.textContent = notification.text;
-        if (notification.handlerName) {
+        if (isHandlerNotification(notification)) {
             notificationElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
-                var _g;
                 event.preventDefault();
                 event.stopPropagation();
-                const handler = notificationHandlers.get((_g = notification.handlerName) !== null && _g !== void 0 ? _g : "");
+                const handler = notificationHandlers.get(notification.handler);
                 if (handler) {
                     yield handler(notification);
                 }
                 else {
-                    console.error(`Handler not found: ${notification.handlerName}`);
+                    console.error(`Handler not found: ${notification.handler}`);
                 }
                 (0, exports.removeNotification)(notification);
                 renderNotifications();
             }));
+        }
+        else if (isLinkNotification(notification)) {
+            notificationElement.setAttribute("href", notification.href);
         }
         for (const action of (_d = notification.actions) !== null && _d !== void 0 ? _d : []) {
             notificationElement.append(document.createTextNode(((_e = notification.actions) === null || _e === void 0 ? void 0 : _e.indexOf(action)) === 0 ? " " : " / "));
@@ -3526,18 +4392,23 @@ const renderNotifications = () => {
             actionElement.classList.add("fh-notification-action");
             actionElement.style.cursor = "pointer";
             actionElement.textContent = action.text;
-            actionElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
-                event.preventDefault();
-                event.stopPropagation();
-                const handler = notificationHandlers.get(action.handlerName);
-                if (handler) {
-                    yield handler(notification);
-                }
-                else {
-                    console.error(`Handler not found: ${action.handlerName}`);
-                }
-                renderNotifications();
-            }));
+            if (isHandlerNotificationAction(action)) {
+                actionElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const handler = notificationHandlers.get(action.handler);
+                    if (handler) {
+                        yield handler(notification);
+                    }
+                    else {
+                        console.error(`Handler not found: ${action.handler}`);
+                    }
+                    renderNotifications();
+                }));
+            }
+            else {
+                actionElement.href = action.href;
+            }
             notificationElement.append(actionElement);
         }
         if ((_f = pageContent.firstElementChild) === null || _f === void 0 ? void 0 : _f.classList.contains("pull-to-refresh-layer")) {
@@ -3561,6 +4432,18 @@ exports.notifications = {
 
 /***/ }),
 
+/***/ 968:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isObject = void 0;
+const isObject = (value) => typeof value === "object" && !Array.isArray(value) && value !== null;
+exports.isObject = isObject;
+
+
+/***/ }),
+
 /***/ 952:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -3571,11 +4454,14 @@ var Page;
 (function (Page) {
     Page["AREA"] = "area";
     Page["BANK"] = "bank";
+    Page["FARM"] = "xfarm";
     Page["FARMERS_MARKET"] = "market";
     Page["FISHING"] = "fishing";
     Page["FRIENDSHIP"] = "npclevels";
-    Page["HOME"] = "index-1";
+    Page["HOME_PAGE"] = "index-1";
+    Page["HOME_PATH"] = "index";
     Page["ITEM"] = "item";
+    Page["KITCHEN"] = "kitchen";
     Page["LOCKSMITH"] = "locksmith";
     Page["MAILBOX"] = "mailbox";
     Page["PERKS"] = "perks";
@@ -3583,18 +4469,25 @@ var Page;
     Page["SETTINGS"] = "settings";
     Page["SETTINGS_OPTIONS"] = "settings_options";
     Page["TEMPLE"] = "mailitems";
+    Page["VAULT"] = "crack";
     Page["WHEEL"] = "spin";
     Page["WORKER"] = "worker";
     Page["WORKSHOP"] = "workshop";
 })(Page || (exports.Page = Page = {}));
 var WorkerGo;
 (function (WorkerGo) {
-    WorkerGo["GET_STATS"] = "getstats";
-    WorkerGo["DEPOSIT_SILVER"] = "depositsilver";
-    WorkerGo["WITHDRAW_SILVER"] = "withdrawalsilver";
-    WorkerGo["COLLECT_ALL_MAIL_ITEMS"] = "collectallmailitems";
-    WorkerGo["RESET_PERKS"] = "resetperks";
     WorkerGo["ACTIVATE_PERK_SET"] = "activateperkset";
+    WorkerGo["COLLECT_ALL_MAIL_ITEMS"] = "collectallmailitems";
+    WorkerGo["COLLECT_ALL_MEALS"] = "cookreadyall";
+    WorkerGo["COOK_ALL"] = "cookitemall";
+    WorkerGo["DEPOSIT_SILVER"] = "depositsilver";
+    WorkerGo["GET_STATS"] = "getstats";
+    WorkerGo["FARM_STATUS"] = "farmstatus";
+    WorkerGo["READY_COUNT"] = "readycount";
+    WorkerGo["RESET_PERKS"] = "resetperks";
+    WorkerGo["WITHDRAW_SILVER"] = "withdrawalsilver";
+    WorkerGo["HARVEST_ALL"] = "harvestall";
+    WorkerGo["PLANT_ALL"] = "plantall";
 })(WorkerGo || (exports.WorkerGo = WorkerGo = {}));
 // get page and parameters if any
 const getPage = () => {
@@ -3630,7 +4523,9 @@ const getTitle = (searchTitle, root) => {
         return null;
     }
     const titles = currentPage.querySelectorAll(".content-block-title");
-    const targetTitle = [...titles].find((title) => title.textContent === searchTitle);
+    const targetTitle = [...titles].find((title) => searchTitle instanceof RegExp
+        ? searchTitle.test(title.textContent || "")
+        : title.textContent === searchTitle);
     return (_a = targetTitle) !== null && _a !== void 0 ? _a : null;
 };
 exports.getTitle = getTitle;
@@ -3742,6 +4637,122 @@ exports.BUTTON_BLUE_BACKGROUND = "#000040";
 exports.BUTTON_BLUE_BORDER = "#00007F";
 exports.BACKGROUND_BLACK = "#111111";
 exports.BACKGROUND_DARK = "#161718";
+
+
+/***/ }),
+
+/***/ 279:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.generateGuess = exports.applyGuess = exports.getPossibleDigits = exports.couldHaveDigit = exports.hasDigit = exports.canSolve = exports.generateDigitInfo = exports.isCorrect = exports.Hint = void 0;
+const array_1 = __webpack_require__(818);
+var Hint;
+(function (Hint) {
+    Hint["NONE"] = "\u274C";
+    Hint["CORRECT"] = "\u2705";
+    Hint["CLOSE"] = "\uD83D\uDFE7";
+})(Hint || (exports.Hint = Hint = {}));
+const isCorrect = (hints) => hints.every((h) => h === Hint.CORRECT);
+exports.isCorrect = isCorrect;
+const generateDigitInfo = () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => ({
+    correctPositions: [],
+    possiblePositions: [0, 1, 2, 3],
+    digit,
+}));
+exports.generateDigitInfo = generateDigitInfo;
+const canSolve = (info) => {
+    const correctPositions = [];
+    for (const digitInfo of info) {
+        if (digitInfo.correctPositions.length > 0) {
+            correctPositions.push(...digitInfo.correctPositions);
+        }
+    }
+    return correctPositions.length === 4;
+};
+exports.canSolve = canSolve;
+const hasDigit = (info) => info.correctPositions.length > 0 ||
+    (info.possiblePositions.length > 0 && info.possiblePositions.length < 4);
+exports.hasDigit = hasDigit;
+const couldHaveDigit = (info) => info.correctPositions.length > 0 || info.possiblePositions.length > 0;
+exports.couldHaveDigit = couldHaveDigit;
+const getPossibleDigits = (info, position) => {
+    const uncalledDigits = [];
+    const calledDigits = [];
+    for (const digitInfo of info) {
+        if (digitInfo.correctPositions.includes(position)) {
+            return [digitInfo.digit];
+        }
+        if ((0, exports.couldHaveDigit)(digitInfo) &&
+            digitInfo.possiblePositions.includes(position)) {
+            if (digitInfo.correctPositions.length === 0) {
+                uncalledDigits.push(digitInfo.digit);
+            }
+            else {
+                calledDigits.push(digitInfo.digit);
+            }
+        }
+    }
+    return [...uncalledDigits, ...calledDigits];
+};
+exports.getPossibleDigits = getPossibleDigits;
+const applyGuess = (info, guess, hints) => {
+    for (const [position, digit] of guess.entries()) {
+        const digitInfo = info[digit];
+        switch (hints[position]) {
+            case Hint.CORRECT: {
+                digitInfo.correctPositions.push(position);
+                digitInfo.possiblePositions = digitInfo.possiblePositions.filter((p) => p !== position);
+                break;
+            }
+            case Hint.CLOSE: {
+                digitInfo.possiblePositions = digitInfo.possiblePositions.filter((p) => p !== position);
+                break;
+            }
+            case Hint.NONE: {
+                digitInfo.correctPositions = [];
+                digitInfo.possiblePositions = [];
+                break;
+            }
+        }
+    }
+    const confirmedDigits = [];
+    for (const digitInfo of info) {
+        if (confirmedDigits.length === 4) {
+            digitInfo.correctPositions = [];
+            digitInfo.possiblePositions = [];
+        }
+        else if ((0, exports.hasDigit)(digitInfo)) {
+            confirmedDigits.push(digitInfo.digit);
+        }
+    }
+    return info;
+};
+exports.applyGuess = applyGuess;
+const generateGuess = (info, guessIndex) => {
+    if (guessIndex === 0) {
+        return [0, 1, 2, 3];
+    }
+    if (guessIndex === 1) {
+        return [4, 5, 6, 7];
+    }
+    const guess = guessIndex === 2 ? [8, 9] : [];
+    while (guess.length < 4) {
+        const position = guess.length;
+        const possibilities = (0, exports.getPossibleDigits)(info, position);
+        guess[position] = (() => {
+            for (const digit of possibilities) {
+                if (!guess.includes(digit)) {
+                    return digit;
+                }
+            }
+            return (0, array_1.getRandom)(possibilities);
+        })();
+    }
+    return guess;
+};
+exports.generateGuess = generateGuess;
 
 
 /***/ })

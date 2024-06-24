@@ -43,7 +43,7 @@ export const getItemByName = async (
 
 export const getBasicItems = async (): Promise<BasicEntity[]> => {
   const { items } = (await pageDataState.get()) ?? {};
-  return items.map(({ name, image }) => ({ name, image }));
+  return items?.map(({ name, image }) => ({ name, image })) ?? [];
 };
 
 export const pageDataState = new CachedState<PageData>(
@@ -79,5 +79,13 @@ export const pageDataState = new CachedState<PageData>(
   },
   {
     timeout: 60 * 60 * 24, // 1 day
+    defaultState: {
+      townsfolk: [],
+      questlines: [],
+      quizzes: [],
+      quests: [],
+      items: [],
+      pages: [],
+    },
   }
 );

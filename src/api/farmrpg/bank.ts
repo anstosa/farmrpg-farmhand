@@ -1,7 +1,7 @@
 import { CachedState, parseUrl, StorageKey } from "../state";
 import { getDocument } from "../utils";
 import { Page, WorkerGo } from "../../utils/page";
-import { sendRequest } from "./api";
+import { requestHTML } from "./api";
 
 export interface Stats {
   silver: number;
@@ -10,23 +10,23 @@ export interface Stats {
 }
 
 const processStats = (root: Document): Stats => {
-  const parameters = root.querySelectorAll("span");
-  const silver = Number(
-    parameters[0].textContent?.trim().replaceAll(",", "") ?? "0"
+  const matches = root.body.textContent?.match(
+    /[^\d,]+([\d,]+)[^\d,]+([\d,]+)[^\d,]+([\d,]+)/
   );
-  const gold = Number(
-    parameters[1].textContent?.trim().replaceAll(",", "") ?? "0"
-  );
-  const ancientCoins = Number(
-    parameters[2].textContent?.trim().replaceAll(",", "") ?? "0"
-  );
+  if (!matches || matches.length < 4) {
+    return { silver: 0, gold: 0, ancientCoins: 0 };
+  }
+  const [_, silverMatch, goldMatch, ancientCoinsMatch] = matches;
+  const silver = Number(silverMatch.replaceAll(",", ""));
+  const gold = Number(goldMatch.replaceAll(",", ""));
+  const ancientCoins = Number(ancientCoinsMatch.replaceAll(",", ""));
   return { silver, gold, ancientCoins };
 };
 
 export const statsState = new CachedState<Stats>(
   StorageKey.STATS,
   async () => {
-    const response = await sendRequest(
+    const response = await requestHTML(
       Page.WORKER,
       new URLSearchParams({ go: WorkerGo.GET_STATS })
     );
@@ -48,6 +48,9 @@ export const statsState = new CachedState<Stats>(
         callback: async (state, response) => {
           const previous = await state.get();
           const [_, query] = parseUrl(response.url);
+          if (!previous) {
+            return;
+          }
           state.set({
             ...previous,
             silver: previous.silver - Number(query.get("amt")),
@@ -62,6 +65,9 @@ export const statsState = new CachedState<Stats>(
         callback: async (state, response) => {
           const previous = await state.get();
           const [_, query] = parseUrl(response.url);
+          if (!previous) {
+            return;
+          }
           state.set({
             ...previous,
             silver: previous.silver + Number(query.get("amt")),
@@ -69,28 +75,27 @@ export const statsState = new CachedState<Stats>(
         },
       },
     ],
+    defaultState: {
+      silver: 0,
+      gold: 0,
+      ancientCoins: 0,
+    },
   }
 );
 
 export const depositSilver = async (amount: number): Promise<void> => {
-  const stats = await statsState.get();
-  await sendRequest(
+  await requestHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.DEPOSIT_SILVER, amt: amount.toString() })
   );
-  stats.silver -= amount;
-  await statsState.set(stats);
 };
 
 export const withdrawSilver = async (amount: number): Promise<void> => {
-  const stats = await statsState.get();
-  await sendRequest(
+  await requestHTML(
     Page.WORKER,
     new URLSearchParams({
       go: WorkerGo.WITHDRAW_SILVER,
       amt: amount.toString(),
     })
   );
-  stats.silver += amount;
-  await statsState.set(stats);
 };

@@ -1,58 +1,34 @@
-import { CachedState, StorageKey } from "../state";
+import { CachedState, onFetchResponse, StorageKey, toUrl } from "../state";
 import { getDocument } from "../utils";
 import { Page } from "../../utils/page";
 
-export const sendRequest = async (
+export const requestHTML = async (
   page: Page,
   query?: URLSearchParams
 ): Promise<Document> => {
-  const response = await fetch(
-    `https://farmrpg.com/${page}.php?${query ? query.toString() : ""}`,
-    {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-    }
-  );
+  const response = await fetch(toUrl(page, query), {
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+  });
   return getDocument(response);
 };
 
-// export const recordHome = async (root?: HTMLElement): Promise<void> => {
-//   if (!root) {
-//     root = document.body;
-//   }
+export const requestJSON = async <T extends object>(
+  page: Page,
+  query?: URLSearchParams
+): Promise<T> => {
+  const response = await fetch(toUrl(page, query), {
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+  });
+  onFetchResponse(response);
+  return await response.json();
+};
 
-//   let farm = state.get("farm");
-//   const farmLink = root.querySelector("a[href^='xfarm.php']");
-//   if (!farmLink) {
-//     console.error("failed to find farm link");
-//     return;
-//   }
-//   const farmId = Number(farmLink.getAttribute("href")?.split("=")[1]);
-//   if (farm) {
-//     farm.id = farmId;
-//   } else {
-//     farm = { id: farmId };
-//   }
-//   if (!farm.field) {
-//     farm.field = {};
-//   }
-//   const farmStatus =
-//     farmLink.querySelector(".item-after")?.textContent || undefined;
-//   farm.field.status = farmStatus;
-//   farm.field.plots = [];
-//   if (farmStatus) {
-//     const cropCount = Number(farmStatus.split(" ")[0]);
-//     const isGrowing = farmStatus.includes("GROWING");
-//     const isReady = farmStatus.includes("READY");
-//     for (let index = 0; index < cropCount; index++) {
-//       farm.field.plots.push({
-//         isGrowing,
-//         isReady,
-//         progress: isReady ? 100 : undefined,
-//       });
-//     }
-//   }
+export const timestampToDate = (timestamp: string): Date =>
+  new Date(`${timestamp}-05:00`);
 
 //   const kitchen = state.get("kitchen") ?? ({} as KitchenState);
 //   const kitchenLink = root.querySelector("a[href='kitchen.php']");
@@ -137,24 +113,17 @@ export const sendRequest = async (
 //     };
 //   }
 
-//   state.update({ farm, kitchen, town, skills });
-// };
-
-// export const scrapeToCache: Feature = {
-//   onPageLoad: (settings, page) => {
-//     if (page === Page.HOME) {
-//       recordHome();
-//     }
-//   },
-// };
-
 export const usernameState = new CachedState<string>(
   StorageKey.USERNAME,
   () =>
     Promise.resolve(
       document.querySelector("#logged_in_username")?.textContent || undefined
     ),
-  { timeout: 0 } // always check, no cost
+  {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: "",
+  }
 );
 
 export const userIdState = new CachedState<number>(
@@ -163,7 +132,11 @@ export const userIdState = new CachedState<number>(
     const userIdRaw = document.querySelector("#logged_in_userid")?.textContent;
     return Promise.resolve(userIdRaw ? Number(userIdRaw) : undefined);
   },
-  { timeout: 0 } // always check, no cost
+  {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: -1,
+  }
 );
 
 export const betaState = new CachedState<boolean>(
@@ -171,7 +144,8 @@ export const betaState = new CachedState<boolean>(
   () =>
     Promise.resolve(document.querySelector("#is_beta")?.textContent === "1"),
   {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: false,
   }
 );
@@ -181,7 +155,8 @@ export const darkModeState = new CachedState<boolean>(
   () =>
     Promise.resolve(document.querySelector("#dark_mode")?.textContent === "1"),
   {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: false,
   }
 );
@@ -191,7 +166,8 @@ export const musicState = new CachedState<boolean>(
   () =>
     Promise.resolve(document.querySelector("#dark_mode")?.textContent === "1"),
   {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: true,
   }
 );
@@ -200,7 +176,8 @@ export const chatState = new CachedState<boolean>(
   StorageKey.IS_CHAT_ENABLED,
   () => Promise.resolve(document.querySelector("#chat")?.textContent === "1"),
   {
-    timeout: 0, // always check, no cost
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
     defaultState: true,
   }
 );

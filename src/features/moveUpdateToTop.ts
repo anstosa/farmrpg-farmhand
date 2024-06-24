@@ -5,7 +5,7 @@ import { StorageKey } from "~/api/state";
 export const moveUpdateToTop: Feature = {
   onPageLoad: async (settings, page) => {
     // make sure we're on the home page
-    if (page !== Page.HOME) {
+    if (page !== Page.HOME_PAGE) {
       return;
     }
 

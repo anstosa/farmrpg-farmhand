@@ -14,26 +14,29 @@ export const linkifyQuickCraft: Feature = {
       return;
     }
 
-    const missingIngredients = currentPage.querySelectorAll<HTMLSpanElement>(
-      "span[style='color:red']"
-    );
-    for (const ingredient of missingIngredients) {
-      const ingredientName = ingredient.textContent;
-      if (!ingredientName) {
-        continue;
-      }
-      const data = await getItemByName(ingredientName);
+    const missingIngredientsWrapper =
+      currentPage.querySelector<HTMLSpanElement>("span[style='color:red']");
+    if (!missingIngredientsWrapper) {
+      return;
+    }
+    const missingIngredients =
+      missingIngredientsWrapper.textContent?.split(", ");
+    missingIngredientsWrapper.textContent = "";
+    for (const ingredient of missingIngredients ?? []) {
+      const data = await getItemByName(ingredient);
       if (!data) {
-        console.error(`No data for ${ingredientName}`);
+        console.error(`No data for ${ingredient}`);
         continue;
       }
 
       const link = document.createElement("a");
       link.dataset.view = ".view-main";
       link.href = `item.php?id=${data.id}`;
-      link.textContent = ingredientName;
+      link.textContent = ingredient;
       link.style.color = "red";
-      ingredient.replaceWith(link);
+      link.style.marginRight = "5px";
+      link.style.display = "block";
+      missingIngredientsWrapper.append(link);
     }
   },
 };

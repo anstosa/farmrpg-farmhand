@@ -74,11 +74,16 @@ export const chatNav: Feature = {
       for (const title of document.querySelectorAll<HTMLDivElement>(
         ".content-block-title.item-input"
       )) {
+        title.style.margin = "0";
+        title.style.marginTop = "-5px";
+        title.style.overflow = "visible";
+        title.style.display = "flex";
+
         const dropdown = document.createElement("div");
         dropdown.classList.add("fh-chatdropdown");
         dropdown.style.cursor = "pointer";
         dropdown.style.textTransform = "titlecase";
-        dropdown.style.width = "100%";
+        dropdown.style.width = "calc(100% - 44px)";
         dropdown.style.height = "44px";
         dropdown.style.display = "flex";
         dropdown.style.alignContent = "center";
@@ -94,9 +99,21 @@ export const chatNav: Feature = {
           }
         });
         title.append(dropdown);
-        title.style.margin = "0";
-        title.style.marginTop = "-5px";
-        title.style.overflow = "visible";
+
+        const refresh = document.createElement("i");
+        refresh.classList.add("fa");
+        refresh.classList.add("fw");
+        refresh.classList.add("fa-refresh");
+        refresh.style.cursor = "pointer";
+        refresh.style.width = "44px";
+        refresh.style.height = "44px";
+        refresh.style.display = "flex";
+        refresh.style.alignItems = "center";
+        refresh.style.justifyContent = "center";
+        refresh.addEventListener("click", () => {
+          document.querySelector<HTMLAnchorElement>(".cclinkselected")?.click();
+        });
+        title.append(refresh);
       }
     }
 

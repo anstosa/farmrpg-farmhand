@@ -1,7 +1,7 @@
 import { Feature } from "../features/feature";
 import { getCurrentPage } from "~/utils/page";
-import { getData, setData } from "../features/farmhandSettings";
 import { isObject } from "./object";
+import { setData } from "../features/farmhandSettings";
 
 const KEY_NOTIFICATIONS = "notifications";
 
@@ -209,11 +209,11 @@ const renderNotifications = (force: boolean = false): void => {
 
 export const notifications: Feature = {
   onInitialize: async () => {
-    const savedNotifications = await getData<Notification<any>[]>(
-      KEY_NOTIFICATIONS,
-      []
-    );
-    state.notifications = savedNotifications;
+    // const savedNotifications = await getData<Notification<any>[]>(
+    //   KEY_NOTIFICATIONS,
+    //   []
+    // );
+    // state.notifications = savedNotifications;
   },
   onPageLoad: () => {
     setTimeout(renderNotifications, 500);

@@ -18,7 +18,7 @@ const SETTING_MEAL_NOTIFICATIONS: FeatureSetting = {
 
 let mealInterval: number | undefined;
 
-const checkMeals = async (): Promise<void> => {
+const renderMeals = async (): Promise<void> => {
   const mealStatus = await mealsStatusState.get();
   if (!mealStatus || mealStatus.meals.length === 0) {
     clearInterval(mealInterval);
@@ -36,6 +36,12 @@ const checkMeals = async (): Promise<void> => {
         const diffSeconds = active.finishedAt / 1000 - now.getTime() / 1000;
         const minutes = Math.floor(diffSeconds / 60);
         const seconds = Math.floor(diffSeconds % 60);
+        if (minutes < 0 && seconds < 0) {
+          mealsStatusState.set({
+            meals: mealStatus.meals.filter((meal) => meal.meal !== active.meal),
+          });
+          return `${active.meal} (EXPIRED!)`;
+        }
         const timeRemaining = `${minutes}:${seconds
           .toString()
           .padStart(2, "0")}`;
@@ -44,7 +50,7 @@ const checkMeals = async (): Promise<void> => {
       .join(", ")}`,
   });
   if (!mealInterval) {
-    mealInterval = setInterval(checkMeals, 1 * 1000) as unknown as number;
+    mealInterval = setInterval(renderMeals, 1 * 1000) as unknown as number;
   }
 };
 
@@ -54,7 +60,6 @@ export const mealNotifications: Feature = {
     if (!settings[SETTING_MEAL_NOTIFICATIONS.id].value) {
       return;
     }
-    checkMeals();
-    mealsStatusState.onUpdate(checkMeals);
+    mealsStatusState.onUpdate(renderMeals);
   },
 };

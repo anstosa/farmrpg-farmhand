@@ -28,13 +28,14 @@ export enum WorkerGo {
   COLLECT_ALL_MEALS = "cookreadyall",
   COOK_ALL = "cookitemall",
   DEPOSIT_SILVER = "depositsilver",
-  GET_STATS = "getstats",
   FARM_STATUS = "farmstatus",
-  READY_COUNT = "readycount",
-  RESET_PERKS = "resetperks",
-  WITHDRAW_SILVER = "withdrawalsilver",
+  GET_STATS = "getstats",
   HARVEST_ALL = "harvestall",
   PLANT_ALL = "plantall",
+  READY_COUNT = "readycount",
+  RESET_PERKS = "resetperks",
+  USE_ITEM = "useitem",
+  WITHDRAW_SILVER = "withdrawalsilver",
 }
 
 // get page and parameters if any

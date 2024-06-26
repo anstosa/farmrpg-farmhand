@@ -36,7 +36,7 @@ export const statsState = new CachedState<Stats>(
     interceptors: [
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.GET_STATS })],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           state.set(processStats(await getDocument(response)));
         },
       },
@@ -45,13 +45,12 @@ export const statsState = new CachedState<Stats>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.DEPOSIT_SILVER }),
         ],
-        callback: async (state, response) => {
-          const previous = await state.get();
+        callback: async (state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           if (!previous) {
             return;
           }
-          state.set({
+          await state.set({
             ...previous,
             silver: previous.silver - Number(query.get("amt")),
           });
@@ -62,13 +61,12 @@ export const statsState = new CachedState<Stats>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.WITHDRAW_SILVER }),
         ],
-        callback: async (state, response) => {
-          const previous = await state.get();
+        callback: async (state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           if (!previous) {
             return;
           }
-          state.set({
+          await state.set({
             ...previous,
             silver: previous.silver + Number(query.get("amt")),
           });

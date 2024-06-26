@@ -59,8 +59,8 @@ export const perksState = new CachedState<PerksState>(
     interceptors: [
       {
         match: [Page.PERKS, new URLSearchParams()],
-        callback: async (state, response) => {
-          state.set(processPerks(await getDocument(response)));
+        callback: async (state, previous, response) => {
+          await state.set(processPerks(await getDocument(response)));
         },
       },
       {
@@ -68,11 +68,9 @@ export const perksState = new CachedState<PerksState>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.ACTIVATE_PERK_SET }),
         ],
-        callback: async (state, response) => {
-          const previous = await state.get();
+        callback: async (state, previous, response) => {
           const [_, query] = parseUrl(response.url);
-          state.set({
-            ...previous,
+          await state.set({
             currentPerkSetId: Number(query.get("id")),
           });
         },

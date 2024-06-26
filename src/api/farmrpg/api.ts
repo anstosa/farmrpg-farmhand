@@ -30,42 +30,6 @@ export const requestJSON = async <T extends object>(
 export const timestampToDate = (timestamp: string): Date =>
   new Date(`${timestamp}-05:00`);
 
-//   const kitchen = state.get("kitchen") ?? ({} as KitchenState);
-//   const kitchenLink = root.querySelector("a[href='kitchen.php']");
-//   if (!kitchenLink) {
-//     console.error("failed to find kitchen link");
-//     return;
-//   }
-//   const kitchenStatus =
-//     kitchenLink.querySelector(".item-after")?.textContent || undefined;
-//   kitchen.status = kitchenStatus;
-//   kitchen.ovens = [];
-//   if (kitchenStatus) {
-//     const ovenCount = Number(kitchenStatus.split(" ")[0]);
-//     const isCooking = kitchenStatus.includes("COOKING");
-//     const isReady = kitchenStatus.includes("READY");
-//     for (let index = 0; index < ovenCount; index++) {
-//       kitchen.ovens.push({
-//         isCooking,
-//         isReady,
-//       });
-//     }
-//   }
-
-//   const town = state.get("town") ?? ({} as TownState);
-//   const townLink = root.querySelector("a[href='town.php']");
-//   if (!townLink) {
-//     console.error("failed to find town link");
-//     return;
-//   }
-//   const townStatus =
-//     townLink.querySelector(".item-after")?.textContent || undefined;
-//   town.status = townStatus;
-//   if (townStatus) {
-//     const isBorgenOpen = townStatus.includes("BORGEN");
-//     town.isBorgenOpen = isBorgenOpen;
-//   }
-
 //   let skills = state.get("skills");
 //   const skillsCard = getCardByTitle("My skills", root);
 //   if (!skillsCard) {

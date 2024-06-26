@@ -28,6 +28,7 @@ export enum CropStatus {
 export interface FarmStatus {
   status: CropStatus;
   count: number;
+  readyAt: number;
 }
 
 const processFarmStatus = (root: HTMLElement): FarmStatus | undefined => {
@@ -36,17 +37,22 @@ const processFarmStatus = (root: HTMLElement): FarmStatus | undefined => {
     return {
       status: CropStatus.EMPTY,
       count: 0,
+      readyAt: Number.POSITIVE_INFINITY,
     };
   }
   // 36 READY!
   const count = Number(statusText.split(" ")[0]);
   let status = CropStatus.EMPTY;
+  let readyAt = Number.POSITIVE_INFINITY;
   if (statusText.toLowerCase().includes("growing")) {
     status = CropStatus.GROWING;
+    // new sure when ready, check again in a minute
+    readyAt = Date.now() + 60 * 1000;
   } else if (statusText.toLowerCase().includes("ready")) {
     status = CropStatus.READY;
+    readyAt = Date.now();
   }
-  return { status, count };
+  return { status, count, readyAt };
 };
 
 const processFarmPage = (root: HTMLElement): FarmStatus | undefined => {
@@ -55,16 +61,24 @@ const processFarmPage = (root: HTMLElement): FarmStatus | undefined => {
   );
   const count = plots.length;
   let status = CropStatus.EMPTY;
+  let readyAt = Number.POSITIVE_INFINITY;
   for (const plot of plots) {
     const image = plot.querySelector<HTMLImageElement>("img");
     if (image?.style.opacity === "1") {
       status = CropStatus.READY;
+      readyAt = Date.now();
     } else if (status === CropStatus.EMPTY) {
       status = CropStatus.GROWING;
+      readyAt = Math.min(
+        readyAt,
+        Date.now() + Number(image?.dataset.seconds ?? "60") * 1000
+      );
     }
   }
-  return { status, count };
+  return { status, count, readyAt };
 };
+
+const scheduledUpdates: Record<number, NodeJS.Timeout> = {};
 
 export const farmStatusState = new CachedState<FarmStatus>(
   StorageKey.FARM_STATUS,
@@ -77,25 +91,26 @@ export const farmStatusState = new CachedState<FarmStatus>(
     defaultState: {
       status: CropStatus.EMPTY,
       count: 4,
+      readyAt: Number.POSITIVE_INFINITY,
     },
     interceptors: [
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.READY_COUNT })],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           state.set(processFarmStatus(root.body));
         },
       },
       {
         match: [Page.FARM, new URLSearchParams()],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
-          state.set(processFarmPage(root.body));
+          await state.set(processFarmPage(root.body));
         },
       },
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const linkStatus = root.body.querySelector<HTMLDivElement>(
             "a[href^='xfarm.php'] .item-after"
@@ -103,20 +118,16 @@ export const farmStatusState = new CachedState<FarmStatus>(
           if (!linkStatus) {
             return;
           }
-          state.set(processFarmStatus(linkStatus));
+          await state.set(processFarmStatus(linkStatus));
         },
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.FARM_STATUS })],
-        callback: async (state, response) => {
-          const previous = await state.get();
+        callback: async (state, previous, response) => {
           const raw = await response.text();
           const rawPlots = raw.split(";");
           if (rawPlots.length < (previous?.count ?? 4)) {
-            await state.set({
-              ...previous,
-              status: CropStatus.EMPTY,
-            });
+            await state.set({ status: CropStatus.EMPTY });
             return;
           }
           let status: CropStatus = CropStatus.EMPTY;
@@ -132,14 +143,13 @@ export const farmStatusState = new CachedState<FarmStatus>(
               status = CropStatus.GROWING;
             }
           }
-          state.set({ ...previous, status });
+          await state.set({ status });
         },
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.HARVEST_ALL })],
-        callback: async (state, response) => {
-          const previous = await state.get();
-          state.set({ ...previous, status: CropStatus.EMPTY });
+        callback: async (state, previous, response) => {
+          await state.set({ status: CropStatus.EMPTY });
           const { drops } = (await response.json()) as {
             result: "success";
             drops: Record<
@@ -175,13 +185,36 @@ export const farmStatusState = new CachedState<FarmStatus>(
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.PLANT_ALL })],
         callback: async (state) => {
-          const previous = await state.get();
-          state.set({ ...previous, status: CropStatus.GROWING });
+          await state.set({ status: CropStatus.GROWING });
         },
       },
     ],
   }
 );
+
+const updateStatus = async (): Promise<void> => {
+  const state = await farmStatusState.get({ doNotFetch: true });
+  if (!state) {
+    return;
+  }
+  if (state.readyAt < Date.now()) {
+    await farmStatusState.set({ status: CropStatus.READY });
+  }
+};
+
+// automatically update crops when finished
+farmStatusState.onUpdate((state) => {
+  if (!state) {
+    return;
+  }
+  if (scheduledUpdates[state.readyAt]) {
+    return;
+  }
+  scheduledUpdates[state.readyAt] = setTimeout(
+    updateStatus,
+    state.readyAt - Date.now()
+  );
+});
 
 const processFarmId = (root: HTMLElement): number | undefined => {
   const farmIdRaw = root.querySelector("#farm")?.textContent;
@@ -200,14 +233,14 @@ export const farmIdState = new CachedState<number>(
     interceptors: [
       {
         match: [Page.FARM, new URLSearchParams()],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
-          state.set(processFarmId(root.body));
+          await state.set(processFarmId(root.body));
         },
       },
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const status = root.body.querySelector<HTMLDivElement>(
             "a[href^='xfarm.php'] .item-after span"
@@ -215,7 +248,7 @@ export const farmIdState = new CachedState<number>(
           if (!status) {
             return;
           }
-          state.set(Number(status.dataset.id));
+          await state.set(Number(status.dataset.id));
         },
       },
     ],

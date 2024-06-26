@@ -63,6 +63,7 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 * Highlight messages tagging you in chat
 * Autocomplete ((item)) tags in chat
 * Autocomplete usernames when @mentioning: in chat
+* Add refresh button to chat
 
 ### Menu
 
@@ -125,6 +126,15 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.13
+
+* Fixed: Remove meal notification after meal expires
+* Fixed: Don't query farm or kitchen if notifications are enabled
+
+### 1.0.12
+
+* Added: Refresh button in chat
 
 ### 1.0.11
 

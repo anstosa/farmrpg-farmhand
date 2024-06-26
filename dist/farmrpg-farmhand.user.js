@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.11
+// @version 1.0.12
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -154,40 +154,6 @@ const requestJSON = (page, query) => __awaiter(void 0, void 0, void 0, function*
 exports.requestJSON = requestJSON;
 const timestampToDate = (timestamp) => new Date(`${timestamp}-05:00`);
 exports.timestampToDate = timestampToDate;
-//   const kitchen = state.get("kitchen") ?? ({} as KitchenState);
-//   const kitchenLink = root.querySelector("a[href='kitchen.php']");
-//   if (!kitchenLink) {
-//     console.error("failed to find kitchen link");
-//     return;
-//   }
-//   const kitchenStatus =
-//     kitchenLink.querySelector(".item-after")?.textContent || undefined;
-//   kitchen.status = kitchenStatus;
-//   kitchen.ovens = [];
-//   if (kitchenStatus) {
-//     const ovenCount = Number(kitchenStatus.split(" ")[0]);
-//     const isCooking = kitchenStatus.includes("COOKING");
-//     const isReady = kitchenStatus.includes("READY");
-//     for (let index = 0; index < ovenCount; index++) {
-//       kitchen.ovens.push({
-//         isCooking,
-//         isReady,
-//       });
-//     }
-//   }
-//   const town = state.get("town") ?? ({} as TownState);
-//   const townLink = root.querySelector("a[href='town.php']");
-//   if (!townLink) {
-//     console.error("failed to find town link");
-//     return;
-//   }
-//   const townStatus =
-//     townLink.querySelector(".item-after")?.textContent || undefined;
-//   town.status = townStatus;
-//   if (townStatus) {
-//     const isBorgenOpen = townStatus.includes("BORGEN");
-//     town.isBorgenOpen = isBorgenOpen;
-//   }
 //   let skills = state.get("skills");
 //   const skillsCard = getCardByTitle("My skills", root);
 //   if (!skillsCard) {
@@ -313,7 +279,7 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
     interceptors: [
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS })],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 state.set(processStats(yield (0, utils_1.getDocument)(response)));
             }),
         },
@@ -322,13 +288,12 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER }),
             ],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const previous = yield state.get();
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const [_, query] = (0, state_1.parseUrl)(response.url);
                 if (!previous) {
                     return;
                 }
-                state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver - Number(query.get("amt")) }));
+                yield state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver - Number(query.get("amt")) }));
             }),
         },
         {
@@ -336,13 +301,12 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.WITHDRAW_SILVER }),
             ],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const previous = yield state.get();
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const [_, query] = (0, state_1.parseUrl)(response.url);
                 if (!previous) {
                     return;
                 }
-                state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver + Number(query.get("amt")) }));
+                yield state.set(Object.assign(Object.assign({}, previous), { silver: previous.silver + Number(query.get("amt")) }));
             }),
         },
     ],
@@ -399,34 +363,44 @@ const processFarmStatus = (root) => {
         return {
             status: CropStatus.EMPTY,
             count: 0,
+            readyAt: Number.POSITIVE_INFINITY,
         };
     }
     // 36 READY!
     const count = Number(statusText.split(" ")[0]);
     let status = CropStatus.EMPTY;
+    let readyAt = Number.POSITIVE_INFINITY;
     if (statusText.toLowerCase().includes("growing")) {
         status = CropStatus.GROWING;
+        // new sure when ready, check again in a minute
+        readyAt = Date.now() + 60 * 1000;
     }
     else if (statusText.toLowerCase().includes("ready")) {
         status = CropStatus.READY;
+        readyAt = Date.now();
     }
-    return { status, count };
+    return { status, count, readyAt };
 };
 const processFarmPage = (root) => {
+    var _a;
     const plots = root.querySelectorAll("#croparea #crops .col-25");
     const count = plots.length;
     let status = CropStatus.EMPTY;
+    let readyAt = Number.POSITIVE_INFINITY;
     for (const plot of plots) {
         const image = plot.querySelector("img");
         if ((image === null || image === void 0 ? void 0 : image.style.opacity) === "1") {
             status = CropStatus.READY;
+            readyAt = Date.now();
         }
         else if (status === CropStatus.EMPTY) {
             status = CropStatus.GROWING;
+            readyAt = Math.min(readyAt, Date.now() + Number((_a = image === null || image === void 0 ? void 0 : image.dataset.seconds) !== null && _a !== void 0 ? _a : "60") * 1000);
         }
     }
-    return { status, count };
+    return { status, count, readyAt };
 };
+const scheduledUpdates = {};
 exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield (0, api_1.requestHTML)(page_1.Page.FARM, new URLSearchParams());
     return processFarmPage(response.body);
@@ -435,42 +409,42 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
     defaultState: {
         status: CropStatus.EMPTY,
         count: 4,
+        readyAt: Number.POSITIVE_INFINITY,
     },
     interceptors: [
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.READY_COUNT })],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 state.set(processFarmStatus(root.body));
             }),
         },
         {
             match: [page_1.Page.FARM, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
-                state.set(processFarmPage(root.body));
+                yield state.set(processFarmPage(root.body));
             }),
         },
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 const linkStatus = root.body.querySelector("a[href^='xfarm.php'] .item-after");
                 if (!linkStatus) {
                     return;
                 }
-                state.set(processFarmStatus(linkStatus));
+                yield state.set(processFarmStatus(linkStatus));
             }),
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.FARM_STATUS })],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a;
-                const previous = yield state.get();
                 const raw = yield response.text();
                 const rawPlots = raw.split(";");
                 if (rawPlots.length < ((_a = previous === null || previous === void 0 ? void 0 : previous.count) !== null && _a !== void 0 ? _a : 4)) {
-                    yield state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.EMPTY }));
+                    yield state.set({ status: CropStatus.EMPTY });
                     return;
                 }
                 let status = CropStatus.EMPTY;
@@ -486,14 +460,13 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
                         status = CropStatus.GROWING;
                     }
                 }
-                state.set(Object.assign(Object.assign({}, previous), { status }));
+                yield state.set({ status });
             }),
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL })],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const previous = yield state.get();
-                state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.EMPTY }));
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set({ status: CropStatus.EMPTY });
                 const { drops } = (yield response.json());
                 (0, popup_1.showPopup)({
                     title: "Harvested Crops",
@@ -517,11 +490,29 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.PLANT_ALL })],
             callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
-                const previous = yield state.get();
-                state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.GROWING }));
+                yield state.set({ status: CropStatus.GROWING });
             }),
         },
     ],
+});
+const updateStatus = () => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.farmStatusState.get({ doNotFetch: true });
+    if (!state) {
+        return;
+    }
+    if (state.readyAt < Date.now()) {
+        yield exports.farmStatusState.set({ status: CropStatus.READY });
+    }
+});
+// automatically update crops when finished
+exports.farmStatusState.onUpdate((state) => {
+    if (!state) {
+        return;
+    }
+    if (scheduledUpdates[state.readyAt]) {
+        return;
+    }
+    scheduledUpdates[state.readyAt] = setTimeout(updateStatus, state.readyAt - Date.now());
 });
 const processFarmId = (root) => {
     var _a;
@@ -537,20 +528,20 @@ exports.farmIdState = new state_1.CachedState(state_1.StorageKey.FARM_ID, () => 
     interceptors: [
         {
             match: [page_1.Page.FARM, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
-                state.set(processFarmId(root.body));
+                yield state.set(processFarmId(root.body));
             }),
         },
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 const status = root.body.querySelector("a[href^='xfarm.php'] .item-after span");
                 if (!status) {
                     return;
                 }
-                state.set(Number(status.dataset.id));
+                yield state.set(Number(status.dataset.id));
             }),
         },
     ],
@@ -583,6 +574,7 @@ const state_1 = __webpack_require__(619);
 const utils_1 = __webpack_require__(683);
 const page_1 = __webpack_require__(952);
 const api_1 = __webpack_require__(126);
+const popup_1 = __webpack_require__(469);
 var OvenStatus;
 (function (OvenStatus) {
     OvenStatus["EMPTY"] = "empty";
@@ -596,26 +588,32 @@ const processKitchenStatus = (root) => {
         return {
             status: OvenStatus.EMPTY,
             count: 0,
+            checkAt: Number.POSITIVE_INFINITY,
         };
     }
     // 36 READY!
     const count = Number(statusText.split(" ")[0]);
     let status = OvenStatus.EMPTY;
+    let checkAt = Number.POSITIVE_INFINITY;
     if (statusText.toLowerCase().includes("cooking")) {
         status = OvenStatus.COOKING;
+        checkAt = Date.now() + 60 * 1000;
     }
     else if (statusText.toLowerCase().includes("attention")) {
         status = OvenStatus.ATTENTION;
+        checkAt = Date.now() + 60 * 1000;
     }
     else if (statusText.toLowerCase().includes("ready")) {
         status = OvenStatus.READY;
+        checkAt = Number.POSITIVE_INFINITY;
     }
-    return { status, count };
+    return { status, count, checkAt };
 };
 const processKitchenPage = (root) => {
     const ovens = root.querySelectorAll("a[href^='oven.php']");
     const count = ovens.length;
     let status = OvenStatus.EMPTY;
+    let checkAt = Number.POSITIVE_INFINITY;
     for (const oven of ovens) {
         const statusText = oven.querySelector(".item-after span");
         if (!(statusText === null || statusText === void 0 ? void 0 : statusText.dataset.countdownTo)) {
@@ -625,6 +623,7 @@ const processKitchenPage = (root) => {
         const now = new Date();
         if (doneDate < now) {
             status = OvenStatus.READY;
+            checkAt = Math.min(checkAt, Number.POSITIVE_INFINITY);
             break;
         }
         const images = oven.querySelectorAll("img");
@@ -635,9 +634,11 @@ const processKitchenPage = (root) => {
         else if (status === OvenStatus.EMPTY) {
             status = OvenStatus.COOKING;
         }
+        checkAt = Math.min(checkAt, Date.now() + 60 * 1000);
     }
-    return { status, count };
+    return { status, count, checkAt };
 };
+const scheduledUpdates = {};
 exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield (0, api_1.requestHTML)(page_1.Page.KITCHEN, new URLSearchParams());
     return processKitchenPage(response.body);
@@ -646,21 +647,22 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
     defaultState: {
         status: OvenStatus.EMPTY,
         count: 0,
+        checkAt: Number.POSITIVE_INFINITY,
     },
     interceptors: [
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 const kitchenStatus = root === null || root === void 0 ? void 0 : root.querySelector("a[href='kitchen.php'] .item-after span");
-                state.set(processKitchenStatus(kitchenStatus || undefined));
+                yield state.set(processKitchenStatus(kitchenStatus || undefined));
             }),
         },
         {
             match: [page_1.Page.KITCHEN, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
-                state.set(processKitchenPage(root.body));
+                yield state.set(processKitchenPage(root.body));
             }),
         },
         {
@@ -668,17 +670,51 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }),
             ],
-            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set({ status: OvenStatus.EMPTY });
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c;
+                const root = yield (0, utils_1.getDocument)(response);
+                const successCount = (_c = (_b = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/success/g)) === null || _b === void 0 ? void 0 : _b.length) !== null && _c !== void 0 ? _c : 0;
+                if (successCount) {
+                    (0, popup_1.showPopup)({
+                        title: "Success!",
+                        contentHTML: `${successCount} meal${successCount === 1 ? "" : "s"} collected`,
+                    });
+                }
+                yield state.set({
+                    status: OvenStatus.EMPTY,
+                    checkAt: Number.POSITIVE_INFINITY,
+                });
             }),
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COOK_ALL })],
             callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set({ status: OvenStatus.COOKING });
+                yield state.set({
+                    status: OvenStatus.COOKING,
+                    checkAt: Date.now() + 60 * 1000,
+                });
             }),
         },
     ],
+});
+const updateStatus = () => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.kitchenStatusState.get({ doNotFetch: true });
+    if (!state) {
+        return;
+    }
+    if (state.checkAt < Date.now()) {
+        yield exports.kitchenStatusState.get();
+    }
+});
+// automatically update crops when finished
+exports.kitchenStatusState.onUpdate((state) => {
+    if (!state) {
+        return;
+    }
+    if (scheduledUpdates[state.checkAt]) {
+        return;
+    }
+    scheduledUpdates[state.checkAt] = setTimeout(updateStatus, state.checkAt - Date.now());
 });
 const collectAll = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }));
@@ -707,6 +743,7 @@ const state_1 = __webpack_require__(619);
 const utils_1 = __webpack_require__(683);
 const page_1 = __webpack_require__(952);
 const api_1 = __webpack_require__(126);
+const scheduledUpdates = {};
 const processMealStatus = (root) => {
     var _a;
     const mealList = (0, page_1.getListByTitle)(/Time-based Effects/, root);
@@ -738,12 +775,37 @@ exports.mealsStatusState = new state_1.CachedState(state_1.StorageKey.MEALS_STAT
     interceptors: [
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
-                state.set(processMealStatus(root.body));
+                yield state.set(processMealStatus(root.body));
+            }),
+        },
+        {
+            match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.USE_ITEM })],
+            callback: () => __awaiter(void 0, void 0, void 0, function* () {
+                // request homepage to trigger meals state update
+                yield (0, api_1.requestHTML)(page_1.Page.HOME_PATH);
             }),
         },
     ],
+});
+const removeFinishedMeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const state = yield exports.mealsStatusState.get({ doNotFetch: true });
+    yield exports.mealsStatusState.set({
+        meals: (_a = state === null || state === void 0 ? void 0 : state.meals.filter((meal) => meal.finishedAt < Date.now())) !== null && _a !== void 0 ? _a : [],
+    });
+});
+// automatically remove meals when finished
+exports.mealsStatusState.onUpdate((state) => {
+    var _a;
+    for (const meal of (_a = state === null || state === void 0 ? void 0 : state.meals) !== null && _a !== void 0 ? _a : []) {
+        const { finishedAt } = meal;
+        if (scheduledUpdates[finishedAt]) {
+            continue;
+        }
+        scheduledUpdates[finishedAt] = setTimeout(removeFinishedMeals, finishedAt - Date.now());
+    }
 });
 
 
@@ -811,8 +873,8 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
     interceptors: [
         {
             match: [page_1.Page.PERKS, new URLSearchParams()],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
-                state.set(processPerks(yield (0, utils_1.getDocument)(response)));
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(processPerks(yield (0, utils_1.getDocument)(response)));
             }),
         },
         {
@@ -820,10 +882,11 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.ACTIVATE_PERK_SET }),
             ],
-            callback: (state, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const previous = yield state.get();
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const [_, query] = (0, state_1.parseUrl)(response.url);
-                state.set(Object.assign(Object.assign({}, previous), { currentPerkSetId: Number(query.get("id")) }));
+                yield state.set({
+                    currentPerkSetId: Number(query.get("id")),
+                });
             }),
         },
     ],
@@ -980,7 +1043,7 @@ const generateEmptyRootState = () => {
 };
 const rootState = generateEmptyRootState();
 exports.queryInterceptors = [];
-const onFetchResponse = (response) => {
+const onFetchResponse = (response) => __awaiter(void 0, void 0, void 0, function* () {
     // only check farmrpg URLs
     if (!response.url.startsWith("https://farmrpg.com")) {
         return;
@@ -988,41 +1051,45 @@ const onFetchResponse = (response) => {
     for (const [state, interceptor] of exports.queryInterceptors) {
         if ((0, exports.urlMatches)(response.url, ...interceptor.match)) {
             console.debug(`[STATE] fetch intercepted ${response.url}`, interceptor);
-            interceptor.callback(state, response.clone());
+            const previous = yield state.get({ doNotFetch: true });
+            interceptor.callback(state, previous, response);
         }
     }
-};
+});
 exports.onFetchResponse = onFetchResponse;
 const watchQueries = () => {
     (function (open) {
         XMLHttpRequest.prototype.open = function () {
             this.addEventListener("readystatechange", function () {
-                if (this.readyState !== 4) {
-                    return;
-                }
-                // only check farmrpg URLs
-                if (!this.responseURL.startsWith("https://farmrpg.com")) {
-                    return;
-                }
-                for (const [state, interceptor] of exports.queryInterceptors) {
-                    if ((0, exports.urlMatches)(this.responseURL, ...interceptor.match)) {
-                        console.debug(`[STATE] XMLHttpRequest intercepted ${this.responseURL}`, interceptor);
-                        interceptor.callback(state, {
-                            headers: new Headers(),
-                            ok: this.status >= 200 && this.status < 300,
-                            redirected: false,
-                            status: this.status,
-                            statusText: this.statusText,
-                            type: "default",
-                            url: this.responseURL,
-                            text: () => Promise.resolve(this.responseText),
-                            json: () => Promise.resolve(JSON.parse(this.responseText)),
-                            formData: () => Promise.resolve(new FormData()),
-                            arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-                            blob: () => Promise.resolve(new Blob([this.responseText])),
-                        });
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (this.readyState !== 4) {
+                        return;
                     }
-                }
+                    // only check farmrpg URLs
+                    if (!this.responseURL.startsWith("https://farmrpg.com")) {
+                        return;
+                    }
+                    for (const [state, interceptor] of exports.queryInterceptors) {
+                        if ((0, exports.urlMatches)(this.responseURL, ...interceptor.match)) {
+                            console.debug(`[STATE] XMLHttpRequest intercepted ${this.responseURL}`, interceptor);
+                            const previous = yield state.get({ doNotFetch: true });
+                            interceptor.callback(state, previous, {
+                                headers: new Headers(),
+                                ok: this.status >= 200 && this.status < 300,
+                                redirected: false,
+                                status: this.status,
+                                statusText: this.statusText,
+                                type: "default",
+                                url: this.responseURL,
+                                text: () => Promise.resolve(this.responseText),
+                                json: () => Promise.resolve(JSON.parse(this.responseText)),
+                                formData: () => Promise.resolve(new FormData()),
+                                arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+                                blob: () => Promise.resolve(new Blob([this.responseText])),
+                            });
+                        }
+                    }
+                });
             }, false);
             // eslint-disable-next-line prefer-rest-params
             Reflect.apply(open, this, arguments);
@@ -1031,18 +1098,18 @@ const watchQueries = () => {
     const originalFetch = window.fetch;
     window.fetch = (input, init) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield originalFetch(input, init);
-        if (response.hasBeenIntercepted) {
+        if (!response.hasBeenIntercepted) {
             response.hasBeenIntercepted = true;
-            (0, exports.onFetchResponse)(response);
+            (0, exports.onFetchResponse)(response.clone());
         }
         return response;
     });
     const originalFetchWorker = fetchWorker;
     fetchWorker = (action, parameters) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield originalFetchWorker(action, parameters);
-        if (response.hasBeenIntercepted) {
+        if (!response.hasBeenIntercepted) {
             response.hasBeenIntercepted = true;
-            (0, exports.onFetchResponse)(response);
+            (0, exports.onFetchResponse)(response.clone());
         }
         return response;
     });
@@ -1067,21 +1134,22 @@ class CachedState {
         this.updateListeners.push(callback);
     }
     get() {
-        return __awaiter(this, arguments, void 0, function* ({ ignoreCache } = {}) {
+        return __awaiter(this, arguments, void 0, function* ({ ignoreCache, doNotFetch } = {}) {
             if (this.getting) {
                 console.debug(`[STATE] Waiting for ${this.key} fetch`, this.getting);
                 return yield this.getting;
             }
             this.getting = new Promise((resolve) => {
-                if (!rootState[this.key] ||
-                    ignoreCache ||
-                    this.updatedAt.getTime() + this.timeout * 1000 < Date.now()) {
-                    console.debug(`[STATE] Fetching ${this.key}`, {
+                if (!doNotFetch &&
+                    (!rootState[this.key] ||
+                        ignoreCache ||
+                        this.updatedAt.getTime() + this.timeout * 1000 < Date.now())) {
+                    console.debug(`[STATE] %cFetching ${this.key}`, {
                         ignoreCache,
                         updatedAt: this.updatedAt,
                         timeout: this.timeout,
                         previous: rootState[this.key],
-                    });
+                    }, "background-color: red; color: white;");
                     this.fetch().then((result) => {
                         this.set(result);
                         resolve(result);
@@ -1105,8 +1173,10 @@ class CachedState {
     }
     set(input) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const previous = this.get({ doNotFetch: true });
             const value = (0, object_1.isObject)(this.defaultState)
-                ? Object.assign(Object.assign({}, this.defaultState), input) : (input !== null && input !== void 0 ? input : this.defaultState);
+                ? Object.assign(Object.assign(Object.assign({}, this.defaultState), previous), input) : ((_a = input !== null && input !== void 0 ? input : previous) !== null && _a !== void 0 ? _a : this.defaultState);
             console.debug(`[STATE] Setting ${this.key}`, value);
             const encoded = JSON.stringify(value);
             this.updatedAt = value === undefined ? new Date(0) : new Date();
@@ -1616,11 +1686,15 @@ exports.chatNav = {
         // create dropdowns if we haven't
         if (dropdowns.length === 0) {
             for (const title of document.querySelectorAll(".content-block-title.item-input")) {
+                title.style.margin = "0";
+                title.style.marginTop = "-5px";
+                title.style.overflow = "visible";
+                title.style.display = "flex";
                 const dropdown = document.createElement("div");
                 dropdown.classList.add("fh-chatdropdown");
                 dropdown.style.cursor = "pointer";
                 dropdown.style.textTransform = "titlecase";
-                dropdown.style.width = "100%";
+                dropdown.style.width = "calc(100% - 44px)";
                 dropdown.style.height = "44px";
                 dropdown.style.display = "flex";
                 dropdown.style.alignContent = "center";
@@ -1637,9 +1711,21 @@ exports.chatNav = {
                     }
                 });
                 title.append(dropdown);
-                title.style.margin = "0";
-                title.style.marginTop = "-5px";
-                title.style.overflow = "visible";
+                const refresh = document.createElement("i");
+                refresh.classList.add("fa");
+                refresh.classList.add("fw");
+                refresh.classList.add("fa-refresh");
+                refresh.style.cursor = "pointer";
+                refresh.style.width = "44px";
+                refresh.style.height = "44px";
+                refresh.style.display = "flex";
+                refresh.style.alignItems = "center";
+                refresh.style.justifyContent = "center";
+                refresh.addEventListener("click", () => {
+                    var _a;
+                    (_a = document.querySelector(".cclinkselected")) === null || _a === void 0 ? void 0 : _a.click();
+                });
+                title.append(refresh);
             }
         }
         // update dropdown content
@@ -3009,13 +3095,12 @@ const SETTING_EMPTY_NOTIFICATIONS = {
     defaultValue: true,
 };
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.HARVEST, farm_1.harvestAll);
-const checkFields = (settings) => __awaiter(void 0, void 0, void 0, function* () {
+const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
     const farmId = yield farm_1.farmIdState.get();
-    const farmStatus = yield farm_1.farmStatusState.get();
-    if (!farmStatus) {
+    if (!state) {
         return;
     }
-    if (farmStatus.status === farm_1.CropStatus.EMPTY &&
+    if (state.status === farm_1.CropStatus.EMPTY &&
         settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
         (0, notifications_1.sendNotification)({
             class: "btnorange",
@@ -3024,7 +3109,7 @@ const checkFields = (settings) => __awaiter(void 0, void 0, void 0, function* ()
             href: (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) })),
         });
     }
-    else if (farmStatus.status === farm_1.CropStatus.READY &&
+    else if (state.status === farm_1.CropStatus.READY &&
         settings[SETTING_HARVEST_NOTIFICATIONS.id].value) {
         const farmUrl = (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) }));
         (0, notifications_1.sendNotification)({
@@ -3048,9 +3133,7 @@ const checkFields = (settings) => __awaiter(void 0, void 0, void 0, function* ()
 exports.fieldNotifications = {
     settings: [SETTING_HARVEST_NOTIFICATIONS, SETTING_EMPTY_NOTIFICATIONS],
     onInitialize: (settings) => {
-        checkFields(settings);
-        setInterval(() => checkFields(settings), 5 * 1000);
-        farm_1.farmStatusState.onUpdate(() => checkFields(settings));
+        farm_1.farmStatusState.onUpdate((state) => renderFields(settings, state));
     },
 };
 
@@ -3112,18 +3195,9 @@ exports.highlightSelfInChat = {
 /***/ }),
 
 /***/ 737:
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.kitchenNotifications = void 0;
 const kitchen_1 = __webpack_require__(182);
@@ -3158,12 +3232,11 @@ const SETTING_EMPTY_NOTIFICATIONS = {
     defaultValue: true,
 };
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_MEALS, kitchen_1.collectAll);
-const checkOvens = (settings) => __awaiter(void 0, void 0, void 0, function* () {
-    const kitchenStatus = yield kitchen_1.kitchenStatusState.get();
-    if (!kitchenStatus) {
+const renderOvens = (settings, state) => {
+    if (!state) {
         return;
     }
-    if (kitchenStatus.status === kitchen_1.OvenStatus.EMPTY &&
+    if (state.status === kitchen_1.OvenStatus.EMPTY &&
         settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
         (0, notifications_1.sendNotification)({
             class: "btnorange",
@@ -3172,7 +3245,7 @@ const checkOvens = (settings) => __awaiter(void 0, void 0, void 0, function* () 
             href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
         });
     }
-    else if (kitchenStatus.status === kitchen_1.OvenStatus.ATTENTION &&
+    else if (state.status === kitchen_1.OvenStatus.ATTENTION &&
         settings[SETTING_ATTENTION_NOTIFICATIONS.id].value) {
         (0, notifications_1.sendNotification)({
             class: "btnorange",
@@ -3181,7 +3254,7 @@ const checkOvens = (settings) => __awaiter(void 0, void 0, void 0, function* () 
             href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
         });
     }
-    else if (kitchenStatus.status === kitchen_1.OvenStatus.READY &&
+    else if (state.status === kitchen_1.OvenStatus.READY &&
         settings[SETTING_COMPLETE_NOTIFICATIONS.id].value) {
         (0, notifications_1.sendNotification)({
             class: "btngreen",
@@ -3200,7 +3273,7 @@ const checkOvens = (settings) => __awaiter(void 0, void 0, void 0, function* () 
     else {
         (0, notifications_1.removeNotification)(notifications_1.NotificationId.OVEN);
     }
-});
+};
 exports.kitchenNotifications = {
     settings: [
         SETTING_COMPLETE_NOTIFICATIONS,
@@ -3208,9 +3281,7 @@ exports.kitchenNotifications = {
         SETTING_EMPTY_NOTIFICATIONS,
     ],
     onInitialize: (settings) => {
-        checkOvens(settings);
-        setInterval(() => checkOvens(settings), 5 * 1000);
-        kitchen_1.kitchenStatusState.onUpdate(() => checkOvens(settings));
+        kitchen_1.kitchenStatusState.onUpdate((state) => renderOvens(settings, state));
     },
 };
 
@@ -3299,7 +3370,7 @@ const SETTING_MEAL_NOTIFICATIONS = {
     defaultValue: true,
 };
 let mealInterval;
-const checkMeals = () => __awaiter(void 0, void 0, void 0, function* () {
+const renderMeals = () => __awaiter(void 0, void 0, void 0, function* () {
     const mealStatus = yield meals_1.mealsStatusState.get();
     if (!mealStatus || mealStatus.meals.length === 0) {
         clearInterval(mealInterval);
@@ -3315,6 +3386,12 @@ const checkMeals = () => __awaiter(void 0, void 0, void 0, function* () {
             const diffSeconds = active.finishedAt / 1000 - now.getTime() / 1000;
             const minutes = Math.floor(diffSeconds / 60);
             const seconds = Math.floor(diffSeconds % 60);
+            if (minutes < 0 && seconds < 0) {
+                meals_1.mealsStatusState.set({
+                    meals: mealStatus.meals.filter((meal) => meal.meal !== active.meal),
+                });
+                return `${active.meal} (EXPIRED!)`;
+            }
             const timeRemaining = `${minutes}:${seconds
                 .toString()
                 .padStart(2, "0")}`;
@@ -3323,7 +3400,7 @@ const checkMeals = () => __awaiter(void 0, void 0, void 0, function* () {
             .join(", ")}`,
     });
     if (!mealInterval) {
-        mealInterval = setInterval(checkMeals, 1 * 1000);
+        mealInterval = setInterval(renderMeals, 1 * 1000);
     }
 });
 exports.mealNotifications = {
@@ -3332,8 +3409,7 @@ exports.mealNotifications = {
         if (!settings[SETTING_MEAL_NOTIFICATIONS.id].value) {
             return;
         }
-        checkMeals();
-        meals_1.mealsStatusState.onUpdate(checkMeals);
+        meals_1.mealsStatusState.onUpdate(renderMeals);
     },
 };
 
@@ -3794,7 +3870,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.11" !== void 0 ? "1.0.11" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.12" !== void 0 ? "1.0.12" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4291,8 +4367,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = exports.Handler = exports.NotificationId = void 0;
 const page_1 = __webpack_require__(952);
-const farmhandSettings_1 = __webpack_require__(973);
 const object_1 = __webpack_require__(968);
+const farmhandSettings_1 = __webpack_require__(973);
 const KEY_NOTIFICATIONS = "notifications";
 var NotificationId;
 (function (NotificationId) {
@@ -4422,8 +4498,11 @@ const renderNotifications = (force = false) => {
 };
 exports.notifications = {
     onInitialize: () => __awaiter(void 0, void 0, void 0, function* () {
-        const savedNotifications = yield (0, farmhandSettings_1.getData)(KEY_NOTIFICATIONS, []);
-        state.notifications = savedNotifications;
+        // const savedNotifications = await getData<Notification<any>[]>(
+        //   KEY_NOTIFICATIONS,
+        //   []
+        // );
+        // state.notifications = savedNotifications;
     }),
     onPageLoad: () => {
         setTimeout(renderNotifications, 500);
@@ -4482,13 +4561,14 @@ var WorkerGo;
     WorkerGo["COLLECT_ALL_MEALS"] = "cookreadyall";
     WorkerGo["COOK_ALL"] = "cookitemall";
     WorkerGo["DEPOSIT_SILVER"] = "depositsilver";
-    WorkerGo["GET_STATS"] = "getstats";
     WorkerGo["FARM_STATUS"] = "farmstatus";
-    WorkerGo["READY_COUNT"] = "readycount";
-    WorkerGo["RESET_PERKS"] = "resetperks";
-    WorkerGo["WITHDRAW_SILVER"] = "withdrawalsilver";
+    WorkerGo["GET_STATS"] = "getstats";
     WorkerGo["HARVEST_ALL"] = "harvestall";
     WorkerGo["PLANT_ALL"] = "plantall";
+    WorkerGo["READY_COUNT"] = "readycount";
+    WorkerGo["RESET_PERKS"] = "resetperks";
+    WorkerGo["USE_ITEM"] = "useitem";
+    WorkerGo["WITHDRAW_SILVER"] = "withdrawalsilver";
 })(WorkerGo || (exports.WorkerGo = WorkerGo = {}));
 // get page and parameters if any
 const getPage = () => {

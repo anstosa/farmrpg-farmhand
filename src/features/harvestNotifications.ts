@@ -1,6 +1,7 @@
 import {
   CropStatus,
   farmIdState,
+  FarmStatus,
   farmStatusState,
   harvestAll,
 } from "~/api/farmrpg/farm";
@@ -37,14 +38,16 @@ const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
 
 registerNotificationHandler(Handler.HARVEST, harvestAll);
 
-const checkFields = async (settings: Settings): Promise<void> => {
+const renderFields = async (
+  settings: Settings,
+  state: FarmStatus | undefined
+): Promise<void> => {
   const farmId = await farmIdState.get();
-  const farmStatus = await farmStatusState.get();
-  if (!farmStatus) {
+  if (!state) {
     return;
   }
   if (
-    farmStatus.status === CropStatus.EMPTY &&
+    state.status === CropStatus.EMPTY &&
     settings[SETTING_EMPTY_NOTIFICATIONS.id].value
   ) {
     sendNotification({
@@ -54,7 +57,7 @@ const checkFields = async (settings: Settings): Promise<void> => {
       href: toUrl(Page.FARM, new URLSearchParams({ id: String(farmId) })),
     });
   } else if (
-    farmStatus.status === CropStatus.READY &&
+    state.status === CropStatus.READY &&
     settings[SETTING_HARVEST_NOTIFICATIONS.id].value
   ) {
     const farmUrl = toUrl(
@@ -82,8 +85,6 @@ const checkFields = async (settings: Settings): Promise<void> => {
 export const fieldNotifications: Feature = {
   settings: [SETTING_HARVEST_NOTIFICATIONS, SETTING_EMPTY_NOTIFICATIONS],
   onInitialize: (settings) => {
-    checkFields(settings);
-    setInterval(() => checkFields(settings), 5 * 1000);
-    farmStatusState.onUpdate(() => checkFields(settings));
+    farmStatusState.onUpdate((state) => renderFields(settings, state));
   },
 };

@@ -1,5 +1,6 @@
 import {
   collectAll,
+  KitchenStatus,
   kitchenStatusState,
   OvenStatus,
 } from "~/api/farmrpg/kitchen";
@@ -46,13 +47,15 @@ const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
 
 registerNotificationHandler(Handler.COLLECT_MEALS, collectAll);
 
-const checkOvens = async (settings: Settings): Promise<void> => {
-  const kitchenStatus = await kitchenStatusState.get();
-  if (!kitchenStatus) {
+const renderOvens = (
+  settings: Settings,
+  state: KitchenStatus | undefined
+): void => {
+  if (!state) {
     return;
   }
   if (
-    kitchenStatus.status === OvenStatus.EMPTY &&
+    state.status === OvenStatus.EMPTY &&
     settings[SETTING_EMPTY_NOTIFICATIONS.id].value
   ) {
     sendNotification({
@@ -62,7 +65,7 @@ const checkOvens = async (settings: Settings): Promise<void> => {
       href: toUrl(Page.KITCHEN, new URLSearchParams()),
     });
   } else if (
-    kitchenStatus.status === OvenStatus.ATTENTION &&
+    state.status === OvenStatus.ATTENTION &&
     settings[SETTING_ATTENTION_NOTIFICATIONS.id].value
   ) {
     sendNotification({
@@ -72,7 +75,7 @@ const checkOvens = async (settings: Settings): Promise<void> => {
       href: toUrl(Page.KITCHEN, new URLSearchParams()),
     });
   } else if (
-    kitchenStatus.status === OvenStatus.READY &&
+    state.status === OvenStatus.READY &&
     settings[SETTING_COMPLETE_NOTIFICATIONS.id].value
   ) {
     sendNotification({
@@ -100,8 +103,6 @@ export const kitchenNotifications: Feature = {
     SETTING_EMPTY_NOTIFICATIONS,
   ],
   onInitialize: (settings) => {
-    checkOvens(settings);
-    setInterval(() => checkOvens(settings), 5 * 1000);
-    kitchenStatusState.onUpdate(() => checkOvens(settings));
+    kitchenStatusState.onUpdate((state) => renderOvens(settings, state));
   },
 };

@@ -1,6 +1,6 @@
 import { CachedState, StorageKey } from "../state";
 import { getDocument } from "../utils";
-import { getListByTitle, Page } from "~/utils/page";
+import { getListByTitle, Page, WorkerGo } from "~/utils/page";
 import { requestHTML, timestampToDate } from "./api";
 
 export interface ActiveMeal {
@@ -11,6 +11,8 @@ export interface ActiveMeal {
 export interface MealsStatus {
   meals: ActiveMeal[];
 }
+
+const scheduledUpdates: Record<number, NodeJS.Timeout> = {};
 
 const processMealStatus = (root: HTMLElement): MealsStatus => {
   const mealList = getListByTitle(/Time-based Effects/, root);
@@ -48,11 +50,39 @@ export const mealsStatusState = new CachedState<MealsStatus>(
     interceptors: [
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (state, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
-          state.set(processMealStatus(root.body));
+          await state.set(processMealStatus(root.body));
+        },
+      },
+      {
+        match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.USE_ITEM })],
+        callback: async () => {
+          // request homepage to trigger meals state update
+          await requestHTML(Page.HOME_PATH);
         },
       },
     ],
   }
 );
+
+const removeFinishedMeals = async (): Promise<void> => {
+  const state = await mealsStatusState.get({ doNotFetch: true });
+  await mealsStatusState.set({
+    meals: state?.meals.filter((meal) => meal.finishedAt < Date.now()) ?? [],
+  });
+};
+
+// automatically remove meals when finished
+mealsStatusState.onUpdate((state) => {
+  for (const meal of state?.meals ?? []) {
+    const { finishedAt } = meal;
+    if (scheduledUpdates[finishedAt]) {
+      continue;
+    }
+    scheduledUpdates[finishedAt] = setTimeout(
+      removeFinishedMeals,
+      finishedAt - Date.now()
+    );
+  }
+});

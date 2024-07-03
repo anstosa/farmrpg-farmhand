@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.13
+// @version 1.0.14
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*

@@ -105,6 +105,7 @@ This frees up points from many activity specific perks to be re-invested in perk
 * Home: compress skills section
 * Quests: Styled border
 * Quests: Minimizable
+* Popups: Click outside to close
 
 ### Export
 
@@ -126,6 +127,13 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.14
+
+* Added: Click outside popups to close
+* Fixed: Quest minimize button from overlapping
+* Fixed: Fully black popup backgrounds
+* Fixed: Perk managment not working in some cases
 
 ### 1.0.13
 
@@ -152,7 +160,6 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 * Added: Pre-fills vault code with recommended guess
 * Fixed: Some perk categories not visible
 * Fixed: Perk sets chaning on perks screen
-* Fixed: Quest minimize button from overlapping
 * Fixed: Missing ingredient links broke for multiple ingredients
 
 ### 1.0.9

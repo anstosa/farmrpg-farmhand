@@ -279,7 +279,7 @@ export class CachedState<T> {
   }
 
   async set(input: Partial<T> | undefined): Promise<void> {
-    const previous = this.get({ doNotFetch: true });
+    const previous = await this.get({ doNotFetch: true });
     const value: T = isObject(this.defaultState)
       ? { ...this.defaultState, ...previous, ...input }
       : ((input ?? previous ?? this.defaultState) as T);

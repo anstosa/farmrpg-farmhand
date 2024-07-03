@@ -9,7 +9,7 @@ export const quests: Feature = {
       <style>
         /* make room for minimize button */
         #statszone > div {
-          padding-right: 15px;
+          padding-right: 15px !important;
         }
         /* make line prettier */
         #statszone hr {

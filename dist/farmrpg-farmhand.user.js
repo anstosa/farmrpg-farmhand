@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.13
+// @version 1.0.14
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -1174,7 +1174,7 @@ class CachedState {
     set(input) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const previous = this.get({ doNotFetch: true });
+            const previous = yield this.get({ doNotFetch: true });
             const value = (0, object_1.isObject)(this.defaultState)
                 ? Object.assign(Object.assign(Object.assign({}, this.defaultState), previous), input) : ((_a = input !== null && input !== void 0 ? input : previous) !== null && _a !== void 0 ? _a : this.defaultState);
             console.debug(`[STATE] Setting ${this.key}`, value);
@@ -3660,7 +3660,7 @@ exports.quests = {
       <style>
         /* make room for minimize button */
         #statszone > div {
-          padding-right: 15px;
+          padding-right: 15px !important;
         }
         /* make line prettier */
         #statszone hr {
@@ -3870,7 +3870,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.13" !== void 0 ? "1.0.13" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.14" !== void 0 ? "1.0.14" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -3968,6 +3968,7 @@ const moveUpdateToTop_1 = __webpack_require__(417);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
+const popup_1 = __webpack_require__(469);
 const quests_1 = __webpack_require__(710);
 const quickSellSafely_1 = __webpack_require__(760);
 const vaultSolver_1 = __webpack_require__(26);
@@ -3977,6 +3978,7 @@ const FEATURES = [
     // internal
     notifications_1.notifications,
     confirmation_1.confirmations,
+    popup_1.popups,
     autocomplete_1.autocomplete,
     versionManager_1.versionManager,
     // home
@@ -4637,12 +4639,15 @@ exports.getListByTitle = getListByTitle;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.showPopup = void 0;
+exports.popups = exports.showPopup = void 0;
 const showPopup = ({ title, contentHTML, align, okText, }) => new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.classList.add("modal-overlay");
+    let overlay = document.querySelector(".modal-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.classList.add("modal-overlay");
+        document.body.append(overlay);
+    }
     overlay.classList.add("modal-overlay-visible");
-    document.body.append(overlay);
     const modal = document.createElement("div");
     modal.classList.add("modal");
     modal.classList.add("modal-in");
@@ -4685,6 +4690,26 @@ const showPopup = ({ title, contentHTML, align, okText, }) => new Promise((resol
     modal.style.marginLeft = `-${offset.width / 2}px`;
 });
 exports.showPopup = showPopup;
+exports.popups = {
+    onInitialize: () => {
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          /* hide duplicate modal overlays */
+          .modal-overlay-visible ~ .modal-overlay-visible {
+            opacity: 0;
+          }
+        <style>
+      `);
+        // click outside to close
+        document.body.addEventListener("click", (event) => {
+            var _a;
+            if (event.target.classList.contains("modal-overlay")) {
+                (_a = document
+                    .querySelector(".modal .modal-button")) === null || _a === void 0 ? void 0 : _a.click();
+            }
+        });
+    },
+};
 
 
 /***/ }),

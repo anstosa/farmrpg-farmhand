@@ -1,3 +1,5 @@
+import { Feature } from "~/features/feature";
+
 export interface Popup {
   title: string;
   contentHTML: string;
@@ -12,10 +14,13 @@ export const showPopup = ({
   okText,
 }: Popup): Promise<void> =>
   new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.classList.add("modal-overlay");
+    let overlay = document.querySelector(".modal-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.classList.add("modal-overlay");
+      document.body.append(overlay);
+    }
     overlay.classList.add("modal-overlay-visible");
-    document.body.append(overlay);
 
     const modal = document.createElement("div");
     modal.classList.add("modal");
@@ -58,3 +63,27 @@ export const showPopup = ({
     modal.style.marginTop = `-${offset.height / 2}px`;
     modal.style.marginLeft = `-${offset.width / 2}px`;
   });
+
+export const popups: Feature = {
+  onInitialize: () => {
+    document.head.insertAdjacentHTML(
+      "beforeend",
+      `
+        <style>
+          /* hide duplicate modal overlays */
+          .modal-overlay-visible ~ .modal-overlay-visible {
+            opacity: 0;
+          }
+        <style>
+      `
+    );
+    // click outside to close
+    document.body.addEventListener("click", (event) => {
+      if ((event.target as HTMLElement).classList.contains("modal-overlay")) {
+        document
+          .querySelector<HTMLSpanElement>(".modal .modal-button")
+          ?.click();
+      }
+    });
+  },
+};

@@ -22,6 +22,7 @@ import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
+import { popups } from "./utils/popup";
 import { quests } from "./features/quests";
 import { quicksellSafely } from "./features/quickSellSafely";
 import { vaultSolver } from "./features/vaultSolver";
@@ -32,6 +33,7 @@ const FEATURES = [
   // internal
   notifications,
   confirmations,
+  popups,
   autocomplete,
   versionManager,
 

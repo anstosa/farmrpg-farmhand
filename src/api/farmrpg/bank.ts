@@ -36,7 +36,7 @@ export const statsState = new CachedState<Stats>(
     interceptors: [
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.GET_STATS })],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           state.set(processStats(await getDocument(response)));
         },
       },
@@ -45,7 +45,7 @@ export const statsState = new CachedState<Stats>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.DEPOSIT_SILVER }),
         ],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           if (!previous) {
             return;
@@ -61,7 +61,7 @@ export const statsState = new CachedState<Stats>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.WITHDRAW_SILVER }),
         ],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           if (!previous) {
             return;

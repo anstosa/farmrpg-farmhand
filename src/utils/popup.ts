@@ -5,6 +5,7 @@ export interface Popup {
   contentHTML: string;
   align?: "left" | "center" | "right";
   okText?: string;
+  actions?: Array<{ name: string; callback: () => Promise<void> }>;
 }
 
 export const showPopup = ({
@@ -12,6 +13,7 @@ export const showPopup = ({
   contentHTML,
   align,
   okText,
+  actions,
 }: Popup): Promise<void> =>
   new Promise((resolve) => {
     let overlay = document.querySelector(".modal-overlay");
@@ -48,11 +50,43 @@ export const showPopup = ({
           "
         >${contentHTML}</div>
       </div>
-      <div class="modal-buttons modal-buttons-1">
-        <span class="modal-button modal-button-bold">${okText ?? "OK"}</span>
+      <div
+        class="
+          modal-buttons
+          modal-buttons-vertical
+          modal-buttons-${(actions?.length ?? 0) + 1}
+        ">
+        ${
+          actions
+            ? actions
+                .map(
+                  ({ name }, index) => `
+              <span
+                class="modal-button modal-button-bold fh-action"
+                data-index="${index}"
+              >
+                ${name}
+              </span>`
+                )
+                .join("")
+            : ""
+        }
+        <span class="modal-button fh-ok">${okText ?? "OK"}</span>
       </div>
     `;
-    const okButton = modal.querySelector(".modal-button");
+    if (actions) {
+      for (const [index, { callback }] of actions.entries()) {
+        const button = modal.querySelector(`.fh-action[data-index='${index}']`);
+        button?.addEventListener("click", async () => {
+          button.textContent = "Loading...";
+          await callback();
+          overlay?.classList.remove("modal-overlay-visible");
+          modal.remove();
+          resolve();
+        });
+      }
+    }
+    const okButton = modal.querySelector(".fh-ok");
     okButton?.addEventListener("click", () => {
       overlay?.classList.remove("modal-overlay-visible");
       modal.remove();

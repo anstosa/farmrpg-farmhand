@@ -56,7 +56,7 @@ export const mailboxState = new CachedState<MailboxState>(
     interceptors: [
       {
         match: [Page.POST_OFFICE, new URLSearchParams()],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           await state.set(processPostoffice(await getDocument(response)));
         },
       },
@@ -65,7 +65,7 @@ export const mailboxState = new CachedState<MailboxState>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MAIL_ITEMS }),
         ],
-        callback: async (state) => {
+        callback: async (settings, state) => {
           await state.set({ contents: [] });
         },
       },

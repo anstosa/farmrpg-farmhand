@@ -1,6 +1,7 @@
 import { isObject } from "~/utils/object";
 import { Page } from "~/utils/page";
 import { Responselike } from "./utils";
+import { Settings } from "~/features/feature";
 
 type InterceptableResponse = Response & { hasBeenIntercepted?: boolean };
 
@@ -85,7 +86,10 @@ const rootState: Record<StorageKey, string | undefined> =
 export const queryInterceptors: [CachedState<any>, QueryInterceptor<any>][] =
   [];
 
-export const onFetchResponse = async (response: Response): Promise<void> => {
+export const onFetchResponse = async (
+  settings: Settings,
+  response: Response
+): Promise<void> => {
   // only check farmrpg URLs
   if (!response.url.startsWith("https://farmrpg.com")) {
     return;
@@ -95,12 +99,12 @@ export const onFetchResponse = async (response: Response): Promise<void> => {
     if (urlMatches(response.url, ...interceptor.match)) {
       console.debug(`[STATE] fetch intercepted ${response.url}`, interceptor);
       const previous = await state.get({ doNotFetch: true });
-      interceptor.callback(state, previous, response);
+      interceptor.callback(settings, state, previous, response);
     }
   }
 };
 
-export const watchQueries = (): void => {
+export const watchQueries = (settings: Settings): void => {
   (function (open) {
     XMLHttpRequest.prototype.open = function () {
       this.addEventListener(
@@ -120,7 +124,7 @@ export const watchQueries = (): void => {
                 interceptor
               );
               const previous = await state.get({ doNotFetch: true });
-              interceptor.callback(state, previous, {
+              interceptor.callback(settings, state, previous, {
                 headers: new Headers(),
                 ok: this.status >= 200 && this.status < 300,
                 redirected: false,
@@ -155,7 +159,7 @@ export const watchQueries = (): void => {
     const response = await originalFetch(input, init);
     if (!response.hasBeenIntercepted) {
       response.hasBeenIntercepted = true;
-      onFetchResponse(response.clone());
+      onFetchResponse(settings, response.clone());
     }
     return response;
   };
@@ -165,7 +169,7 @@ export const watchQueries = (): void => {
     const response = await originalFetchWorker(action, parameters);
     if (!response.hasBeenIntercepted) {
       response.hasBeenIntercepted = true;
-      onFetchResponse(response.clone());
+      onFetchResponse(settings, response.clone());
     }
     return response;
   };
@@ -180,6 +184,7 @@ export interface CachedStateOptions<T>
 export interface QueryInterceptor<T> {
   match: [Page, URLSearchParams];
   callback: (
+    settings: Settings,
     state: CachedState<T>,
     previous: T,
     response: Responselike

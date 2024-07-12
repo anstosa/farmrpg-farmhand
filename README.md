@@ -128,6 +128,12 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.15
+
+* Added: Harvest popup has re-plant option
+* Added: Option to disable Harvest popup
+* Added: Option to disable vault code suggestions
+
 ### 1.0.14
 
 * Added: Click outside popups to close

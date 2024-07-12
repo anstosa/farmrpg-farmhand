@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.14
+// @version 1.0.15
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -132,7 +132,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = exports.timestampToDate = exports.requestJSON = exports.requestHTML = void 0;
 const state_1 = __webpack_require__(619);
+const index_1 = __webpack_require__(217);
 const utils_1 = __webpack_require__(683);
+const farmhandSettings_1 = __webpack_require__(973);
 const requestHTML = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield fetch((0, state_1.toUrl)(page, query), {
         method: "POST",
@@ -148,7 +150,8 @@ const requestJSON = (page, query) => __awaiter(void 0, void 0, void 0, function*
         mode: "cors",
         credentials: "include",
     });
-    (0, state_1.onFetchResponse)(response);
+    const settings = yield (0, farmhandSettings_1.getSettings)(index_1.FEATURES);
+    (0, state_1.onFetchResponse)(settings, response);
     return yield response.json();
 });
 exports.requestJSON = requestJSON;
@@ -279,7 +282,7 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
     interceptors: [
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS })],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 state.set(processStats(yield (0, utils_1.getDocument)(response)));
             }),
         },
@@ -288,7 +291,7 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER }),
             ],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const [_, query] = (0, state_1.parseUrl)(response.url);
                 if (!previous) {
                     return;
@@ -301,7 +304,7 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.WITHDRAW_SILVER }),
             ],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const [_, query] = (0, state_1.parseUrl)(response.url);
                 if (!previous) {
                     return;
@@ -350,6 +353,7 @@ const state_1 = __webpack_require__(619);
 const utils_1 = __webpack_require__(683);
 const page_1 = __webpack_require__(952);
 const api_1 = __webpack_require__(126);
+const harvestNotifications_1 = __webpack_require__(894);
 const popup_1 = __webpack_require__(469);
 var CropStatus;
 (function (CropStatus) {
@@ -414,21 +418,21 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
     interceptors: [
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.READY_COUNT })],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 state.set(processFarmStatus(root.body));
             }),
         },
         {
             match: [page_1.Page.FARM, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 yield state.set(processFarmPage(root.body));
             }),
         },
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 const linkStatus = root.body.querySelector("a[href^='xfarm.php'] .item-after");
                 if (!linkStatus) {
@@ -439,7 +443,7 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.FARM_STATUS })],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a;
                 const raw = yield response.text();
                 const rawPlots = raw.split(";");
@@ -465,14 +469,16 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL })],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 yield state.set({ status: CropStatus.EMPTY });
                 const { drops } = (yield response.json());
-                (0, popup_1.showPopup)({
-                    title: "Harvested Crops",
-                    contentHTML: `
+                const [page] = (0, page_1.getPage)();
+                if (page !== page_1.Page.FARM || settings[harvestNotifications_1.SETTING_HARVEST_POPUP.id].value) {
+                    (0, popup_1.showPopup)({
+                        title: "Harvested Crops",
+                        contentHTML: `
               ${Object.values(drops)
-                        .map((drop) => `
+                            .map((drop) => `
                     <img
                       src="${drop.img}"
                       style="
@@ -482,14 +488,38 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
                     >
                     (x${drop.qty})
                   `)
-                        .join("&nbsp;")}
+                            .join("&nbsp;")}
             `,
-                });
+                        actions: [
+                            {
+                                name: "Replant",
+                                callback: () => __awaiter(void 0, void 0, void 0, function* () {
+                                    var _b;
+                                    const farmId = yield exports.farmIdState.get();
+                                    if (!farmId) {
+                                        console.error("No farm id found");
+                                        return;
+                                    }
+                                    if (page === page_1.Page.FARM) {
+                                        (_b = document
+                                            .querySelector(".plantallbtn")) === null || _b === void 0 ? void 0 : _b.click();
+                                    }
+                                    else {
+                                        yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
+                                            go: page_1.WorkerGo.PLANT_ALL,
+                                            id: String(farmId),
+                                        }));
+                                    }
+                                }),
+                            },
+                        ],
+                    });
+                }
             }),
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.PLANT_ALL })],
-            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
                 yield state.set({ status: CropStatus.GROWING });
             }),
         },
@@ -528,14 +558,14 @@ exports.farmIdState = new state_1.CachedState(state_1.StorageKey.FARM_ID, () => 
     interceptors: [
         {
             match: [page_1.Page.FARM, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 yield state.set(processFarmId(root.body));
             }),
         },
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 const status = root.body.querySelector("a[href^='xfarm.php'] .item-after span");
                 if (!status) {
@@ -652,7 +682,7 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
     interceptors: [
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 const kitchenStatus = root === null || root === void 0 ? void 0 : root.querySelector("a[href='kitchen.php'] .item-after span");
                 yield state.set(processKitchenStatus(kitchenStatus || undefined));
@@ -660,7 +690,7 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
         },
         {
             match: [page_1.Page.KITCHEN, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 yield state.set(processKitchenPage(root.body));
             }),
@@ -670,7 +700,7 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }),
             ],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c;
                 const root = yield (0, utils_1.getDocument)(response);
                 const successCount = (_c = (_b = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/success/g)) === null || _b === void 0 ? void 0 : _b.length) !== null && _c !== void 0 ? _c : 0;
@@ -688,7 +718,7 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COOK_ALL })],
-            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
                 yield state.set({
                     status: OvenStatus.COOKING,
                     checkAt: Date.now() + 60 * 1000,
@@ -775,7 +805,7 @@ exports.mealsStatusState = new state_1.CachedState(state_1.StorageKey.MEALS_STAT
     interceptors: [
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const root = yield (0, utils_1.getDocument)(response);
                 yield state.set(processMealStatus(root.body));
             }),
@@ -873,7 +903,7 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
     interceptors: [
         {
             match: [page_1.Page.PERKS, new URLSearchParams()],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 yield state.set(processPerks(yield (0, utils_1.getDocument)(response)));
             }),
         },
@@ -882,7 +912,7 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.ACTIVATE_PERK_SET }),
             ],
-            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 const [_, query] = (0, state_1.parseUrl)(response.url);
                 yield state.set({
                     currentPerkSetId: Number(query.get("id")),
@@ -1043,7 +1073,7 @@ const generateEmptyRootState = () => {
 };
 const rootState = generateEmptyRootState();
 exports.queryInterceptors = [];
-const onFetchResponse = (response) => __awaiter(void 0, void 0, void 0, function* () {
+const onFetchResponse = (settings, response) => __awaiter(void 0, void 0, void 0, function* () {
     // only check farmrpg URLs
     if (!response.url.startsWith("https://farmrpg.com")) {
         return;
@@ -1052,12 +1082,12 @@ const onFetchResponse = (response) => __awaiter(void 0, void 0, void 0, function
         if ((0, exports.urlMatches)(response.url, ...interceptor.match)) {
             console.debug(`[STATE] fetch intercepted ${response.url}`, interceptor);
             const previous = yield state.get({ doNotFetch: true });
-            interceptor.callback(state, previous, response);
+            interceptor.callback(settings, state, previous, response);
         }
     }
 });
 exports.onFetchResponse = onFetchResponse;
-const watchQueries = () => {
+const watchQueries = (settings) => {
     (function (open) {
         XMLHttpRequest.prototype.open = function () {
             this.addEventListener("readystatechange", function () {
@@ -1073,7 +1103,7 @@ const watchQueries = () => {
                         if ((0, exports.urlMatches)(this.responseURL, ...interceptor.match)) {
                             console.debug(`[STATE] XMLHttpRequest intercepted ${this.responseURL}`, interceptor);
                             const previous = yield state.get({ doNotFetch: true });
-                            interceptor.callback(state, previous, {
+                            interceptor.callback(settings, state, previous, {
                                 headers: new Headers(),
                                 ok: this.status >= 200 && this.status < 300,
                                 redirected: false,
@@ -1100,7 +1130,7 @@ const watchQueries = () => {
         const response = yield originalFetch(input, init);
         if (!response.hasBeenIntercepted) {
             response.hasBeenIntercepted = true;
-            (0, exports.onFetchResponse)(response.clone());
+            (0, exports.onFetchResponse)(settings, response.clone());
         }
         return response;
     });
@@ -1109,7 +1139,7 @@ const watchQueries = () => {
         const response = yield originalFetchWorker(action, parameters);
         if (!response.hasBeenIntercepted) {
             response.hasBeenIntercepted = true;
-            (0, exports.onFetchResponse)(response.clone());
+            (0, exports.onFetchResponse)(settings, response.clone());
         }
         return response;
     });
@@ -3071,7 +3101,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fieldNotifications = void 0;
+exports.fieldNotifications = exports.SETTING_HARVEST_POPUP = void 0;
 const farm_1 = __webpack_require__(888);
 const notifications_1 = __webpack_require__(783);
 const page_1 = __webpack_require__(952);
@@ -3081,6 +3111,16 @@ const SETTING_HARVEST_NOTIFICATIONS = {
     title: "Farm: Harvest Notifications",
     description: `
     Show notification when crops are ready to harvest
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
+exports.SETTING_HARVEST_POPUP = {
+    id: "harvestPopup",
+    title: "Farm: Harvest Popup",
+    description: `
+    Show popup on Farm page when crops are harvested with the harvest results including bonuses</br>
+    (popup is always shown if havesting from other pages via the notification)
   `,
     type: "boolean",
     defaultValue: true,
@@ -3131,7 +3171,11 @@ const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.fieldNotifications = {
-    settings: [SETTING_HARVEST_NOTIFICATIONS, SETTING_EMPTY_NOTIFICATIONS],
+    settings: [
+        SETTING_HARVEST_NOTIFICATIONS,
+        exports.SETTING_HARVEST_POPUP,
+        SETTING_EMPTY_NOTIFICATIONS,
+    ],
     onInitialize: (settings) => {
         farm_1.farmStatusState.onUpdate((state) => renderFields(settings, state));
     },
@@ -3799,10 +3843,21 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.vaultSolver = void 0;
 const vault_1 = __webpack_require__(279);
 const page_1 = __webpack_require__(952);
+const SETTING_VAULT_SOLVER = {
+    id: "vaultSolver",
+    title: "Vault: Auto Solver",
+    description: "Auto-fill solution suggestions in the vault input box",
+    type: "boolean",
+    defaultValue: true,
+};
 exports.vaultSolver = {
+    settings: [SETTING_VAULT_SOLVER],
     onPageLoad: (settings, page) => {
         var _a;
         if (page !== page_1.Page.VAULT) {
+            return;
+        }
+        if (!settings[SETTING_VAULT_SOLVER.id].value) {
             return;
         }
         const input = document.querySelector("#vaultcode");
@@ -3870,7 +3925,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.14" !== void 0 ? "1.0.14" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.15" !== void 0 ? "1.0.15" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -3944,6 +3999,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FEATURES = void 0;
 const autocomplete_1 = __webpack_require__(67);
 const autocompleteItems_1 = __webpack_require__(477);
 const autocompleteUsers_1 = __webpack_require__(881);
@@ -3974,7 +4030,7 @@ const quickSellSafely_1 = __webpack_require__(760);
 const vaultSolver_1 = __webpack_require__(26);
 const versionManager_1 = __webpack_require__(70);
 const state_1 = __webpack_require__(619);
-const FEATURES = [
+exports.FEATURES = [
     // internal
     notifications_1.notifications,
     confirmation_1.confirmations,
@@ -4025,10 +4081,10 @@ const watchSubtree = (selector, handler, filter) => {
     }
     const handle = () => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
+        const settings = yield (0, farmhandSettings_1.getSettings)(exports.FEATURES);
         const [page, parameters] = (0, page_1.getPage)();
         // console.debug(`${selector} Load`, page, parameters);
-        for (const feature of FEATURES) {
+        for (const feature of exports.FEATURES) {
             (_a = feature[handler]) === null || _a === void 0 ? void 0 : _a.call(feature, settings, page, parameters);
         }
     });
@@ -4063,14 +4119,14 @@ const watchSubtree = (selector, handler, filter) => {
         // eslint-disable-next-line unicorn/prefer-module
         "use strict";
         console.info("STARTING Farmhand by Ansel Santosa");
-        yield (0, state_1.watchQueries)();
         // initialize
-        const settings = yield (0, farmhandSettings_1.getSettings)(FEATURES);
-        for (const { onInitialize } of FEATURES) {
+        const settings = yield (0, farmhandSettings_1.getSettings)(exports.FEATURES);
+        for (const { onInitialize } of exports.FEATURES) {
             if (onInitialize) {
                 onInitialize(settings);
             }
         }
+        yield (0, state_1.watchQueries)(settings);
         // double watches because the page and nav load at different times but
         // separating the handlers makes everything harder
         watchSubtree(".view-main .pages", "onPageLoad", ".page");
@@ -4635,12 +4691,22 @@ exports.getListByTitle = getListByTitle;
 /***/ }),
 
 /***/ 469:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ (function(__unused_webpack_module, exports) {
 
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.popups = exports.showPopup = void 0;
-const showPopup = ({ title, contentHTML, align, okText, }) => new Promise((resolve) => {
+const showPopup = ({ title, contentHTML, align, okText, actions, }) => new Promise((resolve) => {
+    var _a;
     let overlay = document.querySelector(".modal-overlay");
     if (!overlay) {
         overlay = document.createElement("div");
@@ -4674,11 +4740,39 @@ const showPopup = ({ title, contentHTML, align, okText, }) => new Promise((resol
           "
         >${contentHTML}</div>
       </div>
-      <div class="modal-buttons modal-buttons-1">
-        <span class="modal-button modal-button-bold">${okText !== null && okText !== void 0 ? okText : "OK"}</span>
+      <div
+        class="
+          modal-buttons
+          modal-buttons-vertical
+          modal-buttons-${((_a = actions === null || actions === void 0 ? void 0 : actions.length) !== null && _a !== void 0 ? _a : 0) + 1}
+        ">
+        ${actions
+        ? actions
+            .map(({ name }, index) => `
+              <span
+                class="modal-button modal-button-bold fh-action"
+                data-index="${index}"
+              >
+                ${name}
+              </span>`)
+            .join("")
+        : ""}
+        <span class="modal-button fh-ok">${okText !== null && okText !== void 0 ? okText : "OK"}</span>
       </div>
     `;
-    const okButton = modal.querySelector(".modal-button");
+    if (actions) {
+        for (const [index, { callback }] of actions.entries()) {
+            const button = modal.querySelector(`.fh-action[data-index='${index}']`);
+            button === null || button === void 0 ? void 0 : button.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+                button.textContent = "Loading...";
+                yield callback();
+                overlay === null || overlay === void 0 ? void 0 : overlay.classList.remove("modal-overlay-visible");
+                modal.remove();
+                resolve();
+            }));
+        }
+    }
+    const okButton = modal.querySelector(".fh-ok");
     okButton === null || okButton === void 0 ? void 0 : okButton.addEventListener("click", () => {
         overlay === null || overlay === void 0 ? void 0 : overlay.classList.remove("modal-overlay-visible");
         modal.remove();

@@ -26,6 +26,17 @@ const SETTING_HARVEST_NOTIFICATIONS: FeatureSetting = {
   defaultValue: true,
 };
 
+export const SETTING_HARVEST_POPUP: FeatureSetting = {
+  id: "harvestPopup",
+  title: "Farm: Harvest Popup",
+  description: `
+    Show popup on Farm page when crops are harvested with the harvest results including bonuses</br>
+    (popup is always shown if havesting from other pages via the notification)
+  `,
+  type: "boolean",
+  defaultValue: true,
+};
+
 const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
   id: "emptyNotifications",
   title: "Farm: Empty Notifications",
@@ -83,7 +94,11 @@ const renderFields = async (
 };
 
 export const fieldNotifications: Feature = {
-  settings: [SETTING_HARVEST_NOTIFICATIONS, SETTING_EMPTY_NOTIFICATIONS],
+  settings: [
+    SETTING_HARVEST_NOTIFICATIONS,
+    SETTING_HARVEST_POPUP,
+    SETTING_EMPTY_NOTIFICATIONS,
+  ],
   onInitialize: (settings) => {
     farmStatusState.onUpdate((state) => renderFields(settings, state));
   },

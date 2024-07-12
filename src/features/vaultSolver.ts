@@ -8,12 +8,25 @@ import {
   Hints,
   Position,
 } from "~/utils/vault";
-import { Feature } from "./feature";
+import { Feature, FeatureSetting } from "./feature";
 import { Page } from "~/utils/page";
 
+const SETTING_VAULT_SOLVER: FeatureSetting = {
+  id: "vaultSolver",
+  title: "Vault: Auto Solver",
+  description: "Auto-fill solution suggestions in the vault input box",
+  type: "boolean",
+  defaultValue: true,
+};
+
 export const vaultSolver: Feature = {
+  settings: [SETTING_VAULT_SOLVER],
   onPageLoad: (settings, page) => {
     if (page !== Page.VAULT) {
+      return;
+    }
+
+    if (!settings[SETTING_VAULT_SOLVER.id].value) {
       return;
     }
 

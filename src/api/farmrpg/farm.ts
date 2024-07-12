@@ -1,8 +1,9 @@
 import { CachedState, StorageKey } from "../state";
 import { getDocument } from "../utils";
+import { getPage, Page, WorkerGo } from "~/utils/page";
 import { Item } from "../buddyfarm/state";
-import { Page, WorkerGo } from "~/utils/page";
 import { requestHTML, requestJSON } from "./api";
+import { SETTING_HARVEST_POPUP } from "~/features/harvestNotifications";
 import { showPopup } from "~/utils/popup";
 
 export interface FarmState {
@@ -96,21 +97,21 @@ export const farmStatusState = new CachedState<FarmStatus>(
     interceptors: [
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.READY_COUNT })],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const root = await getDocument(response);
           state.set(processFarmStatus(root.body));
         },
       },
       {
         match: [Page.FARM, new URLSearchParams()],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processFarmPage(root.body));
         },
       },
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const root = await getDocument(response);
           const linkStatus = root.body.querySelector<HTMLDivElement>(
             "a[href^='xfarm.php'] .item-after"
@@ -123,7 +124,7 @@ export const farmStatusState = new CachedState<FarmStatus>(
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.FARM_STATUS })],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const raw = await response.text();
           const rawPlots = raw.split(";");
           if (rawPlots.length < (previous?.count ?? 4)) {
@@ -148,7 +149,7 @@ export const farmStatusState = new CachedState<FarmStatus>(
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.HARVEST_ALL })],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           await state.set({ status: CropStatus.EMPTY });
           const { drops } = (await response.json()) as {
             result: "success";
@@ -161,9 +162,11 @@ export const farmStatusState = new CachedState<FarmStatus>(
               }
             >;
           };
-          showPopup({
-            title: "Harvested Crops",
-            contentHTML: `
+          const [page] = getPage();
+          if (page !== Page.FARM || settings[SETTING_HARVEST_POPUP.id].value) {
+            showPopup({
+              title: "Harvested Crops",
+              contentHTML: `
               ${Object.values(drops)
                 .map(
                   (drop) => `
@@ -179,12 +182,38 @@ export const farmStatusState = new CachedState<FarmStatus>(
                 )
                 .join("&nbsp;")}
             `,
-          });
+              actions: [
+                {
+                  name: "Replant",
+                  callback: async () => {
+                    const farmId = await farmIdState.get();
+                    if (!farmId) {
+                      console.error("No farm id found");
+                      return;
+                    }
+                    if (page === Page.FARM) {
+                      document
+                        .querySelector<HTMLAnchorElement>(".plantallbtn")
+                        ?.click();
+                    } else {
+                      await requestHTML(
+                        Page.WORKER,
+                        new URLSearchParams({
+                          go: WorkerGo.PLANT_ALL,
+                          id: String(farmId),
+                        })
+                      );
+                    }
+                  },
+                },
+              ],
+            });
+          }
         },
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.PLANT_ALL })],
-        callback: async (state) => {
+        callback: async (settings, state) => {
           await state.set({ status: CropStatus.GROWING });
         },
       },
@@ -233,14 +262,14 @@ export const farmIdState = new CachedState<number>(
     interceptors: [
       {
         match: [Page.FARM, new URLSearchParams()],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processFarmId(root.body));
         },
       },
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const root = await getDocument(response);
           const status = root.body.querySelector<HTMLDivElement>(
             "a[href^='xfarm.php'] .item-after span"

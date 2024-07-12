@@ -29,7 +29,7 @@ import { vaultSolver } from "./features/vaultSolver";
 import { versionManager } from "./features/versionManager";
 import { watchQueries } from "./api/state";
 
-const FEATURES = [
+export const FEATURES = [
   // internal
   notifications,
   confirmations,
@@ -134,8 +134,6 @@ const watchSubtree = (
   "use strict";
   console.info("STARTING Farmhand by Ansel Santosa");
 
-  await watchQueries();
-
   // initialize
   const settings = await getSettings(FEATURES);
   for (const { onInitialize } of FEATURES) {
@@ -143,6 +141,8 @@ const watchSubtree = (
       onInitialize(settings);
     }
   }
+
+  await watchQueries(settings);
 
   // double watches because the page and nav load at different times but
   // separating the handlers makes everything harder

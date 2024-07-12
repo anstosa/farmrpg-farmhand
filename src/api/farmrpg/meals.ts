@@ -50,7 +50,7 @@ export const mealsStatusState = new CachedState<MealsStatus>(
     interceptors: [
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (state, previous, response) => {
+        callback: async (settings, state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processMealStatus(root.body));
         },

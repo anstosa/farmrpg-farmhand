@@ -1,5 +1,7 @@
 import { CachedState, onFetchResponse, StorageKey, toUrl } from "../state";
+import { FEATURES } from "~/index";
 import { getDocument } from "../utils";
+import { getSettings } from "~/features/farmhandSettings";
 import { Page } from "../../utils/page";
 
 export const requestHTML = async (
@@ -23,7 +25,8 @@ export const requestJSON = async <T extends object>(
     mode: "cors",
     credentials: "include",
   });
-  onFetchResponse(response);
+  const settings = await getSettings(FEATURES);
+  onFetchResponse(settings, response);
   return await response.json();
 };
 

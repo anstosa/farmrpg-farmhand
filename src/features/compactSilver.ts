@@ -17,6 +17,9 @@ export const compactSilver: Feature = {
       return;
     }
     const amount = Number(silver.textContent?.trim().replaceAll(",", ""));
+    if (Number.isNaN(amount)) {
+      return;
+    }
     if (amount < 1_000_000) {
       return;
     }

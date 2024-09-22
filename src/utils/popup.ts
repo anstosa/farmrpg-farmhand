@@ -114,9 +114,10 @@ export const popups: Feature = {
     // click outside to close
     document.body.addEventListener("click", (event) => {
       if ((event.target as HTMLElement).classList.contains("modal-overlay")) {
-        document
-          .querySelector<HTMLSpanElement>(".modal .modal-button")
-          ?.click();
+        const buttons = document.querySelectorAll<HTMLSpanElement>(
+          ".modal .modal-button"
+        );
+        [...buttons]?.at(-1)?.click();
       }
     });
   },

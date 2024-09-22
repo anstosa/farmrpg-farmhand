@@ -21,6 +21,8 @@ import { highlightSelfInChat } from "./features/highlightSelfInChat";
 import { kitchenNotifications } from "./features/kitchenNotifications";
 import { linkifyQuickCraft } from "./features/linkifyQuickCraft";
 import { maxContainers } from "./features/maxContainers";
+import { maxCows } from "./features/maxCows";
+import { maxPigs } from "./features/maxPigs";
 import { mealNotifications } from "./features/mealNotifications";
 import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
@@ -52,6 +54,8 @@ export const FEATURES = [
 
   // farm,
   fieldNotifications,
+  maxPigs,
+  maxCows,
 
   // flea market
   fleaMarket,

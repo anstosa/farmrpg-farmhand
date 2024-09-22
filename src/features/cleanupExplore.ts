@@ -12,7 +12,7 @@ export const SETTING_EXPLORE_RESULTS: FeatureSetting = {
 export const cleanupExplore: Feature = {
   settings: [SETTING_EXPLORE_RESULTS],
   onPageLoad: (settings, page) => {
-    if (page !== Page.AREA) {
+    if (!page || ![Page.AREA, Page.FISHING].includes(page)) {
       return;
     }
     if (!settings[SETTING_EXPLORE_RESULTS.id].value) {

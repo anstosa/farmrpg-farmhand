@@ -115,7 +115,6 @@ All settings can be exported and imported on other devices
 
 Future features under consideration or development
 
-* Max out animal purchases by default
 * Desktop notifications
 * Dropdowns with icons for seeds, etc
 * Grape juice button after replant popup if available
@@ -134,6 +133,13 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.17
+
+* Added: Improved explore view applies to fishing as well
+* Added: Select maximum animals to buy or sell by default (instead of 1)
+* Fixed: Clicking outside to close harvest popup replanted
+* Fixed: "NaNM" silver
 
 ### 1.0.16
 

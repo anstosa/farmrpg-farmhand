@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.16
+// @version 1.0.17
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -20,7 +20,7 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 413:
+/***/ 3413:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -35,8 +35,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.pageDataState = exports.getBasicItems = exports.getItemByName = void 0;
-const state_1 = __webpack_require__(456);
-const state_2 = __webpack_require__(619);
+const state_1 = __webpack_require__(4456);
+const state_2 = __webpack_require__(4619);
 // TODO cache this
 const getItemByName = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
@@ -104,7 +104,7 @@ exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, ()
 
 /***/ }),
 
-/***/ 456:
+/***/ 4456:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -131,10 +131,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = exports.timestampToDate = exports.requestJSON = exports.requestHTML = void 0;
-const state_1 = __webpack_require__(619);
-const index_1 = __webpack_require__(217);
-const utils_1 = __webpack_require__(683);
-const farmhandSettings_1 = __webpack_require__(973);
+const state_1 = __webpack_require__(4619);
+const index_1 = __webpack_require__(6217);
+const utils_1 = __webpack_require__(7683);
+const farmhandSettings_1 = __webpack_require__(8973);
 const requestHTML = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield fetch((0, state_1.toUrl)(page, query), {
         method: "POST",
@@ -244,7 +244,7 @@ exports.chatState = new state_1.CachedState(state_1.StorageKey.IS_CHAT_ENABLED, 
 
 /***/ }),
 
-/***/ 22:
+/***/ 9022:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -259,9 +259,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.withdrawSilver = exports.depositSilver = exports.statsState = void 0;
-const state_1 = __webpack_require__(619);
-const utils_1 = __webpack_require__(683);
-const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
+const page_1 = __webpack_require__(7952);
 const api_1 = __webpack_require__(126);
 const processStats = (root) => {
     var _a;
@@ -334,7 +334,7 @@ exports.withdrawSilver = withdrawSilver;
 
 /***/ }),
 
-/***/ 888:
+/***/ 9888:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -349,11 +349,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.harvestAll = exports.farmIdState = exports.farmStatusState = exports.CropStatus = void 0;
-const state_1 = __webpack_require__(619);
-const utils_1 = __webpack_require__(683);
-const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
+const page_1 = __webpack_require__(7952);
 const api_1 = __webpack_require__(126);
-const harvestNotifications_1 = __webpack_require__(894);
+const harvestNotifications_1 = __webpack_require__(4894);
 const popup_1 = __webpack_require__(469);
 var CropStatus;
 (function (CropStatus) {
@@ -600,9 +600,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.collectAll = exports.kitchenStatusState = exports.OvenStatus = void 0;
-const state_1 = __webpack_require__(619);
-const utils_1 = __webpack_require__(683);
-const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
+const page_1 = __webpack_require__(7952);
 const api_1 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
 var OvenStatus;
@@ -754,7 +754,7 @@ exports.collectAll = collectAll;
 
 /***/ }),
 
-/***/ 250:
+/***/ 5250:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -769,9 +769,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.mealsStatusState = void 0;
-const state_1 = __webpack_require__(619);
-const utils_1 = __webpack_require__(683);
-const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
+const page_1 = __webpack_require__(7952);
 const api_1 = __webpack_require__(126);
 const scheduledUpdates = {};
 const processMealStatus = (root) => {
@@ -856,9 +856,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.activatePerkSet = exports.resetPerks = exports.isActivePerkSet = exports.getCurrentPerkSet = exports.getActivityPerksSet = exports.perksState = exports.PerkActivity = void 0;
-const state_1 = __webpack_require__(619);
-const utils_1 = __webpack_require__(683);
-const page_1 = __webpack_require__(952);
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
+const page_1 = __webpack_require__(7952);
 const api_1 = __webpack_require__(126);
 var PerkActivity;
 (function (PerkActivity) {
@@ -962,7 +962,7 @@ exports.activatePerkSet = activatePerkSet;
 
 /***/ }),
 
-/***/ 604:
+/***/ 1604:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -977,8 +977,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.latestVersionState = exports.SCRIPT_URL = void 0;
-const state_1 = __webpack_require__(619);
-const utils_1 = __webpack_require__(683);
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
 exports.SCRIPT_URL = "https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand";
 exports.latestVersionState = new state_1.CachedState(state_1.StorageKey.LATEST_VERSION, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -994,7 +994,7 @@ exports.latestVersionState = new state_1.CachedState(state_1.StorageKey.LATEST_V
 
 /***/ }),
 
-/***/ 619:
+/***/ 4619:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1009,7 +1009,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CachedState = exports.watchQueries = exports.onFetchResponse = exports.queryInterceptors = exports.StorageKey = exports.toUrl = exports.urlMatches = exports.parseUrl = void 0;
-const object_1 = __webpack_require__(968);
+const object_1 = __webpack_require__(7968);
 const parseUrl = (url) => {
     // https://farmrpg.com/worker.php?cachebuster=271544&go=getchat&room=giveaways
     const truncatedUrl = url.replace("https://farmrpg.com/", "");
@@ -1250,7 +1250,7 @@ exports.CachedState = CachedState;
 
 /***/ }),
 
-/***/ 683:
+/***/ 7683:
 /***/ (function(__unused_webpack_module, exports) {
 
 
@@ -1297,14 +1297,14 @@ exports.getDocument = getDocument;
 
 /***/ }),
 
-/***/ 477:
+/***/ 8477:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.autocompleteItems = exports.SETTING_AUTOCOMPLETE_ITEMS = void 0;
-const api_1 = __webpack_require__(413);
-const autocomplete_1 = __webpack_require__(67);
+const api_1 = __webpack_require__(3413);
+const autocomplete_1 = __webpack_require__(4067);
 exports.SETTING_AUTOCOMPLETE_ITEMS = {
     id: "autocompleteItems",
     title: "Chat: Autocomplete ((items))",
@@ -1332,7 +1332,7 @@ exports.autocompleteItems = {
 
 /***/ }),
 
-/***/ 881:
+/***/ 5881:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1347,7 +1347,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.autocompleteUsers = exports.getUsers = exports.SETTING_AUTOCOMPLETE_USERS = void 0;
-const autocomplete_1 = __webpack_require__(67);
+const autocomplete_1 = __webpack_require__(4067);
 exports.SETTING_AUTOCOMPLETE_USERS = {
     id: "autocompleteUsers",
     title: "Chat: Autocomplete @Users:",
@@ -1389,7 +1389,7 @@ exports.autocompleteUsers = {
 
 /***/ }),
 
-/***/ 92:
+/***/ 8092:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1404,11 +1404,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.banker = exports.SETTING_BANKER = void 0;
-const bank_1 = __webpack_require__(22);
-const page_1 = __webpack_require__(952);
-const confirmation_1 = __webpack_require__(906);
+const bank_1 = __webpack_require__(9022);
+const page_1 = __webpack_require__(7952);
+const confirmation_1 = __webpack_require__(3906);
 const popup_1 = __webpack_require__(469);
-const theme_1 = __webpack_require__(178);
+const theme_1 = __webpack_require__(1178);
 exports.SETTING_BANKER = {
     id: "banker",
     title: "Bank: Banker",
@@ -1558,14 +1558,14 @@ exports.banker = {
 
 /***/ }),
 
-/***/ 273:
+/***/ 2273:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.buddyFarm = exports.SETTING_BUDDY_FARM = void 0;
-const page_1 = __webpack_require__(952);
-const state_1 = __webpack_require__(456);
+const page_1 = __webpack_require__(7952);
+const state_1 = __webpack_require__(4456);
 exports.SETTING_BUDDY_FARM = {
     id: "buddyFarm",
     title: "Item: Buddy's Almanac",
@@ -1703,13 +1703,13 @@ exports.buddyFarm = {
 
 /***/ }),
 
-/***/ 922:
+/***/ 6922:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.chatNav = void 0;
-const theme_1 = __webpack_require__(178);
+const theme_1 = __webpack_require__(1178);
 const openAutocomplete = (dropdown) => {
     const currentLink = document.querySelector(".cclinkselected");
     const links = [
@@ -1829,13 +1829,13 @@ exports.chatNav = {
 
 /***/ }),
 
-/***/ 742:
+/***/ 2742:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.cleanupExplore = exports.SETTING_EXPLORE_RESULTS = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 exports.SETTING_EXPLORE_RESULTS = {
     id: "",
     title: "Explore: Improved Layout",
@@ -1846,7 +1846,7 @@ exports.SETTING_EXPLORE_RESULTS = {
 exports.cleanupExplore = {
     settings: [exports.SETTING_EXPLORE_RESULTS],
     onPageLoad: (settings, page) => {
-        if (page !== page_1.Page.AREA) {
+        if (!page || ![page_1.Page.AREA, page_1.Page.FISHING].includes(page)) {
             return;
         }
         if (!settings[exports.SETTING_EXPLORE_RESULTS.id].value) {
@@ -1898,13 +1898,13 @@ exports.cleanupExplore = {
 
 /***/ }),
 
-/***/ 870:
+/***/ 5870:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.cleanupHome = exports.SETTING_COMPRESS_SKILLS = exports.SETTING_HIDE_FOOTER = exports.SETTING_HIDE_THEME = exports.SETTING_HIDE_PLAYERS = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 exports.SETTING_HIDE_PLAYERS = {
     id: "homeHidePlayers",
     title: "Home: Hide players",
@@ -2025,13 +2025,13 @@ exports.cleanupHome = {
 
 /***/ }),
 
-/***/ 56:
+/***/ 4056:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.collapseItemImage = exports.SETTING_COLLAPSE_ITEM = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 exports.SETTING_COLLAPSE_ITEM = {
     id: "collapseItem",
     title: "Item: Collapse Item Image",
@@ -2089,7 +2089,7 @@ exports.collapseItemImage = {
 
 /***/ }),
 
-/***/ 181:
+/***/ 8181:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -2110,6 +2110,9 @@ exports.compactSilver = {
             return;
         }
         const amount = Number((_a = silver.textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", ""));
+        if (Number.isNaN(amount)) {
+            return;
+        }
         if (amount < 1000000) {
             return;
         }
@@ -2132,7 +2135,7 @@ exports.compactSilver = {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.compressChat = exports.SETTING_CHAT_COMPRESS = void 0;
-const theme_1 = __webpack_require__(178);
+const theme_1 = __webpack_require__(1178);
 exports.SETTING_CHAT_COMPRESS = {
     id: "compressChat",
     title: "Chat: Compress messages",
@@ -2193,7 +2196,7 @@ exports.compressChat = {
 
 /***/ }),
 
-/***/ 827:
+/***/ 2827:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -2382,7 +2385,7 @@ exports.navigationStyle = {
 
 /***/ }),
 
-/***/ 224:
+/***/ 2224:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -2397,9 +2400,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.customNavigation = exports.SETTING_CUSTOM_NAVIGATION = void 0;
-const theme_1 = __webpack_require__(178);
-const farmhandSettings_1 = __webpack_require__(973);
-const confirmation_1 = __webpack_require__(906);
+const theme_1 = __webpack_require__(1178);
+const farmhandSettings_1 = __webpack_require__(8973);
+const confirmation_1 = __webpack_require__(3906);
 exports.SETTING_CUSTOM_NAVIGATION = {
     id: "customNav",
     title: "Customize Navigation",
@@ -2788,7 +2791,7 @@ exports.customNavigation = {
 
 /***/ }),
 
-/***/ 164:
+/***/ 5164:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -2804,7 +2807,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.dismissableChatBanners = exports.SETTING_CHAT_DISMISSABLE_BANNERS = void 0;
 const popup_1 = __webpack_require__(469);
-const state_1 = __webpack_require__(619);
+const state_1 = __webpack_require__(4619);
 exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
     id: "dismissableChatBanners",
     title: "Chat: Dismissable Banners",
@@ -2883,7 +2886,7 @@ exports.dismissableChatBanners = {
 
 /***/ }),
 
-/***/ 973:
+/***/ 8973:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -2898,7 +2901,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.farmhandSettings = exports.SETTING_IMPORT = exports.SETTING_EXPORT = exports.setSetting = exports.setData = exports.getData = exports.getSetting = exports.getSettings = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 const popup_1 = __webpack_require__(469);
 const getSettings = (features) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -3212,7 +3215,7 @@ exports.farmhandSettings = {
 
 /***/ }),
 
-/***/ 100:
+/***/ 2100:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -3248,7 +3251,7 @@ exports.fishinInBarrel = {
 
 /***/ }),
 
-/***/ 361:
+/***/ 9361:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -3292,7 +3295,7 @@ exports.fleaMarket = {
 
 /***/ }),
 
-/***/ 894:
+/***/ 4894:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3307,10 +3310,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fieldNotifications = exports.SETTING_HARVEST_POPUP = void 0;
-const farm_1 = __webpack_require__(888);
-const notifications_1 = __webpack_require__(783);
-const page_1 = __webpack_require__(952);
-const state_1 = __webpack_require__(619);
+const farm_1 = __webpack_require__(9888);
+const notifications_1 = __webpack_require__(6783);
+const page_1 = __webpack_require__(7952);
+const state_1 = __webpack_require__(4619);
 const SETTING_HARVEST_NOTIFICATIONS = {
     id: "harvestNotifications",
     title: "Farm: Harvest Notifications",
@@ -3389,7 +3392,7 @@ exports.fieldNotifications = {
 
 /***/ }),
 
-/***/ 454:
+/***/ 5454:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3404,7 +3407,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.highlightSelfInChat = exports.SETTING_CHAT_HIGHLIGHT_SELF = void 0;
-const theme_1 = __webpack_require__(178);
+const theme_1 = __webpack_require__(1178);
 const api_1 = __webpack_require__(126);
 exports.SETTING_CHAT_HIGHLIGHT_SELF = {
     id: "highlightSelfInChat",
@@ -3443,16 +3446,16 @@ exports.highlightSelfInChat = {
 
 /***/ }),
 
-/***/ 737:
+/***/ 9737:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.kitchenNotifications = void 0;
 const kitchen_1 = __webpack_require__(182);
-const notifications_1 = __webpack_require__(783);
-const page_1 = __webpack_require__(952);
-const state_1 = __webpack_require__(619);
+const notifications_1 = __webpack_require__(6783);
+const page_1 = __webpack_require__(7952);
+const state_1 = __webpack_require__(4619);
 const SETTING_COMPLETE_NOTIFICATIONS = {
     id: "harvestNotifications",
     title: "Kitchen: Meals ready notification",
@@ -3537,7 +3540,7 @@ exports.kitchenNotifications = {
 
 /***/ }),
 
-/***/ 711:
+/***/ 7092:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3552,8 +3555,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.linkifyQuickCraft = void 0;
-const page_1 = __webpack_require__(952);
-const api_1 = __webpack_require__(413);
+const page_1 = __webpack_require__(7952);
+const api_1 = __webpack_require__(3413);
 exports.linkifyQuickCraft = {
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
@@ -3592,13 +3595,13 @@ exports.linkifyQuickCraft = {
 
 /***/ }),
 
-/***/ 735:
+/***/ 9735:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.maxContainers = exports.SETTING_MAX_CONTAINERS = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 exports.SETTING_MAX_CONTAINERS = {
     id: "maxContainers",
     title: "Locksmith: Max containers",
@@ -3628,7 +3631,140 @@ exports.maxContainers = {
 
 /***/ }),
 
-/***/ 792:
+/***/ 1103:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.maxCows = void 0;
+const page_1 = __webpack_require__(7952);
+const maxPigs_1 = __webpack_require__(2934);
+exports.maxCows = {
+    onPageLoad: (settings, page) => {
+        if (page !== page_1.Page.PASTURE) {
+            return;
+        }
+        if (!settings[maxPigs_1.SETTING_MAX_ANIMALS.id].value) {
+            return;
+        }
+        const currentPage = (0, page_1.getCurrentPage)();
+        // max buy cows
+        (() => {
+            var _a;
+            const pigTitle = (0, page_1.getTitle)(/Cows/);
+            const match = (_a = pigTitle === null || pigTitle === void 0 ? void 0 : pigTitle.textContent) === null || _a === void 0 ? void 0 : _a.match(/(\d+) \/ (\d+)/);
+            if (!match) {
+                return;
+            }
+            const [_, current, max] = match;
+            if (!current || !max) {
+                return;
+            }
+            const maxBuy = Number(max) - Number(current);
+            const buyField = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(".addamt");
+            if (!buyField) {
+                return;
+            }
+            buyField.value = maxBuy.toString();
+        })();
+        // max slaughter
+        (() => {
+            var _a;
+            const slaughterSelector = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(".levelid");
+            if (!slaughterSelector) {
+                return;
+            }
+            if (slaughterSelector.options.length > 1) {
+                slaughterSelector.selectedIndex = 1;
+            }
+            const match = (_a = slaughterSelector.options[1].textContent) === null || _a === void 0 ? void 0 : _a.match(/\((\d+)\)/);
+            if (!match) {
+                return;
+            }
+            const maxSlaughter = Number(match[1]);
+            const amountField = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(".levelamt");
+            if (!amountField) {
+                return;
+            }
+            amountField.value = maxSlaughter.toString();
+        })();
+    },
+};
+
+
+/***/ }),
+
+/***/ 2934:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.maxPigs = exports.SETTING_MAX_ANIMALS = void 0;
+const page_1 = __webpack_require__(7952);
+exports.SETTING_MAX_ANIMALS = {
+    id: "maxAnimals",
+    title: "Farm: Buy Max Animals",
+    description: "Buy max animals by default (instead of 1)",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.maxPigs = {
+    settings: [exports.SETTING_MAX_ANIMALS],
+    onPageLoad: (settings, page) => {
+        if (page !== page_1.Page.PIG_PEN) {
+            return;
+        }
+        if (!settings[exports.SETTING_MAX_ANIMALS.id].value) {
+            return;
+        }
+        const currentPage = (0, page_1.getCurrentPage)();
+        // max buy pigs
+        (() => {
+            var _a;
+            const pigTitle = (0, page_1.getTitle)(/Pigs/);
+            const match = (_a = pigTitle === null || pigTitle === void 0 ? void 0 : pigTitle.textContent) === null || _a === void 0 ? void 0 : _a.match(/(\d+) \/ (\d+)/);
+            if (!match) {
+                return;
+            }
+            const [_, current, max] = match;
+            if (!current || !max) {
+                return;
+            }
+            const maxBuy = Number(max) - Number(current);
+            const buyField = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(".addamt");
+            if (!buyField) {
+                return;
+            }
+            buyField.value = maxBuy.toString();
+        })();
+        // max slaughter
+        (() => {
+            var _a;
+            const slaughterSelector = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(".levelid");
+            if (!slaughterSelector) {
+                return;
+            }
+            if (slaughterSelector.options.length > 1) {
+                slaughterSelector.selectedIndex = 1;
+            }
+            const match = (_a = slaughterSelector.options[1].textContent) === null || _a === void 0 ? void 0 : _a.match(/\((\d+)\)/);
+            if (!match) {
+                return;
+            }
+            const maxSlaughter = Number(match[1]);
+            const amountField = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(".levelamt");
+            if (!amountField) {
+                return;
+            }
+            amountField.value = maxSlaughter.toString();
+        })();
+    },
+};
+
+
+/***/ }),
+
+/***/ 5792:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3643,8 +3779,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.mealNotifications = void 0;
-const meals_1 = __webpack_require__(250);
-const notifications_1 = __webpack_require__(783);
+const meals_1 = __webpack_require__(5250);
+const notifications_1 = __webpack_require__(6783);
 const SETTING_MEAL_NOTIFICATIONS = {
     id: "mealNotifications",
     title: "Meal Notifications",
@@ -3701,7 +3837,7 @@ exports.mealNotifications = {
 
 /***/ }),
 
-/***/ 417:
+/***/ 4417:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3716,8 +3852,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.moveUpdateToTop = void 0;
-const page_1 = __webpack_require__(952);
-const state_1 = __webpack_require__(619);
+const page_1 = __webpack_require__(7952);
+const state_1 = __webpack_require__(4619);
 exports.moveUpdateToTop = {
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
@@ -3789,9 +3925,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.perkManagment = exports.SETTING_PERK_MANAGER = void 0;
 const perks_1 = __webpack_require__(771);
-const page_1 = __webpack_require__(952);
-const notifications_1 = __webpack_require__(783);
-const quickSellSafely_1 = __webpack_require__(760);
+const page_1 = __webpack_require__(7952);
+const notifications_1 = __webpack_require__(6783);
+const quickSellSafely_1 = __webpack_require__(8760);
 exports.SETTING_PERK_MANAGER = {
     id: "perkManager",
     title: "Perks: Auto manage",
@@ -3932,13 +4068,13 @@ exports.perkManagment = {
 
 /***/ }),
 
-/***/ 768:
+/***/ 1768:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.questCollapse = exports.SETTING_QUEST_COLLAPSE = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 exports.SETTING_QUEST_COLLAPSE = {
     id: "questCollapse",
     title: "Quest: Global collapse status",
@@ -3985,13 +4121,13 @@ exports.questCollapse = {
 
 /***/ }),
 
-/***/ 710:
+/***/ 3710:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.quests = void 0;
-const theme_1 = __webpack_require__(178);
+const theme_1 = __webpack_require__(1178);
 exports.quests = {
     onInitialize: () => {
         document.head.insertAdjacentHTML("beforeend", `
@@ -4050,7 +4186,7 @@ exports.quests = {
 
 /***/ }),
 
-/***/ 760:
+/***/ 8760:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -4065,7 +4201,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.quicksellSafely = exports.onQuicksellClick = exports.SETTING_QUICKSELL_SAFELY = void 0;
-const page_1 = __webpack_require__(952);
+const page_1 = __webpack_require__(7952);
 exports.SETTING_QUICKSELL_SAFELY = {
     id: "quicksellSafely",
     title: "Item: Safe Quick Sell",
@@ -4160,14 +4296,14 @@ exports.quicksellSafely = {
 
 /***/ }),
 
-/***/ 26:
+/***/ 3026:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.vaultSolver = void 0;
-const vault_1 = __webpack_require__(279);
-const page_1 = __webpack_require__(952);
+const vault_1 = __webpack_require__(2279);
+const page_1 = __webpack_require__(7952);
 const SETTING_VAULT_SOLVER = {
     id: "vaultSolver",
     title: "Vault: Auto Solver",
@@ -4234,9 +4370,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.versionManager = void 0;
-const utils_1 = __webpack_require__(683);
-const notifications_1 = __webpack_require__(783);
-const api_1 = __webpack_require__(604);
+const utils_1 = __webpack_require__(7683);
+const notifications_1 = __webpack_require__(6783);
+const api_1 = __webpack_require__(1604);
 const popup_1 = __webpack_require__(469);
 const isVersion = (version) => version.split(".").length === 3;
 const normalizeVersion = (version) => version.split("-")[0];
@@ -4250,7 +4386,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.16" !== void 0 ? "1.0.16" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.17" !== void 0 ? "1.0.17" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4310,7 +4446,7 @@ exports.versionManager = {
 
 /***/ }),
 
-/***/ 217:
+/***/ 6217:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -4325,41 +4461,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FEATURES = void 0;
-const autocomplete_1 = __webpack_require__(67);
-const autocompleteItems_1 = __webpack_require__(477);
-const autocompleteUsers_1 = __webpack_require__(881);
-const banker_1 = __webpack_require__(92);
-const buddyfarm_1 = __webpack_require__(273);
-const chatNav_1 = __webpack_require__(922);
-const cleanupExplore_1 = __webpack_require__(742);
-const cleanupHome_1 = __webpack_require__(870);
-const collapseItemImage_1 = __webpack_require__(56);
-const compactSilver_1 = __webpack_require__(181);
+const autocomplete_1 = __webpack_require__(4067);
+const autocompleteItems_1 = __webpack_require__(8477);
+const autocompleteUsers_1 = __webpack_require__(5881);
+const banker_1 = __webpack_require__(8092);
+const buddyfarm_1 = __webpack_require__(2273);
+const chatNav_1 = __webpack_require__(6922);
+const cleanupExplore_1 = __webpack_require__(2742);
+const cleanupHome_1 = __webpack_require__(5870);
+const collapseItemImage_1 = __webpack_require__(4056);
+const compactSilver_1 = __webpack_require__(8181);
 const compressChat_1 = __webpack_require__(223);
-const confirmation_1 = __webpack_require__(906);
-const customNavigation_1 = __webpack_require__(224);
-const dismissableChatBanners_1 = __webpack_require__(164);
-const farmhandSettings_1 = __webpack_require__(973);
-const harvestNotifications_1 = __webpack_require__(894);
-const fishInBarrel_1 = __webpack_require__(100);
-const fleaMarket_1 = __webpack_require__(361);
-const page_1 = __webpack_require__(952);
-const highlightSelfInChat_1 = __webpack_require__(454);
-const kitchenNotifications_1 = __webpack_require__(737);
-const linkifyQuickCraft_1 = __webpack_require__(711);
-const maxContainers_1 = __webpack_require__(735);
-const mealNotifications_1 = __webpack_require__(792);
-const moveUpdateToTop_1 = __webpack_require__(417);
-const compressNavigation_1 = __webpack_require__(827);
-const notifications_1 = __webpack_require__(783);
+const confirmation_1 = __webpack_require__(3906);
+const customNavigation_1 = __webpack_require__(2224);
+const dismissableChatBanners_1 = __webpack_require__(5164);
+const farmhandSettings_1 = __webpack_require__(8973);
+const harvestNotifications_1 = __webpack_require__(4894);
+const fishInBarrel_1 = __webpack_require__(2100);
+const fleaMarket_1 = __webpack_require__(9361);
+const page_1 = __webpack_require__(7952);
+const highlightSelfInChat_1 = __webpack_require__(5454);
+const kitchenNotifications_1 = __webpack_require__(9737);
+const linkifyQuickCraft_1 = __webpack_require__(7092);
+const maxContainers_1 = __webpack_require__(9735);
+const maxCows_1 = __webpack_require__(1103);
+const maxPigs_1 = __webpack_require__(2934);
+const mealNotifications_1 = __webpack_require__(5792);
+const moveUpdateToTop_1 = __webpack_require__(4417);
+const compressNavigation_1 = __webpack_require__(2827);
+const notifications_1 = __webpack_require__(6783);
 const perkManagement_1 = __webpack_require__(682);
 const popup_1 = __webpack_require__(469);
-const questCollapse_1 = __webpack_require__(768);
-const quests_1 = __webpack_require__(710);
-const quickSellSafely_1 = __webpack_require__(760);
-const vaultSolver_1 = __webpack_require__(26);
+const questCollapse_1 = __webpack_require__(1768);
+const quests_1 = __webpack_require__(3710);
+const quickSellSafely_1 = __webpack_require__(8760);
+const vaultSolver_1 = __webpack_require__(3026);
 const versionManager_1 = __webpack_require__(70);
-const state_1 = __webpack_require__(619);
+const state_1 = __webpack_require__(4619);
 exports.FEATURES = [
     // internal
     notifications_1.notifications,
@@ -4375,6 +4513,8 @@ exports.FEATURES = [
     mealNotifications_1.mealNotifications,
     // farm,
     harvestNotifications_1.fieldNotifications,
+    maxPigs_1.maxPigs,
+    maxCows_1.maxCows,
     // flea market
     fleaMarket_1.fleaMarket,
     // items
@@ -4481,7 +4621,7 @@ const watchSubtree = (selector, handler, filter) => {
 
 /***/ }),
 
-/***/ 818:
+/***/ 5818:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -4493,7 +4633,7 @@ exports.getRandom = getRandom;
 
 /***/ }),
 
-/***/ 67:
+/***/ 4067:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -4508,7 +4648,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.autocomplete = exports.registerInputListeners = exports.registerAutocomplete = void 0;
-const theme_1 = __webpack_require__(178);
+const theme_1 = __webpack_require__(1178);
 const state = {
     currentIndex: 0,
     autocompletes: [],
@@ -4693,7 +4833,7 @@ exports.autocomplete = {
 
 /***/ }),
 
-/***/ 906:
+/***/ 3906:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -4746,7 +4886,7 @@ exports.confirmations = {
 
 /***/ }),
 
-/***/ 783:
+/***/ 6783:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -4761,9 +4901,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = exports.Handler = exports.NotificationId = void 0;
-const page_1 = __webpack_require__(952);
-const object_1 = __webpack_require__(968);
-const farmhandSettings_1 = __webpack_require__(973);
+const page_1 = __webpack_require__(7952);
+const object_1 = __webpack_require__(7968);
+const farmhandSettings_1 = __webpack_require__(8973);
 const KEY_NOTIFICATIONS = "notifications";
 var NotificationId;
 (function (NotificationId) {
@@ -4907,7 +5047,7 @@ exports.notifications = {
 
 /***/ }),
 
-/***/ 968:
+/***/ 7968:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -4919,7 +5059,7 @@ exports.isObject = isObject;
 
 /***/ }),
 
-/***/ 952:
+/***/ 7952:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -4939,7 +5079,9 @@ var Page;
     Page["KITCHEN"] = "kitchen";
     Page["LOCKSMITH"] = "locksmith";
     Page["MAILBOX"] = "mailbox";
+    Page["PASTURE"] = "pasture";
     Page["PERKS"] = "perks";
+    Page["PIG_PEN"] = "pigpen";
     Page["POST_OFFICE"] = "postoffice";
     Page["QUEST"] = "quest";
     Page["SETTINGS"] = "settings";
@@ -5134,10 +5276,10 @@ exports.popups = {
       `);
         // click outside to close
         document.body.addEventListener("click", (event) => {
-            var _a;
+            var _a, _b;
             if (event.target.classList.contains("modal-overlay")) {
-                (_a = document
-                    .querySelector(".modal .modal-button")) === null || _a === void 0 ? void 0 : _a.click();
+                const buttons = document.querySelectorAll(".modal .modal-button");
+                (_b = (_a = [...buttons]) === null || _a === void 0 ? void 0 : _a.at(-1)) === null || _b === void 0 ? void 0 : _b.click();
             }
         });
     },
@@ -5146,7 +5288,7 @@ exports.popups = {
 
 /***/ }),
 
-/***/ 178:
+/***/ 1178:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -5179,13 +5321,13 @@ exports.BACKGROUND_DARK = "#161718";
 
 /***/ }),
 
-/***/ 279:
+/***/ 2279:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateGuess = exports.applyGuess = exports.getPossibleDigits = exports.couldHaveDigit = exports.hasDigit = exports.canSolve = exports.generateDigitInfo = exports.isCorrect = exports.Hint = void 0;
-const array_1 = __webpack_require__(818);
+const array_1 = __webpack_require__(5818);
 var Hint;
 (function (Hint) {
     Hint["NONE"] = "\u274C";
@@ -5326,7 +5468,7 @@ exports.generateGuess = generateGuess;
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__(217);
+/******/ 	var __webpack_exports__ = __webpack_require__(6217);
 /******/ 	
 /******/ })()
 ;

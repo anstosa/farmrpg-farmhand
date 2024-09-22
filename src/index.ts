@@ -4,8 +4,10 @@ import { autocompleteUsers } from "./features/autocompleteUsers";
 import { banker } from "./features/banker";
 import { buddyFarm } from "~/features/buddyfarm";
 import { chatNav } from "./features/chatNav";
+import { cleanupExplore } from "./features/cleanupExplore";
 import { cleanupHome } from "./features/cleanupHome";
 import { collapseItemImage } from "./features/collapseItemImage";
+import { compactSilver } from "./features/compactSilver";
 import { compressChat } from "./features/compressChat";
 import { confirmations } from "./utils/confirmation";
 import { customNavigation } from "./features/customNavigation";
@@ -13,16 +15,19 @@ import { dismissableChatBanners } from "./features/dismissableChatBanners";
 import { farmhandSettings, getSettings } from "./features/farmhandSettings";
 import { fieldNotifications } from "./features/harvestNotifications";
 import { fishinInBarrel } from "./features/fishInBarrel";
+import { fleaMarket } from "./features/fleaMarket";
 import { getPage } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
 import { kitchenNotifications } from "./features/kitchenNotifications";
 import { linkifyQuickCraft } from "./features/linkifyQuickCraft";
+import { maxContainers } from "./features/maxContainers";
 import { mealNotifications } from "./features/mealNotifications";
 import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
 import { popups } from "./utils/popup";
+import { questCollapse } from "./features/questCollapse";
 import { quests } from "./features/quests";
 import { quicksellSafely } from "./features/quickSellSafely";
 import { vaultSolver } from "./features/vaultSolver";
@@ -48,6 +53,9 @@ export const FEATURES = [
   // farm,
   fieldNotifications,
 
+  // flea market
+  fleaMarket,
+
   // items
   buddyFarm,
   collapseItemImage,
@@ -56,6 +64,8 @@ export const FEATURES = [
 
   // quests
   quests,
+  questCollapse,
+  compactSilver,
 
   // bank
   banker,
@@ -63,11 +73,15 @@ export const FEATURES = [
   // vault
   vaultSolver,
 
+  // locksmith
+  maxContainers,
+
   // fishing
   fishinInBarrel,
 
   // explore
   perkManagment,
+  cleanupExplore,
 
   // chat
   chatNav,

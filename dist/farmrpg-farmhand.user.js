@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.15
+// @version 1.0.16
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -110,7 +110,7 @@ exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, ()
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.nameToSlug = void 0;
-const nameToSlug = (name) => name.toLowerCase().replaceAll(/[\s']/g, "-");
+const nameToSlug = (name) => name.trim().toLowerCase().replaceAll(/[\s']/g, "-");
 exports.nameToSlug = nameToSlug;
 
 
@@ -1569,14 +1569,14 @@ const state_1 = __webpack_require__(456);
 exports.SETTING_BUDDY_FARM = {
     id: "buddyFarm",
     title: "Item: Buddy's Almanac",
-    description: "Add shortcut to look up items on buddy.farm",
+    description: "Add shortcut to look up items and quests on buddy.farm",
     type: "boolean",
     defaultValue: true,
 };
 exports.buddyFarm = {
     settings: [exports.SETTING_BUDDY_FARM],
     onPageLoad: (settings, page) => {
-        var _a, _b;
+        var _a, _b, _c, _d, _e;
         // make sure setting is enabled
         if (!settings[exports.SETTING_BUDDY_FARM.id].value) {
             return;
@@ -1586,35 +1586,33 @@ exports.buddyFarm = {
         if (!currentPage) {
             return;
         }
-        // make sure we are on an item page
-        if (page !== page_1.Page.ITEM) {
-            return;
-        }
-        // find header to get item data
-        const itemHeader = document.querySelector(".sharelink");
-        if (!itemHeader) {
-            console.error("Item header not found");
-            return;
-        }
-        // get name and link for item
-        const itemName = (_a = itemHeader.textContent) !== null && _a !== void 0 ? _a : "";
-        const itemLink = `https://buddy.farm/i/${(0, state_1.nameToSlug)(itemName)}`;
-        // use title to find item details section
-        const titles = currentPage.querySelectorAll(".content-block-title");
-        const itemDetailsTitle = [...titles].find((title) => title.textContent === "Item Details");
-        const itemDetailsCard = itemDetailsTitle === null || itemDetailsTitle === void 0 ? void 0 : itemDetailsTitle.nextElementSibling;
-        const itemDetailsList = itemDetailsCard === null || itemDetailsCard === void 0 ? void 0 : itemDetailsCard.querySelector("ul");
-        if (!itemDetailsList) {
-            console.error("Item Details list not found");
-            return;
-        }
-        // remove existing link
-        (_b = document.querySelector(".fh-buddyshortcut")) === null || _b === void 0 ? void 0 : _b.remove();
-        // create a new item detail for buddy.farm link
-        const buddyFarmLinkLi = document.createElement("li");
-        buddyFarmLinkLi.classList.add("close-panel");
-        buddyFarmLinkLi.classList.add("fh-buddyshortcut");
-        buddyFarmLinkLi.innerHTML = `
+        // handle item pages
+        if (page === page_1.Page.ITEM) {
+            // find header to get item data
+            const itemHeader = document.querySelector(".sharelink");
+            if (!itemHeader) {
+                console.error("Item header not found");
+                return;
+            }
+            // get name and link for item
+            const itemName = (_a = itemHeader.textContent) !== null && _a !== void 0 ? _a : "";
+            const itemLink = `https://buddy.farm/q/${(0, state_1.nameToSlug)(itemName)}`;
+            // use title to find item details section
+            const titles = currentPage.querySelectorAll(".content-block-title");
+            const itemDetailsTitle = [...titles].find((title) => title.textContent === "Item Details");
+            const itemDetailsCard = itemDetailsTitle === null || itemDetailsTitle === void 0 ? void 0 : itemDetailsTitle.nextElementSibling;
+            const itemDetailsList = itemDetailsCard === null || itemDetailsCard === void 0 ? void 0 : itemDetailsCard.querySelector("ul");
+            if (!itemDetailsList) {
+                console.error("Item Details list not found");
+                return;
+            }
+            // remove existing link
+            (_b = document.querySelector(".fh-buddyshortcut")) === null || _b === void 0 ? void 0 : _b.remove();
+            // create a new item detail for buddy.farm link
+            const buddyFarmLinkLi = document.createElement("li");
+            buddyFarmLinkLi.classList.add("close-panel");
+            buddyFarmLinkLi.classList.add("fh-buddyshortcut");
+            buddyFarmLinkLi.innerHTML = `
       <div class="item-content">
         <div class="item-media">
           <a
@@ -1640,8 +1638,65 @@ exports.buddyFarm = {
         </div>
       </div>
     `;
-        // insert at top
-        itemDetailsList.insertBefore(buddyFarmLinkLi, itemDetailsList.firstChild);
+            // insert at top
+            itemDetailsList.insertBefore(buddyFarmLinkLi, itemDetailsList.firstChild);
+        }
+        // handle quest pages
+        if (page === page_1.Page.QUEST) {
+            // find header to get item data
+            const questHeader = currentPage.querySelector(".item-title");
+            if (!questHeader) {
+                console.error("Quest header not found");
+                return;
+            }
+            // get name and link for item
+            const questName = (_c = questHeader.textContent) !== null && _c !== void 0 ? _c : "";
+            const questLink = `https://buddy.farm/i/${(0, state_1.nameToSlug)(questName)}`;
+            // find last card to insert
+            const card = (_d = (0, page_1.getCardByTitle)("This Help Request is Visible")) !== null && _d !== void 0 ? _d : (0, page_1.getCardByTitle)("This Help Request is Hidden");
+            if (!card) {
+                console.error("last card not found");
+                return;
+            }
+            // remove existing link
+            (_e = document.querySelector(".fh-buddyshortcut")) === null || _e === void 0 ? void 0 : _e.remove();
+            // create a new item detail for buddy.farm link
+            const buddyFarmLink = document.createElement("div");
+            buddyFarmLink.classList.add("list-block");
+            buddyFarmLink.classList.add("fh-buddyshortcut");
+            buddyFarmLink.innerHTML = `
+        <ul>
+          <li>
+            <div class="item-content">
+              <div class="item-media">
+                <a
+                  href="https://buddy.farm"
+                  onclick="window.open('https://buddy.farm', '_blank');return false;"
+                >
+                  <img src="https://buddy.farm/icons/icon-256x256.png" class="itemimg">
+                </a>
+              </div>
+              <div class="item-inner">
+                <div class="item-title">
+                  Buddy's Almanac
+                  <br><span style="font-size: 11px">Lookup item on buddy.farm</span>
+                </div>
+                <div class="item-after">
+                  <a
+                    href="${questLink}"
+                    onclick="window.open('${questLink}', '_blank');return false;"
+                    class="button btngreen"
+                    style="height:28px"
+                  >OPEN</a>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      `;
+            // insert at top
+            card.insertBefore(buddyFarmLink, card.firstChild);
+        }
     },
 };
 
@@ -1768,6 +1823,75 @@ exports.chatNav = {
                 dropdown.dataset.channel = currentLink.dataset.channel;
             }
         }
+    },
+};
+
+
+/***/ }),
+
+/***/ 742:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.cleanupExplore = exports.SETTING_EXPLORE_RESULTS = void 0;
+const page_1 = __webpack_require__(952);
+exports.SETTING_EXPLORE_RESULTS = {
+    id: "",
+    title: "Explore: Improved Layout",
+    description: "Larger icons and stable sort",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.cleanupExplore = {
+    settings: [exports.SETTING_EXPLORE_RESULTS],
+    onPageLoad: (settings, page) => {
+        if (page !== page_1.Page.AREA) {
+            return;
+        }
+        if (!settings[exports.SETTING_EXPLORE_RESULTS.id].value) {
+            return;
+        }
+        // get console
+        const console = document.querySelector("#consoletxt");
+        if (!console) {
+            return;
+        }
+        const observer = new MutationObserver(() => {
+            const results = console.querySelector("span[style='font-size:11px']");
+            if (!results) {
+                return;
+            }
+            const icons = results.querySelectorAll("img");
+            if (!icons) {
+                return;
+            }
+            const sortedIcons = [...icons].sort((a, b) => a.src.localeCompare(b.src));
+            const improvedLayout = document.createElement("div");
+            improvedLayout.style.display = "flex";
+            improvedLayout.style.flexWrap = "wrap";
+            improvedLayout.style.justifyContent = "center";
+            improvedLayout.style.alignItems = "center";
+            improvedLayout.style.gap = "10px";
+            improvedLayout.style.width = "100%";
+            improvedLayout.style.marginTop = "10px";
+            improvedLayout.innerHTML = `
+      ${sortedIcons
+                .map((icon) => {
+                var _a, _b;
+                return `
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              <img src="${icon.src}" style="${icon.getAttribute("style")};width:36px!important">
+              <span style="text-size:13px;">${(_b = (_a = icon.nextSibling) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()}</span>
+            </div>
+          `;
+            })
+                .join("")}
+    `;
+            results.style.display = "none";
+            results.after(improvedLayout);
+        });
+        observer.observe(console, { childList: true });
     },
 };
 
@@ -1959,6 +2083,43 @@ exports.collapseItemImage = {
         smallImage.src = itemImage.src;
         smallImage.style.width = "30px";
         sharelink.prepend(smallImage);
+    },
+};
+
+
+/***/ }),
+
+/***/ 181:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.compactSilver = exports.SETTING_COMPACT_SILVER = void 0;
+exports.SETTING_COMPACT_SILVER = {
+    id: "compactSilver",
+    title: "Wallet: Compact silver",
+    description: "Display compact numbers for silver over 1M",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.compactSilver = {
+    onQuestLoad: () => {
+        var _a;
+        const silver = document.querySelector("#statszone span:first-child");
+        if (!silver || !silver.textContent || silver.dataset.compactSilver) {
+            return;
+        }
+        const amount = Number((_a = silver.textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", ""));
+        if (amount < 1000000) {
+            return;
+        }
+        const icon = silver.querySelector("img");
+        silver.innerHTML =
+            amount > 1000000000
+                ? `&nbsp;${(amount / 1000000000).toFixed(1)}B&nbsp;&nbsp;`
+                : `&nbsp;${(amount / 1000000).toFixed(1)}M&nbsp;&nbsp;`;
+        silver.insertBefore(icon, silver.firstChild);
+        silver.dataset.compactSilver = "true";
     },
 };
 
@@ -3087,6 +3248,50 @@ exports.fishinInBarrel = {
 
 /***/ }),
 
+/***/ 361:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fleaMarket = exports.SETTING_FLEA_MARKET = void 0;
+exports.SETTING_FLEA_MARKET = {
+    id: "fleaMarket",
+    title: "Flea Market: Disable",
+    description: "Flea Market is disabled because it's a waste of gold",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.fleaMarket = {
+    settings: [exports.SETTING_FLEA_MARKET],
+    onInitialize: (settings) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_FLEA_MARKET.id].value) {
+            return;
+        }
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          /* Hide Flea Market in Town */
+          a[href="flea.php"] {
+            display: none;
+          }
+
+          /* Hide Flea Market Page */
+          .page[page="flea"] {
+            display: none;
+          }
+
+          /* Hide Flea Market in Inventory */
+          .close-panel:has(a[href="flea.php"]) {
+            display: none;
+          }
+        <style>
+      `);
+    },
+};
+
+
+/***/ }),
+
 /***/ 894:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -3382,6 +3587,42 @@ exports.linkifyQuickCraft = {
             missingIngredientsWrapper.append(link);
         }
     }),
+};
+
+
+/***/ }),
+
+/***/ 735:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.maxContainers = exports.SETTING_MAX_CONTAINERS = void 0;
+const page_1 = __webpack_require__(952);
+exports.SETTING_MAX_CONTAINERS = {
+    id: "maxContainers",
+    title: "Locksmith: Max containers",
+    description: "Open max containers by default (instead of 1)",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.maxContainers = {
+    settings: [exports.SETTING_MAX_CONTAINERS],
+    onPageLoad: (settings, page) => {
+        if (page !== page_1.Page.LOCKSMITH) {
+            return;
+        }
+        if (!settings[exports.SETTING_MAX_CONTAINERS.id].value) {
+            return;
+        }
+        // get buttons
+        const buttons = document.querySelectorAll("button.lsmaxqty");
+        setTimeout(() => {
+            for (const button of buttons) {
+                button.click();
+            }
+        }, 150);
+    },
 };
 
 
@@ -3691,6 +3932,59 @@ exports.perkManagment = {
 
 /***/ }),
 
+/***/ 768:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.questCollapse = exports.SETTING_QUEST_COLLAPSE = void 0;
+const page_1 = __webpack_require__(952);
+exports.SETTING_QUEST_COLLAPSE = {
+    id: "questCollapse",
+    title: "Quest: Global collapse status",
+    description: "Remember the quest details collapse status globally instead of per-quest",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.questCollapse = {
+    settings: [exports.SETTING_QUEST_COLLAPSE],
+    onPageLoad: (settings, page) => {
+        // make sure setting is enabled
+        if (!settings[exports.SETTING_QUEST_COLLAPSE.id].value) {
+            return;
+        }
+        // make sure we're on a quest page
+        if (page !== page_1.Page.QUEST) {
+            return;
+        }
+        // find accordion item
+        const accordion = document.querySelector(".accordion-helprequest");
+        if (!accordion) {
+            console.error("Item header not found");
+            return;
+        }
+        const isCollapsed = !accordion.classList.contains("accordion-item-expanded");
+        const link = accordion.querySelector("a");
+        if (!link) {
+            return;
+        }
+        link.addEventListener("click", () => {
+            setTimeout(() => {
+                localStorage.questCollapse = !accordion.classList.contains("accordion-item-expanded");
+            }, 500);
+        });
+        if (isCollapsed && localStorage.questCollapse === "false") {
+            accordion.classList.add("accordion-item-expanded");
+        }
+        if (!isCollapsed && localStorage.questCollapse === "true") {
+            accordion.classList.remove("accordion-item-expanded");
+        }
+    },
+};
+
+
+/***/ }),
+
 /***/ 710:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -3775,7 +4069,7 @@ const page_1 = __webpack_require__(952);
 exports.SETTING_QUICKSELL_SAFELY = {
     id: "quicksellSafely",
     title: "Item: Safe Quick Sell",
-    description: "If item is locked, also lock the Quick Sell button",
+    description: "If item is locked, also lock the Quick Sell and Quick Give buttons",
     type: "boolean",
     defaultValue: true,
 };
@@ -3789,7 +4083,7 @@ exports.onQuicksellClick = onQuicksellClick;
 exports.quicksellSafely = {
     settings: [exports.SETTING_QUICKSELL_SAFELY],
     onPageLoad: (settings, page) => {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f;
         // make sure we're on the right page
         if (page !== page_1.Page.ITEM) {
             return;
@@ -3828,6 +4122,37 @@ exports.quicksellSafely = {
                 quicksellButton.click();
             }));
             (_d = quicksellButton.parentElement) === null || _d === void 0 ? void 0 : _d.insertBefore(proxyButton, quicksellButton);
+        }
+        const quickgiveButton = (_e = (0, page_1.getCurrentPage)()) === null || _e === void 0 ? void 0 : _e.querySelector(".quickgivebtn");
+        if (quickgiveButton && !quickgiveButton.style.display) {
+            quickgiveButton.style.display = "none";
+            const proxyButton = document.createElement("button");
+            proxyButton.classList.add("button");
+            proxyButton.classList.add(isSafetyOn && isLocked ? "btnred" : "btngreen");
+            proxyButton.style.height = "28px;";
+            if (!isSafetyOn || !isLocked) {
+                proxyButton.textContent = "GIVE";
+            }
+            if (isSafetyOn && isLocked) {
+                const lock = document.createElement("i");
+                lock.classList.add("f7-icons");
+                lock.style.fontSize = "17px";
+                lock.textContent = "unlock_fill";
+                proxyButton.append(lock);
+            }
+            proxyButton.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+                if (isSafetyOn && isLocked) {
+                    unlockButton.click();
+                    return;
+                }
+                for (const callback of state.onQuicksellClick) {
+                    if (!(yield callback(event))) {
+                        return;
+                    }
+                }
+                quickgiveButton.click();
+            }));
+            (_f = quickgiveButton.parentElement) === null || _f === void 0 ? void 0 : _f.insertBefore(proxyButton, quickgiveButton);
         }
     },
 };
@@ -3925,7 +4250,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.15" !== void 0 ? "1.0.15" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.16" !== void 0 ? "1.0.16" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4006,8 +4331,10 @@ const autocompleteUsers_1 = __webpack_require__(881);
 const banker_1 = __webpack_require__(92);
 const buddyfarm_1 = __webpack_require__(273);
 const chatNav_1 = __webpack_require__(922);
+const cleanupExplore_1 = __webpack_require__(742);
 const cleanupHome_1 = __webpack_require__(870);
 const collapseItemImage_1 = __webpack_require__(56);
+const compactSilver_1 = __webpack_require__(181);
 const compressChat_1 = __webpack_require__(223);
 const confirmation_1 = __webpack_require__(906);
 const customNavigation_1 = __webpack_require__(224);
@@ -4015,16 +4342,19 @@ const dismissableChatBanners_1 = __webpack_require__(164);
 const farmhandSettings_1 = __webpack_require__(973);
 const harvestNotifications_1 = __webpack_require__(894);
 const fishInBarrel_1 = __webpack_require__(100);
+const fleaMarket_1 = __webpack_require__(361);
 const page_1 = __webpack_require__(952);
 const highlightSelfInChat_1 = __webpack_require__(454);
 const kitchenNotifications_1 = __webpack_require__(737);
 const linkifyQuickCraft_1 = __webpack_require__(711);
+const maxContainers_1 = __webpack_require__(735);
 const mealNotifications_1 = __webpack_require__(792);
 const moveUpdateToTop_1 = __webpack_require__(417);
 const compressNavigation_1 = __webpack_require__(827);
 const notifications_1 = __webpack_require__(783);
 const perkManagement_1 = __webpack_require__(682);
 const popup_1 = __webpack_require__(469);
+const questCollapse_1 = __webpack_require__(768);
 const quests_1 = __webpack_require__(710);
 const quickSellSafely_1 = __webpack_require__(760);
 const vaultSolver_1 = __webpack_require__(26);
@@ -4045,6 +4375,8 @@ exports.FEATURES = [
     mealNotifications_1.mealNotifications,
     // farm,
     harvestNotifications_1.fieldNotifications,
+    // flea market
+    fleaMarket_1.fleaMarket,
     // items
     buddyfarm_1.buddyFarm,
     collapseItemImage_1.collapseItemImage,
@@ -4052,14 +4384,19 @@ exports.FEATURES = [
     linkifyQuickCraft_1.linkifyQuickCraft,
     // quests
     quests_1.quests,
+    questCollapse_1.questCollapse,
+    compactSilver_1.compactSilver,
     // bank
     banker_1.banker,
     // vault
     vaultSolver_1.vaultSolver,
+    // locksmith
+    maxContainers_1.maxContainers,
     // fishing
     fishInBarrel_1.fishinInBarrel,
     // explore
     perkManagement_1.perkManagment,
+    cleanupExplore_1.cleanupExplore,
     // chat
     chatNav_1.chatNav,
     compressChat_1.compressChat,
@@ -4481,7 +4818,7 @@ const renderNotifications = (force = false) => {
         return;
     }
     // remove existing notifications
-    const notifications = document.querySelectorAll(".fh-notification");
+    const notifications = pageContent.querySelectorAll(".fh-notification");
     if (!force && notifications.length === state.notifications.length) {
         return;
     }
@@ -4604,6 +4941,7 @@ var Page;
     Page["MAILBOX"] = "mailbox";
     Page["PERKS"] = "perks";
     Page["POST_OFFICE"] = "postoffice";
+    Page["QUEST"] = "quest";
     Page["SETTINGS"] = "settings";
     Page["SETTINGS_OPTIONS"] = "settings_options";
     Page["TEMPLE"] = "mailitems";

@@ -234,4 +234,4 @@ export interface BuddyFarmPageData {
 }
 
 export const nameToSlug = (name: string): string =>
-  name.toLowerCase().replaceAll(/[\s']/g, "-");
+  name.trim().toLowerCase().replaceAll(/[\s']/g, "-");

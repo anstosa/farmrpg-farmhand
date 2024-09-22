@@ -13,6 +13,7 @@ export enum Page {
   MAILBOX = "mailbox",
   PERKS = "perks",
   POST_OFFICE = "postoffice",
+  QUEST = "quest",
   SETTINGS = "settings",
   SETTINGS_OPTIONS = "settings_options",
   TEMPLE = "mailitems", // not a typo

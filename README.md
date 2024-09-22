@@ -115,6 +115,13 @@ All settings can be exported and imported on other devices
 
 Future features under consideration or development
 
+* Max out animal purchases by default
+* Desktop notifications
+* Dropdowns with icons for seeds, etc
+* Grape juice button after replant popup if available
+* Fix notifications page bouncing issue
+* Improved button styling
+* Use again functionality for meals
 * Ctrl+K quick go to popup for quickly going to any page, item, etc from anywhere
 * Show collected items in success popup when collecting from pets
 * Quick collect link in mailbox notification like with pets that shows collected items in success popup
@@ -127,6 +134,17 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.16
+
+* Added: Disable Flea Market by default (because it's a waste of gold)
+* Added: Disable Quick Give if sell is locked
+* Added: Added Buddy's Almanac link to quests
+* Added: Remember quest details collapse globally instead of per-quest
+* Added: Made silver display compact numbers over 1M
+* Added: Open max containers by default
+* Added: Improved exploration results (larger icons, stable sort)
+* Fixed: Notifications not rendering reliably
 
 ### 1.0.15
 

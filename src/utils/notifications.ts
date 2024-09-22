@@ -120,7 +120,7 @@ const renderNotifications = (force: boolean = false): void => {
   }
 
   // remove existing notifications
-  const notifications = document.querySelectorAll(".fh-notification");
+  const notifications = pageContent.querySelectorAll(".fh-notification");
   if (!force && notifications.length === state.notifications.length) {
     return;
   }

@@ -4,7 +4,8 @@ import { getCurrentPage, Page } from "~/utils/page";
 export const SETTING_QUICKSELL_SAFELY: FeatureSetting = {
   id: "quicksellSafely",
   title: "Item: Safe Quick Sell",
-  description: "If item is locked, also lock the Quick Sell button",
+  description:
+    "If item is locked, also lock the Quick Sell and Quick Give buttons",
   type: "boolean",
   defaultValue: true,
 };
@@ -66,6 +67,38 @@ export const quicksellSafely: Feature = {
         quicksellButton.click();
       });
       quicksellButton.parentElement?.insertBefore(proxyButton, quicksellButton);
+    }
+    const quickgiveButton =
+      getCurrentPage()?.querySelector<HTMLButtonElement>(".quickgivebtn");
+    if (quickgiveButton && !quickgiveButton.style.display) {
+      quickgiveButton.style.display = "none";
+      const proxyButton = document.createElement("button");
+      proxyButton.classList.add("button");
+      proxyButton.classList.add(isSafetyOn && isLocked ? "btnred" : "btngreen");
+      proxyButton.style.height = "28px;";
+      if (!isSafetyOn || !isLocked) {
+        proxyButton.textContent = "GIVE";
+      }
+      if (isSafetyOn && isLocked) {
+        const lock = document.createElement("i");
+        lock.classList.add("f7-icons");
+        lock.style.fontSize = "17px";
+        lock.textContent = "unlock_fill";
+        proxyButton.append(lock);
+      }
+      proxyButton.addEventListener("click", async (event) => {
+        if (isSafetyOn && isLocked) {
+          unlockButton.click();
+          return;
+        }
+        for (const callback of state.onQuicksellClick) {
+          if (!(await callback(event))) {
+            return;
+          }
+        }
+        quickgiveButton.click();
+      });
+      quickgiveButton.parentElement?.insertBefore(proxyButton, quickgiveButton);
     }
   },
 };

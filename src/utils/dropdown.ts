@@ -11,6 +11,7 @@ export interface ItemOption {
   quantity: number;
   icon: string;
   value: string;
+  proxyOption: HTMLOptionElement;
 }
 
 export const replaceSelect = (
@@ -79,6 +80,9 @@ export const replaceSelect = (
     `;
     optionElement.addEventListener("click", () => {
       proxySelect.value = option.value;
+      proxySelect.dispatchEvent(new Event("change"));
+      // proxySelect.selectedIndex = option.proxyOption.index;
+      // option.proxyOption.click();
       replaceSelect(proxySelect, options);
     });
     menu.append(optionElement);

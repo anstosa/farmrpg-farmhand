@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.18
+// @version 1.0.19
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -3483,7 +3483,7 @@ exports.highlightSelfInChat = {
 
 /***/ }),
 
-/***/ 6987:
+/***/ 1108:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -3596,7 +3596,7 @@ exports.improvedInputs = {
         if (!settings[exports.SETTING_IMPROVED_INPUTS.id].value) {
             return;
         }
-        const selector = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector("select[class*='id']:not(.locide)");
+        const selector = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector("select[class*='id']:not(.locide):not(.type_id)");
         if (!selector) {
             return;
         }
@@ -3610,6 +3610,7 @@ exports.improvedInputs = {
                         quantity: Number(option.dataset.amt),
                         icon: (_a = shovel === null || shovel === void 0 ? void 0 : shovel.image) !== null && _a !== void 0 ? _a : "",
                         value: option.value,
+                        proxyOption: option,
                     };
                 }
                 const match = (_b = option.textContent) === null || _b === void 0 ? void 0 : _b.match(/^(.*) \(([\d,]+)\)$/);
@@ -3628,6 +3629,7 @@ exports.improvedInputs = {
                     quantity: Number(quantity.replaceAll(",", "")),
                     icon: item.image,
                     value: option.value,
+                    proxyOption: option,
                 };
             })));
             (0, dropdown_1.replaceSelect)(selector, options.filter((option) => option !== undefined));
@@ -4578,7 +4580,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.18" !== void 0 ? "1.0.18" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.19" !== void 0 ? "1.0.19" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4673,7 +4675,7 @@ const fishInBarrel_1 = __webpack_require__(2100);
 const fleaMarket_1 = __webpack_require__(9361);
 const page_1 = __webpack_require__(7952);
 const highlightSelfInChat_1 = __webpack_require__(5454);
-const itemSelector_1 = __webpack_require__(6987);
+const improvedInputs_1 = __webpack_require__(1108);
 const kitchenNotifications_1 = __webpack_require__(9737);
 const linkifyQuickCraft_1 = __webpack_require__(7092);
 const maxContainers_1 = __webpack_require__(9735);
@@ -4699,7 +4701,7 @@ exports.FEATURES = [
     autocomplete_1.autocomplete,
     versionManager_1.versionManager,
     // UI
-    itemSelector_1.improvedInputs,
+    improvedInputs_1.improvedInputs,
     // home
     cleanupHome_1.cleanupHome,
     moveUpdateToTop_1.moveUpdateToTop,
@@ -5144,6 +5146,9 @@ const replaceSelect = (proxySelect, options) => {
     `;
         optionElement.addEventListener("click", () => {
             proxySelect.value = option.value;
+            proxySelect.dispatchEvent(new Event("change"));
+            // proxySelect.selectedIndex = option.proxyOption.index;
+            // option.proxyOption.click();
             (0, exports.replaceSelect)(proxySelect, options);
         });
         menu.append(optionElement);

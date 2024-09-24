@@ -134,6 +134,10 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.19
+
+* Fixed: Select not selecting
+
 ### 1.0.18
 
 * Added: Consistent, cleaner UI elements for buttons and text/number inputs

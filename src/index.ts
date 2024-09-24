@@ -18,7 +18,7 @@ import { fishinInBarrel } from "./features/fishInBarrel";
 import { fleaMarket } from "./features/fleaMarket";
 import { getPage } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
-import { improvedInputs } from "./features/itemSelector";
+import { improvedInputs } from "./features/improvedInputs";
 import { kitchenNotifications } from "./features/kitchenNotifications";
 import { linkifyQuickCraft } from "./features/linkifyQuickCraft";
 import { maxContainers } from "./features/maxContainers";

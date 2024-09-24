@@ -113,7 +113,7 @@ export const improvedInputs: Feature = {
       return;
     }
     const selector = getCurrentPage()?.querySelector<HTMLSelectElement>(
-      "select[class*='id']:not(.locide)"
+      "select[class*='id']:not(.locide):not(.type_id)"
     );
     if (!selector) {
       return;
@@ -128,6 +128,7 @@ export const improvedInputs: Feature = {
               quantity: Number(option.dataset.amt),
               icon: shovel?.image ?? "",
               value: option.value,
+              proxyOption: option,
             };
           }
           const match = option.textContent?.match(/^(.*) \(([\d,]+)\)$/);
@@ -146,6 +147,7 @@ export const improvedInputs: Feature = {
             quantity: Number(quantity.replaceAll(",", "")),
             icon: item.image,
             value: option.value,
+            proxyOption: option,
           };
         })
       );

@@ -35,7 +35,7 @@ export const buddyFarm: Feature = {
 
       // get name and link for item
       const itemName = itemHeader.textContent ?? "";
-      const itemLink = `https://buddy.farm/q/${nameToSlug(itemName)}`;
+      const itemLink = `https://buddy.farm/i/${nameToSlug(itemName)}`;
 
       // use title to find item details section
       const titles = currentPage.querySelectorAll(".content-block-title");
@@ -98,7 +98,7 @@ export const buddyFarm: Feature = {
 
       // get name and link for item
       const questName = questHeader.textContent ?? "";
-      const questLink = `https://buddy.farm/i/${nameToSlug(questName)}`;
+      const questLink = `https://buddy.farm/q/${nameToSlug(questName)}`;
 
       // find last card to insert
       const card =

@@ -20,6 +20,7 @@ export enum Page {
   SETTINGS_OPTIONS = "settings_options",
   TEMPLE = "mailitems", // not a typo
   VAULT = "crack",
+  WELL = "well",
   WHEEL = "spin",
   WORKER = "worker",
   WORKSHOP = "workshop",

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.17
+// @version 1.0.18
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -37,9 +37,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.pageDataState = exports.getBasicItems = exports.getItemByName = void 0;
 const state_1 = __webpack_require__(4456);
 const state_2 = __webpack_require__(4619);
-// TODO cache this
+const itemDataState = new state_2.CachedState(state_2.StorageKey.ITEM_DATA, () => Promise.resolve({}), {
+    timeout: 60 * 60 * 24, // 1 day
+    defaultState: {},
+});
 const getItemByName = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
+    const items = yield itemDataState.get();
+    if (items === null || items === void 0 ? void 0 : items[itemName]) {
+        return items[itemName];
+    }
     const response = yield fetch(`https://buddy.farm/page-data/i/${(0, state_1.nameToSlug)(itemName)}/page-data.json`);
     const data = (yield response.json());
     const item = (_d = (_c = (_b = (_a = data === null || data === void 0 ? void 0 : data.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.farmrpg) === null || _c === void 0 ? void 0 : _c.items) === null || _d === void 0 ? void 0 : _d[0];
@@ -47,13 +54,14 @@ const getItemByName = (itemName) => __awaiter(void 0, void 0, void 0, function* 
         console.error(`Item ${itemName} not found`);
         return;
     }
+    itemDataState.set(Object.assign(Object.assign({}, items), { [itemName]: item }));
     return item;
 });
 exports.getItemByName = getItemByName;
 const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f;
-    const { items } = (_e = (yield exports.pageDataState.get())) !== null && _e !== void 0 ? _e : {};
-    return (_f = items === null || items === void 0 ? void 0 : items.map(({ name, image }) => ({ name, image }))) !== null && _f !== void 0 ? _f : [];
+    var _a, _b;
+    const { items } = (_a = (yield exports.pageDataState.get())) !== null && _a !== void 0 ? _a : {};
+    return (_b = items === null || items === void 0 ? void 0 : items.map(({ name, image }) => ({ name, image }))) !== null && _b !== void 0 ? _b : [];
 });
 exports.getBasicItems = getBasicItems;
 exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, () => __awaiter(void 0, void 0, void 0, function* () {
@@ -110,7 +118,28 @@ exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, ()
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.nameToSlug = void 0;
-const nameToSlug = (name) => name.trim().toLowerCase().replaceAll(/[\s']/g, "-");
+const NAME_OVERRIDES = {
+    "Gold Pea": "Gold Peas",
+    "Gold Pepper": "Gold Peppers",
+    "Mega Beet": "Mega Beet Seeds",
+    "Mega Sunflower": "Mega Sunflower Seeds",
+    Pea: "Peas",
+    Pepper: "Peppers",
+    Pine: "Pine Tree",
+};
+const nameToSlug = (name) => {
+    var _a;
+    let slug = (_a = NAME_OVERRIDES[name]) !== null && _a !== void 0 ? _a : name;
+    // delete item markings
+    slug = slug.replaceAll("*", "");
+    // trim whitespace
+    slug = slug.trim();
+    // lowercase
+    slug = slug.toLowerCase();
+    // replace punctuation and whitespace with hyphens
+    slug = slug.replaceAll(/[ ',.]/g, "-");
+    return slug;
+};
 exports.nameToSlug = nameToSlug;
 
 
@@ -493,16 +522,17 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
                         actions: [
                             {
                                 name: "Replant",
+                                buttonClass: "btnblue",
                                 callback: () => __awaiter(void 0, void 0, void 0, function* () {
-                                    var _b;
+                                    var _a;
                                     const farmId = yield exports.farmIdState.get();
                                     if (!farmId) {
                                         console.error("No farm id found");
                                         return;
                                     }
                                     if (page === page_1.Page.FARM) {
-                                        (_b = document
-                                            .querySelector(".plantallbtn")) === null || _b === void 0 ? void 0 : _b.click();
+                                        (_a = document
+                                            .querySelector(".plantallbtn")) === null || _a === void 0 ? void 0 : _a.click();
                                     }
                                     else {
                                         yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
@@ -1596,7 +1626,7 @@ exports.buddyFarm = {
             }
             // get name and link for item
             const itemName = (_a = itemHeader.textContent) !== null && _a !== void 0 ? _a : "";
-            const itemLink = `https://buddy.farm/q/${(0, state_1.nameToSlug)(itemName)}`;
+            const itemLink = `https://buddy.farm/i/${(0, state_1.nameToSlug)(itemName)}`;
             // use title to find item details section
             const titles = currentPage.querySelectorAll(".content-block-title");
             const itemDetailsTitle = [...titles].find((title) => title.textContent === "Item Details");
@@ -1651,7 +1681,7 @@ exports.buddyFarm = {
             }
             // get name and link for item
             const questName = (_c = questHeader.textContent) !== null && _c !== void 0 ? _c : "";
-            const questLink = `https://buddy.farm/i/${(0, state_1.nameToSlug)(questName)}`;
+            const questLink = `https://buddy.farm/q/${(0, state_1.nameToSlug)(questName)}`;
             // find last card to insert
             const card = (_d = (0, page_1.getCardByTitle)("This Help Request is Visible")) !== null && _d !== void 0 ? _d : (0, page_1.getCardByTitle)("This Help Request is Hidden");
             if (!card) {
@@ -1843,6 +1873,7 @@ exports.SETTING_EXPLORE_RESULTS = {
     type: "boolean",
     defaultValue: true,
 };
+let maxHeight = 0;
 exports.cleanupExplore = {
     settings: [exports.SETTING_EXPLORE_RESULTS],
     onPageLoad: (settings, page) => {
@@ -1889,6 +1920,11 @@ exports.cleanupExplore = {
                 .join("")}
     `;
             results.style.display = "none";
+            setTimeout(() => {
+                maxHeight = Math.max(console.offsetHeight, maxHeight);
+                console.style.minHeight = `${maxHeight}px`;
+                console.style.display = "block";
+            });
             results.after(improvedLayout);
         });
         observer.observe(console, { childList: true });
@@ -2104,25 +2140,26 @@ exports.SETTING_COMPACT_SILVER = {
 };
 exports.compactSilver = {
     onQuestLoad: () => {
-        var _a;
-        const silver = document.querySelector("#statszone span:first-child");
-        if (!silver || !silver.textContent || silver.dataset.compactSilver) {
-            return;
+        var _a, _b, _c;
+        for (const silver of document.querySelectorAll("#statszone span:first-child")) {
+            if (!silver || silver.dataset.compactSilver) {
+                continue;
+            }
+            const icon = silver.querySelector("img");
+            const amount = Number((_b = (_a = icon === null || icon === void 0 ? void 0 : icon.nextSibling) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim().replaceAll(",", ""));
+            if (Number.isNaN(amount)) {
+                continue;
+            }
+            if (amount < 1000000) {
+                continue;
+            }
+            (_c = icon === null || icon === void 0 ? void 0 : icon.nextSibling) === null || _c === void 0 ? void 0 : _c.replaceWith(amount > 1000000000
+                ? // eslint-disable-next-line no-irregular-whitespace
+                    ` ${(amount / 1000000000).toFixed(1)}B  `
+                : // eslint-disable-next-line no-irregular-whitespace
+                    ` ${(amount / 1000000).toFixed(1)}M  `);
+            silver.dataset.compactSilver = "true";
         }
-        const amount = Number((_a = silver.textContent) === null || _a === void 0 ? void 0 : _a.trim().replaceAll(",", ""));
-        if (Number.isNaN(amount)) {
-            return;
-        }
-        if (amount < 1000000) {
-            return;
-        }
-        const icon = silver.querySelector("img");
-        silver.innerHTML =
-            amount > 1000000000
-                ? `&nbsp;${(amount / 1000000000).toFixed(1)}B&nbsp;&nbsp;`
-                : `&nbsp;${(amount / 1000000).toFixed(1)}M&nbsp;&nbsp;`;
-        silver.insertBefore(icon, silver.firstChild);
-        silver.dataset.compactSilver = "true";
     },
 };
 
@@ -2609,13 +2646,13 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
     `;
         (_a = navigationItem
             .querySelector(".fh-icons")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
-            var _l;
+            var _a;
             event.preventDefault();
             event.stopPropagation();
             if (!event.target) {
                 return;
             }
-            item.icon = (_l = event.target.dataset.icon) !== null && _l !== void 0 ? _l : "";
+            item.icon = (_a = event.target.dataset.icon) !== null && _a !== void 0 ? _a : "";
             yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
             renderNavigation(true);
         }));
@@ -3087,8 +3124,8 @@ exports.SETTING_IMPORT = {
     placeholder: "Paste Here",
     buttonText: "Import",
     buttonAction: (settings, settingWrapper) => __awaiter(void 0, void 0, void 0, function* () {
-        var _b;
-        const input = (_b = settingWrapper.querySelector(".fh-input")) === null || _b === void 0 ? void 0 : _b.value;
+        var _a;
+        const input = (_a = settingWrapper.querySelector(".fh-input")) === null || _a === void 0 ? void 0 : _a.value;
         const importedSettings = JSON.parse(input !== null && input !== void 0 ? input : "[]");
         for (const setting of importedSettings) {
             yield (0, exports.setSetting)(setting);
@@ -3441,6 +3478,161 @@ exports.highlightSelfInChat = {
             message.style.border = `1px solid ${theme_1.ALERT_YELLOW_BORDER}`;
         }
     }),
+};
+
+
+/***/ }),
+
+/***/ 6987:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.improvedInputs = exports.SETTING_IMPROVED_INPUTS = void 0;
+const theme_1 = __webpack_require__(1178);
+const page_1 = __webpack_require__(7952);
+const api_1 = __webpack_require__(3413);
+const dropdown_1 = __webpack_require__(9946);
+exports.SETTING_IMPROVED_INPUTS = {
+    id: "improvedInputs",
+    title: "UI: Improved Inputs",
+    description: "Consistent button and field styling and improved item selector UI",
+    type: "boolean",
+    defaultValue: true,
+};
+exports.improvedInputs = {
+    settings: [exports.SETTING_IMPROVED_INPUTS],
+    onInitialize: (settings) => {
+        if (!settings[exports.SETTING_IMPROVED_INPUTS.id].value) {
+            return;
+        }
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          .newinput,
+          input[type="number"],
+          input[type="text"]:not(#chat_txt_desktop) {
+            ${(0, theme_1.toCSS)(theme_1.INPUT_STYLES)}
+          }
+
+          .modal {
+            border-radius: 0;
+            border: 2px solid #c5c5c5;
+            border-bottom: 0;
+            overflow: visible;
+          }
+
+          .list-block .item-after {
+            max-height: initial;
+          }
+
+          .pages .button:not([class*=".btn"]),
+          .modal-button,
+          .button.btngreen,
+          .tosswellbtn,
+          .cookallbtn {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_GREEN_STYLES)}
+          }
+
+          .modal-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 -2px;
+            height: 44px !important;
+            width: calc(100% + 4px) !important;
+          }
+          
+          .modal-button:last-child {
+            margin-bottom: -2px;
+          }
+
+          select, .inlineinputlg {
+            ${(0, theme_1.toCSS)(theme_1.INPUT_STYLES)}
+          }
+          
+          .button.btnred[class*="btn"] {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_RED_STYLES)} 
+          }
+
+          .button.btnorange[class*="btn"] {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_ORANGE_STYLES)}
+          }
+          
+          .button.btnblue[class*="btn"] {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_BLUE_STYLES)}
+          }
+
+          button[class*="qty"] {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_GRAY_DARK_STYLES)}
+          }
+          
+          .button.btnpurple[class*="btn"] {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_PURPLE_STYLES)}
+          }
+
+          .button.btngray[class*="btn"] {
+            ${(0, theme_1.toCSS)(theme_1.BUTTON_GRAY_STYLES)}
+          }
+
+          .buttons-row .button[class*="btn"] {
+            height: inherit !important;
+            width: inherit !important;
+            flex: 1 !important;
+          }
+        </style>
+      `);
+    },
+    onPageLoad: (settings) => {
+        var _a;
+        if (!settings[exports.SETTING_IMPROVED_INPUTS.id].value) {
+            return;
+        }
+        const selector = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector("select[class*='id']:not(.locide)");
+        if (!selector) {
+            return;
+        }
+        (() => __awaiter(void 0, void 0, void 0, function* () {
+            const options = yield Promise.all([...selector.options].map((option) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b;
+                if (option.dataset.name === "Shovel") {
+                    const shovel = yield (0, api_1.getItemByName)("Shovel");
+                    return {
+                        name: "Dig Up",
+                        quantity: Number(option.dataset.amt),
+                        icon: (_a = shovel === null || shovel === void 0 ? void 0 : shovel.image) !== null && _a !== void 0 ? _a : "",
+                        value: option.value,
+                    };
+                }
+                const match = (_b = option.textContent) === null || _b === void 0 ? void 0 : _b.match(/^(.*) \(([\d,]+)\)$/);
+                if (!match) {
+                    console.error("Failed to parse option", option);
+                    return;
+                }
+                const [, name, quantity] = match;
+                const item = yield (0, api_1.getItemByName)(name);
+                if (!item) {
+                    console.error("Failed to get item", name);
+                    return;
+                }
+                return {
+                    name,
+                    quantity: Number(quantity.replaceAll(",", "")),
+                    icon: item.image,
+                    value: option.value,
+                };
+            })));
+            (0, dropdown_1.replaceSelect)(selector, options.filter((option) => option !== undefined));
+        }))();
+    },
 };
 
 
@@ -4386,7 +4578,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.17" !== void 0 ? "1.0.17" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.18" !== void 0 ? "1.0.18" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4481,6 +4673,7 @@ const fishInBarrel_1 = __webpack_require__(2100);
 const fleaMarket_1 = __webpack_require__(9361);
 const page_1 = __webpack_require__(7952);
 const highlightSelfInChat_1 = __webpack_require__(5454);
+const itemSelector_1 = __webpack_require__(6987);
 const kitchenNotifications_1 = __webpack_require__(9737);
 const linkifyQuickCraft_1 = __webpack_require__(7092);
 const maxContainers_1 = __webpack_require__(9735);
@@ -4505,6 +4698,8 @@ exports.FEATURES = [
     popup_1.popups,
     autocomplete_1.autocomplete,
     versionManager_1.versionManager,
+    // UI
+    itemSelector_1.improvedInputs,
     // home
     cleanupHome_1.cleanupHome,
     moveUpdateToTop_1.moveUpdateToTop,
@@ -4682,7 +4877,7 @@ const processInput = (input) => __awaiter(void 0, void 0, void 0, function* () {
     return processedInput;
 });
 const applyInput = (input, item) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _a;
     const { filteredItems, search, match, text } = yield processInput(input);
     if (!state.activeAutocomplete) {
         return;
@@ -4697,7 +4892,7 @@ const applyInput = (input, item) => __awaiter(void 0, void 0, void 0, function* 
         prefix,
         item.name,
         suffix,
-        text.slice(((_b = match.index) !== null && _b !== void 0 ? _b : 0) + match[0].length),
+        text.slice(((_a = match.index) !== null && _a !== void 0 ? _a : 0) + match[0].length),
     ].join("");
     closeAutocomplete();
 });
@@ -4882,6 +5077,82 @@ exports.confirmations = {
       `);
     },
 };
+
+
+/***/ }),
+
+/***/ 9946:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.replaceSelect = void 0;
+const theme_1 = __webpack_require__(1178);
+const replaceSelect = (proxySelect, options) => {
+    var _a, _b, _c;
+    (_b = (_a = proxySelect.parentElement) === null || _a === void 0 ? void 0 : _a.querySelector(".fh-item-selector")) === null || _b === void 0 ? void 0 : _b.remove();
+    (_c = document === null || document === void 0 ? void 0 : document.querySelector(".fh-item-selector-menu")) === null || _c === void 0 ? void 0 : _c.remove();
+    const formatter = new Intl.NumberFormat();
+    proxySelect.style.display = "none";
+    const selector = document.createElement("div");
+    selector.classList.add("fh-item-selector");
+    (0, theme_1.applyStyles)(selector, theme_1.INPUT_STYLES);
+    selector.style.display = "flex";
+    selector.style.alignItems = "center";
+    selector.style.justifyContent = "center";
+    selector.style.gap = "4px";
+    const menu = document.createElement("div");
+    menu.classList.add("fh-item-selector-menu");
+    menu.style.padding = "10px 0";
+    menu.style.display = "none";
+    menu.style.position = "fixed";
+    menu.style.zIndex = "9999";
+    menu.style.background = theme_1.BACKGROUND_DARK;
+    menu.style.border = `2px solid ${theme_1.BORDER_GRAY}`;
+    menu.style.overflowY = "auto";
+    menu.style.maxHeight = "406px";
+    menu.style.fontSize = "17px";
+    menu.style.color = theme_1.TEXT_GRAY;
+    menu.style.marginTop = "-2px";
+    const selectedOption = options.find((option) => option.value === proxySelect.value);
+    selector.innerHTML = `
+    ${selectedOption
+        ? `<img src="${selectedOption === null || selectedOption === void 0 ? void 0 : selectedOption.icon}" style="width:16px; "/>`
+        : ""}
+    ${selectedOption
+        ? `${selectedOption.name} (${formatter.format(selectedOption.quantity)})`
+        : "Select an item"}
+  `;
+    selector.addEventListener("click", () => {
+        const offset = selector.getBoundingClientRect();
+        menu.style.top = `${offset.y + offset.height}px`;
+        menu.style.right = `${window.innerWidth - offset.right}px`;
+        menu.style.display = menu.style.display === "none" ? "block" : "none";
+    });
+    for (const option of options) {
+        const optionElement = document.createElement("div");
+        optionElement.textContent = `${option.name} (${option.quantity})`;
+        optionElement.style.textAlign = "left";
+        optionElement.style.padding = "2px 10px";
+        optionElement.style.display = "flex";
+        optionElement.style.alignItems = "center";
+        optionElement.style.gap = "4px";
+        optionElement.style.cursor = "pointer";
+        optionElement.innerHTML = `
+      <img src="${option.icon}" style="width:16px;"/>
+      ${option.name} (${formatter.format(option.quantity)})
+    `;
+        optionElement.addEventListener("click", () => {
+            proxySelect.value = option.value;
+            (0, exports.replaceSelect)(proxySelect, options);
+        });
+        menu.append(optionElement);
+    }
+    proxySelect.after(selector);
+    document.body.append(menu);
+    proxySelect.dataset.hasProxied = "true";
+};
+exports.replaceSelect = replaceSelect;
 
 
 /***/ }),
@@ -5088,6 +5359,7 @@ var Page;
     Page["SETTINGS_OPTIONS"] = "settings_options";
     Page["TEMPLE"] = "mailitems";
     Page["VAULT"] = "crack";
+    Page["WELL"] = "well";
     Page["WHEEL"] = "spin";
     Page["WORKER"] = "worker";
     Page["WORKSHOP"] = "workshop";
@@ -5228,9 +5500,9 @@ const showPopup = ({ title, contentHTML, align, okText, actions, }) => new Promi
         ">
         ${actions
         ? actions
-            .map(({ name }, index) => `
+            .map(({ name, buttonClass }, index) => `
               <span
-                class="modal-button modal-button-bold fh-action"
+                class="modal-button modal-button-bold fh-action button ${buttonClass}"
                 data-index="${index}"
               >
                 ${name}
@@ -5293,7 +5565,22 @@ exports.popups = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BACKGROUND_DARK = exports.BACKGROUND_BLACK = exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.BORDER_GRAY = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = void 0;
+exports.BUTTON_GRAY_DARK_STYLES = exports.BUTTON_GRAY_STYLES = exports.BUTTON_PURPLE_STYLES = exports.BUTTON_RED_STYLES = exports.BUTTON_GREEN_DARK_STYLES = exports.BUTTON_ORANGE_STYLES = exports.BUTTON_BLUE_STYLES = exports.BUTTON_GREEN_STYLES = exports.BUTTON_GRAY_BORDER = exports.BUTTON_GRAY_BACKGROUND = exports.BUTTON_PURPLE_BORDER = exports.BUTTON_PURPLE_BACKGROUND = exports.BUTTON_RED_BORDER = exports.BUTTON_RED_BACKGROUND = exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.INPUT_STYLES = exports.INPUT_BORDER = exports.INPUT_PADDING = exports.BACKGROUND_DARK = exports.BACKGROUND_BLACK = exports.BACKGROUND_WHITE = exports.BORDER_GRAY = exports.TEXT_BLACK = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.TEXT_GRAY = exports.TEXT_WHITE = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = exports.toCSS = exports.camelToKebab = exports.applyStyles = exports.important = void 0;
+const important = (style) => `${style} !important`;
+exports.important = important;
+const applyStyles = (element, styles) => {
+    for (const [key, input] of Object.entries(styles)) {
+        const [value, priority] = input.split("!");
+        element.style.setProperty(key, value, priority);
+    }
+};
+exports.applyStyles = applyStyles;
+const camelToKebab = (input) => input.replaceAll(/[A-Z]+(?![a-z])|[A-Z]/g, ($, ofs) => (ofs ? "-" : "") + $.toLowerCase());
+exports.camelToKebab = camelToKebab;
+const toCSS = (style) => Object.entries(style)
+    .map(([key, value]) => `${(0, exports.camelToKebab)(key)}: ${value}`)
+    .join(";\n");
+exports.toCSS = toCSS;
 // links
 exports.LINK_GREEN = "#90EE90";
 exports.LINK_RED = "#ED143D";
@@ -5301,22 +5588,66 @@ exports.LINK_RED = "#ED143D";
 exports.ALERT_YELLOW_BACKGROUND = "#351C04";
 exports.ALERT_YELLOW_BORDER = "#41260D";
 // text
+exports.TEXT_WHITE = "#FFFFFF";
+exports.TEXT_GRAY = "#BBBBBB";
 exports.TEXT_ERROR = "#FF0000";
 exports.TEXT_WARNING = "#FFA500";
 exports.TEXT_SUCCESS = "#30D611";
+exports.TEXT_BLACK = "#000000";
 // borders
 exports.BORDER_GRAY = "#393939";
+// backgrounds
+exports.BACKGROUND_WHITE = "#FFFFFF";
+exports.BACKGROUND_BLACK = "#111111";
+exports.BACKGROUND_DARK = "#161718";
+exports.INPUT_PADDING = "9px 12px";
+exports.INPUT_BORDER = `2px solid ${exports.BORDER_GRAY}`;
+exports.INPUT_STYLES = {
+    background: (0, exports.important)(exports.BACKGROUND_DARK),
+    border: (0, exports.important)(exports.INPUT_BORDER),
+    borderRadius: (0, exports.important)("0"),
+    fontSize: (0, exports.important)("14px"),
+    boxShadow: (0, exports.important)("none"),
+    color: (0, exports.important)(exports.TEXT_WHITE),
+    height: (0, exports.important)("36px"),
+    padding: (0, exports.important)(exports.INPUT_PADDING),
+};
 // buttons
 exports.BUTTON_GREEN_BACKGROUND = "#003300";
 exports.BUTTON_GREEN_BORDER = "#006600";
 exports.BUTTON_GREEN_DARK_BACKGROUND = "#001900";
 exports.BUTTON_GREEN_DARK_BORDER = "#003300";
-exports.BUTTON_ORANGE_BACKGROUND = "#351C04";
-exports.BUTTON_ORANGE_BORDER = "#41260D";
-exports.BUTTON_BLUE_BACKGROUND = "#000040";
-exports.BUTTON_BLUE_BORDER = "#00007F";
-exports.BACKGROUND_BLACK = "#111111";
-exports.BACKGROUND_DARK = "#161718";
+exports.BUTTON_ORANGE_BACKGROUND = "#532A02";
+exports.BUTTON_ORANGE_BORDER = "#8B4A0D";
+exports.BUTTON_BLUE_BACKGROUND = "#101059";
+exports.BUTTON_BLUE_BORDER = "#19199B";
+exports.BUTTON_RED_BACKGROUND = "#330000";
+exports.BUTTON_RED_BORDER = "#660000";
+exports.BUTTON_PURPLE_BACKGROUND = "#3A204C";
+exports.BUTTON_PURPLE_BORDER = "#4A315C";
+exports.BUTTON_GRAY_BACKGROUND = "#444444";
+exports.BUTTON_GRAY_BORDER = "#666666";
+const generateButton = (background, border) => ({
+    background: (0, exports.important)(background),
+    border: (0, exports.important)(`2px solid ${border}`),
+    borderRadius: (0, exports.important)("0"),
+    boxShadow: (0, exports.important)("none"),
+    color: (0, exports.important)(exports.TEXT_WHITE),
+    fontSize: (0, exports.important)("14px"),
+    cursor: (0, exports.important)("pointer"),
+    lineHeight: (0, exports.important)("1"),
+    height: (0, exports.important)("36px"),
+    padding: (0, exports.important)(exports.INPUT_PADDING),
+    width: (0, exports.important)("auto"),
+});
+exports.BUTTON_GREEN_STYLES = generateButton(exports.BUTTON_GREEN_BACKGROUND, exports.BUTTON_GREEN_BORDER);
+exports.BUTTON_BLUE_STYLES = generateButton(exports.BUTTON_BLUE_BACKGROUND, exports.BUTTON_BLUE_BORDER);
+exports.BUTTON_ORANGE_STYLES = generateButton(exports.BUTTON_ORANGE_BACKGROUND, exports.BUTTON_ORANGE_BORDER);
+exports.BUTTON_GREEN_DARK_STYLES = generateButton(exports.BUTTON_GREEN_DARK_BACKGROUND, exports.BUTTON_GREEN_DARK_BORDER);
+exports.BUTTON_RED_STYLES = generateButton(exports.BUTTON_RED_BACKGROUND, exports.BUTTON_RED_BORDER);
+exports.BUTTON_PURPLE_STYLES = generateButton(exports.BUTTON_PURPLE_BACKGROUND, exports.BUTTON_PURPLE_BORDER);
+exports.BUTTON_GRAY_STYLES = generateButton(exports.BUTTON_GRAY_BACKGROUND, exports.BUTTON_GRAY_BORDER);
+exports.BUTTON_GRAY_DARK_STYLES = generateButton(exports.BORDER_GRAY, exports.BORDER_GRAY);
 
 
 /***/ }),

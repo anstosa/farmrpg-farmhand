@@ -1,11 +1,17 @@
 import { Feature } from "~/features/feature";
 
+export interface Action {
+  name: string;
+  buttonClass?: string;
+  callback: () => Promise<void>;
+}
+
 export interface Popup {
   title: string;
   contentHTML: string;
   align?: "left" | "center" | "right";
   okText?: string;
-  actions?: Array<{ name: string; callback: () => Promise<void> }>;
+  actions?: Action[];
 }
 
 export const showPopup = ({
@@ -60,9 +66,9 @@ export const showPopup = ({
           actions
             ? actions
                 .map(
-                  ({ name }, index) => `
+                  ({ name, buttonClass }, index) => `
               <span
-                class="modal-button modal-button-bold fh-action"
+                class="modal-button modal-button-bold fh-action button ${buttonClass}"
                 data-index="${index}"
               >
                 ${name}

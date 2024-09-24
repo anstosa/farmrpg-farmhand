@@ -185,6 +185,7 @@ export const farmStatusState = new CachedState<FarmStatus>(
               actions: [
                 {
                   name: "Replant",
+                  buttonClass: "btnblue",
                   callback: async () => {
                     const farmId = await farmIdState.get();
                     if (!farmId) {

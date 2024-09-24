@@ -9,6 +9,8 @@ export const SETTING_EXPLORE_RESULTS: FeatureSetting = {
   defaultValue: true,
 };
 
+let maxHeight = 0;
+
 export const cleanupExplore: Feature = {
   settings: [SETTING_EXPLORE_RESULTS],
   onPageLoad: (settings, page) => {
@@ -20,7 +22,7 @@ export const cleanupExplore: Feature = {
     }
 
     // get console
-    const console = document.querySelector("#consoletxt");
+    const console = document.querySelector<HTMLSpanElement>("#consoletxt");
     if (!console) {
       return;
     }
@@ -60,6 +62,11 @@ export const cleanupExplore: Feature = {
         .join("")}
     `;
       results.style.display = "none";
+      setTimeout(() => {
+        maxHeight = Math.max(console.offsetHeight, maxHeight);
+        console.style.minHeight = `${maxHeight}px`;
+        console.style.display = "block";
+      });
       results.after(improvedLayout);
     });
     observer.observe(console, { childList: true });

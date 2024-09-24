@@ -134,6 +134,14 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.18
+
+* Added: Consistent, cleaner UI elements for buttons and text/number inputs
+* Added: Improved item selector for seeds, kitchen, and well
+* Fixed: Compact silver not working with tracked mastery or quest
+* Fixed: Stabilized size of improved explore results so buttons don't bounce
+* Fixed: Broken Buddy.Farm links
+
 ### 1.0.17
 
 * Added: Improved explore view applies to fishing as well

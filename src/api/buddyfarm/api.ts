@@ -25,10 +25,22 @@ interface PageDataResponse {
   staticQueryHashes: unknown;
 }
 
-// TODO cache this
+const itemDataState = new CachedState<Record<string, Item>>(
+  StorageKey.ITEM_DATA,
+  () => Promise.resolve({}),
+  {
+    timeout: 60 * 60 * 24, // 1 day
+    defaultState: {},
+  }
+);
+
 export const getItemByName = async (
   itemName: string
 ): Promise<Item | undefined> => {
+  const items = await itemDataState.get();
+  if (items?.[itemName]) {
+    return items[itemName];
+  }
   const response = await fetch(
     `https://buddy.farm/page-data/i/${nameToSlug(itemName)}/page-data.json`
   );
@@ -38,6 +50,7 @@ export const getItemByName = async (
     console.error(`Item ${itemName} not found`);
     return;
   }
+  itemDataState.set({ ...items, [itemName]: item });
   return item;
 };
 

@@ -10,25 +10,30 @@ export const SETTING_COMPACT_SILVER: FeatureSetting = {
 
 export const compactSilver: Feature = {
   onQuestLoad: () => {
-    const silver = document.querySelector<HTMLDivElement>(
+    for (const silver of document.querySelectorAll<HTMLDivElement>(
       "#statszone span:first-child"
-    );
-    if (!silver || !silver.textContent || silver.dataset.compactSilver) {
-      return;
+    )) {
+      if (!silver || silver.dataset.compactSilver) {
+        continue;
+      }
+      const icon = silver.querySelector("img");
+      const amount = Number(
+        icon?.nextSibling?.textContent?.trim().replaceAll(",", "")
+      );
+      if (Number.isNaN(amount)) {
+        continue;
+      }
+      if (amount < 1_000_000) {
+        continue;
+      }
+      icon?.nextSibling?.replaceWith(
+        amount > 1_000_000_000
+          ? // eslint-disable-next-line no-irregular-whitespace
+            ` ${(amount / 1_000_000_000).toFixed(1)}B  `
+          : // eslint-disable-next-line no-irregular-whitespace
+            ` ${(amount / 1_000_000).toFixed(1)}M  `
+      );
+      silver.dataset.compactSilver = "true";
     }
-    const amount = Number(silver.textContent?.trim().replaceAll(",", ""));
-    if (Number.isNaN(amount)) {
-      return;
-    }
-    if (amount < 1_000_000) {
-      return;
-    }
-    const icon = silver.querySelector("img");
-    silver.innerHTML =
-      amount > 1_000_000_000
-        ? `&nbsp;${(amount / 1_000_000_000).toFixed(1)}B&nbsp;&nbsp;`
-        : `&nbsp;${(amount / 1_000_000).toFixed(1)}M&nbsp;&nbsp;`;
-    silver.insertBefore(icon as Node, silver.firstChild);
-    silver.dataset.compactSilver = "true";
   },
 };

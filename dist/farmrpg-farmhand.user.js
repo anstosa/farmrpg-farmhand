@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.19
+// @version 1.0.20
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -1885,9 +1885,10 @@ exports.cleanupExplore = {
         }
         // get console
         const console = document.querySelector("#consoletxt");
-        if (!console) {
+        if (!console || !console.parentElement) {
             return;
         }
+        console.parentElement.style.height = "200px";
         const observer = new MutationObserver(() => {
             const results = console.querySelector("span[style='font-size:11px']");
             if (!results) {
@@ -3518,7 +3519,7 @@ exports.improvedInputs = {
         document.head.insertAdjacentHTML("beforeend", `
         <style>
           .newinput,
-          input[type="number"],
+          input[type="number"]:not(#vaultcode),
           input[type="text"]:not(#chat_txt_desktop) {
             ${(0, theme_1.toCSS)(theme_1.INPUT_STYLES)}
           }
@@ -3795,6 +3796,7 @@ exports.linkifyQuickCraft = {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.maxContainers = exports.SETTING_MAX_CONTAINERS = void 0;
+const debounce_1 = __webpack_require__(4276);
 const page_1 = __webpack_require__(7952);
 exports.SETTING_MAX_CONTAINERS = {
     id: "maxContainers",
@@ -3806,19 +3808,34 @@ exports.SETTING_MAX_CONTAINERS = {
 exports.maxContainers = {
     settings: [exports.SETTING_MAX_CONTAINERS],
     onPageLoad: (settings, page) => {
-        if (page !== page_1.Page.LOCKSMITH) {
-            return;
-        }
         if (!settings[exports.SETTING_MAX_CONTAINERS.id].value) {
             return;
         }
-        // get buttons
-        const buttons = document.querySelectorAll("button.lsmaxqty");
-        setTimeout(() => {
+        if (page !== page_1.Page.LOCKSMITH) {
+            return;
+        }
+        const currentPage = (0, page_1.getCurrentPage)();
+        if (!currentPage) {
+            return;
+        }
+        const observer = new MutationObserver((0, debounce_1.debounce)(() => {
+            // get inputs
+            const inputs = document.querySelectorAll("input.qty[type='number']");
+            // if we only have 1 input, we can't be sure whether the user or the app changed it
+            if (inputs.length <= 1) {
+                return;
+            }
+            // if any of them are not 1, the app didn't do it
+            if ([...inputs].some((input) => ["0", "1"].includes(input.value))) {
+                return;
+            }
+            // get buttons
+            const buttons = document.querySelectorAll("button.lsmaxqty");
             for (const button of buttons) {
                 button.click();
             }
-        }, 150);
+        }));
+        observer.observe(currentPage, { childList: true, subtree: true });
     },
 };
 
@@ -4025,6 +4042,216 @@ exports.mealNotifications = {
             return;
         }
         meals_1.mealsStatusState.onUpdate(renderMeals);
+    },
+};
+
+
+/***/ }),
+
+/***/ 4414:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.miner = void 0;
+const theme_1 = __webpack_require__(1178);
+const page_1 = __webpack_require__(7952);
+const SETTING_MINER = {
+    id: "miner",
+    title: "Mining: Auto Miner",
+    description: "Adds button to take the next suggested action",
+    type: "boolean",
+    defaultValue: true,
+};
+const SETTING_MINER_EXPLOSIVES = {
+    id: "minerExplosives",
+    title: "Mining: Use Explosives",
+    description: "Use explosives as suggested action",
+    type: "boolean",
+    defaultValue: true,
+};
+const SETTING_MINER_BOMBS = {
+    id: "minerBombs",
+    title: "Mining: Use Bombs",
+    description: "Use bombs as suggested action",
+    type: "boolean",
+    defaultValue: false,
+};
+const getStatus = (cell) => {
+    var _a, _b, _c;
+    if (!cell.classList.contains("marked")) {
+        return "unexplored";
+    }
+    const icon = cell.firstElementChild;
+    if (!icon) {
+        return "unknown";
+    }
+    if (icon.tagName === "IMG") {
+        return "discovered";
+    }
+    if ((_a = icon.getAttribute("style")) === null || _a === void 0 ? void 0 : _a.includes("color:yellow")) {
+        return "miss";
+    }
+    if ((_b = cell.getAttribute("style")) === null || _b === void 0 ? void 0 : _b.includes("background-color:#cc0000;")) {
+        return "trap";
+    }
+    if ((_c = icon.getAttribute("style")) === null || _c === void 0 ? void 0 : _c.includes("color:black")) {
+        return "hit";
+    }
+    if (icon.classList.contains("fa-pickaxe")) {
+        return "extra";
+    }
+    if (icon.classList.contains("fa-sparkles")) {
+        return "xp";
+    }
+    return "unknown";
+};
+const getCellAt = (board, x, y) => {
+    const rowIndex = y - 1;
+    if (rowIndex < 0 || rowIndex >= board.length) {
+        return undefined;
+    }
+    const columnIndex = x - 1;
+    if (columnIndex < 0 || columnIndex >= board[rowIndex].length) {
+        return undefined;
+    }
+    return board[rowIndex][columnIndex];
+};
+const fillHints = (board) => {
+    // loop over all cells
+    for (let rowIndex = 0; rowIndex < board.length; rowIndex++) {
+        const row = board[rowIndex];
+        for (const cell of row) {
+            if (cell.status !== "unexplored") {
+                cell.isCandidate = false;
+                continue;
+            }
+            let hasDirection = false;
+            let isNextToHit = false;
+            const left = getCellAt(board, cell.x - 1, cell.y);
+            if (left && ["unexplored", "hit"].includes(left.status)) {
+                hasDirection = true;
+                if (left.status === "hit") {
+                    isNextToHit = true;
+                }
+            }
+            const right = getCellAt(board, cell.x + 1, cell.y);
+            if (right && ["unexplored", "hit"].includes(right.status)) {
+                hasDirection = true;
+                if (right.status === "hit") {
+                    isNextToHit = true;
+                }
+            }
+            const top = getCellAt(board, cell.x, cell.y - 1);
+            if (top && ["unexplored", "hit"].includes(top.status)) {
+                hasDirection = true;
+                if (top.status === "hit") {
+                    isNextToHit = true;
+                }
+            }
+            const bottom = getCellAt(board, cell.x, cell.y + 1);
+            if (bottom && ["unexplored", "hit"].includes(bottom.status)) {
+                hasDirection = true;
+                if (bottom.status === "hit") {
+                    isNextToHit = true;
+                }
+            }
+            cell.isNextToHit = isNextToHit;
+            cell.isCandidate = hasDirection;
+        }
+    }
+};
+const tryCell = (cell) => {
+    cell.element.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+};
+exports.miner = {
+    settings: [SETTING_MINER, SETTING_MINER_EXPLOSIVES, SETTING_MINER_BOMBS],
+    onPageLoad: (settings, page) => {
+        if (page !== page_1.Page.MINING) {
+            return;
+        }
+        if (!settings[SETTING_MINER.id].value) {
+            return;
+        }
+        const currentPage = (0, page_1.getCurrentPage)();
+        if (!currentPage) {
+            return;
+        }
+        const magicButton = document.createElement("div");
+        magicButton.style.position = "absolute";
+        magicButton.style.right = "20px";
+        magicButton.style.bottom = "80px";
+        magicButton.style.cursor = "pointer";
+        magicButton.style.zIndex = "999999";
+        magicButton.style.height = "60px";
+        magicButton.style.width = "60px";
+        magicButton.style.borderRadius = "100%";
+        magicButton.style.backgroundColor = theme_1.BUTTON_GREEN_BACKGROUND;
+        magicButton.style.borderWidth = "2px";
+        magicButton.style.borderColor = theme_1.BUTTON_GREEN_BORDER;
+        magicButton.style.borderStyle = "solid";
+        magicButton.style.color = theme_1.TEXT_WHITE;
+        magicButton.style.display = "flex";
+        magicButton.style.justifyContent = "center";
+        magicButton.style.alignItems = "center";
+        magicButton.innerHTML = `<i class="fa fa-wand-sparkles fa-2x fa-fw" />`;
+        magicButton.addEventListener("click", () => {
+            // go to next level if available
+            const nextLevelButton = currentPage.querySelector(".nextlevelbtn");
+            if (nextLevelButton && nextLevelButton.style.display !== "none") {
+                nextLevelButton.click();
+                return;
+            }
+            // use explosives if available
+            const explosivesButton = currentPage.querySelector(".useexplosivebtn:not(.disabled)");
+            if (explosivesButton) {
+                explosivesButton.click();
+                return;
+            }
+            // otherwise use pickaxe
+            const picks = currentPage.querySelector("#pickaxes");
+            if (!picks) {
+                return;
+            }
+            const pickCount = Number(picks.textContent || "0");
+            // no picks, make more
+            if (!pickCount) {
+                picks.click();
+            }
+            // get boared state
+            const board = [];
+            const cells = currentPage.querySelectorAll(".checkCell");
+            const size = Math.sqrt(cells.length);
+            for (let rowIndex = 0; rowIndex < size; rowIndex++) {
+                board.push([]);
+                for (let columnIndex = 0; columnIndex < size; columnIndex++) {
+                    const cell = cells[rowIndex * size + columnIndex];
+                    board[rowIndex].push({
+                        element: cell,
+                        isMarked: cell.classList.contains("marked"),
+                        x: Number(cell.dataset.x),
+                        y: Number(cell.dataset.y),
+                        status: getStatus(cell),
+                    });
+                }
+            }
+            // fill in deductions
+            fillHints(board);
+            // get candidates
+            const candidates = board.flat().filter((cell) => cell.isCandidate);
+            // get candidates next to hits
+            const nextToHits = candidates.filter((cell) => cell.isNextToHit);
+            // if there are any, click the first one
+            // TODO: prioritize based on alignment
+            if (nextToHits.length > 0) {
+                tryCell(nextToHits[0]);
+                return;
+            }
+            // click a random candidate
+            // TODO: prioritize based on checkerboard pattern from center
+            tryCell(candidates[Math.floor(Math.random() * candidates.length) || 0]);
+        });
+        currentPage.append(magicButton);
     },
 };
 
@@ -4497,6 +4724,7 @@ exports.quicksellSafely = {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.vaultSolver = void 0;
 const vault_1 = __webpack_require__(2279);
+const theme_1 = __webpack_require__(1178);
 const page_1 = __webpack_require__(7952);
 const SETTING_VAULT_SOLVER = {
     id: "vaultSolver",
@@ -4515,6 +4743,45 @@ exports.vaultSolver = {
         if (!settings[SETTING_VAULT_SOLVER.id].value) {
             return;
         }
+        const currentPage = (0, page_1.getCurrentPage)();
+        if (!currentPage) {
+            return;
+        }
+        const magicButton = document.createElement("div");
+        magicButton.style.position = "absolute";
+        magicButton.style.right = "20px";
+        magicButton.style.bottom = "80px";
+        magicButton.style.cursor = "pointer";
+        magicButton.style.zIndex = "999999";
+        magicButton.style.height = "60px";
+        magicButton.style.width = "60px";
+        magicButton.style.borderRadius = "100%";
+        magicButton.style.backgroundColor = theme_1.BUTTON_GREEN_BACKGROUND;
+        magicButton.style.borderWidth = "2px";
+        magicButton.style.borderColor = theme_1.BUTTON_GREEN_BORDER;
+        magicButton.style.borderStyle = "solid";
+        magicButton.style.color = theme_1.TEXT_WHITE;
+        magicButton.style.display = "flex";
+        magicButton.style.justifyContent = "center";
+        magicButton.style.alignItems = "center";
+        magicButton.innerHTML = `<i class="fa fa-wand-sparkles fa-2x fa-fw" />`;
+        magicButton.addEventListener("click", () => {
+            var _a;
+            // click new vault button if available
+            const newVaultButton = currentPage.querySelector(".resetbtn");
+            if (newVaultButton) {
+                newVaultButton.click();
+                return;
+            }
+            // click more guesses button if available
+            const moreTriesButton = currentPage.querySelector(".moretriesbtn");
+            if (moreTriesButton) {
+                moreTriesButton.click();
+            }
+            // otherwise, submit the current guess
+            (_a = currentPage.querySelector(".vcbtn")) === null || _a === void 0 ? void 0 : _a.click();
+        });
+        currentPage.append(magicButton);
         const input = document.querySelector("#vaultcode");
         if (!input) {
             console.error("Input not found");
@@ -4580,7 +4847,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.19" !== void 0 ? "1.0.19" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.20" !== void 0 ? "1.0.20" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -4682,6 +4949,7 @@ const maxContainers_1 = __webpack_require__(9735);
 const maxCows_1 = __webpack_require__(1103);
 const maxPigs_1 = __webpack_require__(2934);
 const mealNotifications_1 = __webpack_require__(5792);
+const miner_1 = __webpack_require__(4414);
 const moveUpdateToTop_1 = __webpack_require__(4417);
 const compressNavigation_1 = __webpack_require__(2827);
 const notifications_1 = __webpack_require__(6783);
@@ -4727,6 +4995,8 @@ exports.FEATURES = [
     banker_1.banker,
     // vault
     vaultSolver_1.vaultSolver,
+    // mining
+    miner_1.miner,
     // locksmith
     maxContainers_1.maxContainers,
     // fishing
@@ -5083,6 +5353,26 @@ exports.confirmations = {
 
 /***/ }),
 
+/***/ 4276:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.debounce = void 0;
+const debounce = (callback, timeout = 300) => {
+    let timer;
+    return (...parameters) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            Reflect.apply(callback, this, parameters);
+        }, timeout);
+    };
+};
+exports.debounce = debounce;
+
+
+/***/ }),
+
 /***/ 9946:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -5355,6 +5645,7 @@ var Page;
     Page["KITCHEN"] = "kitchen";
     Page["LOCKSMITH"] = "locksmith";
     Page["MAILBOX"] = "mailbox";
+    Page["MINING"] = "mining";
     Page["PASTURE"] = "pasture";
     Page["PERKS"] = "perks";
     Page["PIG_PEN"] = "pigpen";

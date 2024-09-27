@@ -25,6 +25,7 @@ import { maxContainers } from "./features/maxContainers";
 import { maxCows } from "./features/maxCows";
 import { maxPigs } from "./features/maxPigs";
 import { mealNotifications } from "./features/mealNotifications";
+import { miner } from "./features/miner";
 import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
@@ -80,6 +81,9 @@ export const FEATURES = [
 
   // vault
   vaultSolver,
+
+  // mining
+  miner,
 
   // locksmith
   maxContainers,

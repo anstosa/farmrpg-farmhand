@@ -34,7 +34,7 @@ export const improvedInputs: Feature = {
       `
         <style>
           .newinput,
-          input[type="number"],
+          input[type="number"]:not(#vaultcode),
           input[type="text"]:not(#chat_txt_desktop) {
             ${toCSS(INPUT_STYLES)}
           }

@@ -42,9 +42,14 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 ### Items
 
 * Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
-* Locks Quick Sell for locked items
+* Locks Quick Sell and Quick Donate for locked items
 * Make missing ingredients in Quick Carft links
 * Show ongoing notifications for meals
+
+### Quests
+
+* Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
+* Remember quest detail collapse state globally instead of per-quest
 
 ### Banker
 
@@ -55,6 +60,16 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 ### Vault
 
 * Prefills vault code with recommended guess
+* Floating "recommended action" button that clicks submit guess, get more guesses, or get new vault for you
+
+### Mining
+
+* Floating "recommended action" button that clicks the recommended action for you
+  * Next floor
+  * Use bomb (disabled by default)
+  * Use explosives
+  * Make more picks (if none left)
+  * Dig recommended location on board
 
 ### Chat
 
@@ -84,12 +99,26 @@ This frees up points from many activity specific perks to be re-invested in perk
 ### Fishing
 
 * Fish always appear in middle of pond
+* Larger results display with consistent ordering for nets
+
+### Exploring
+
+* Larger results display with consistent ordering
 
 ### Farming
 
 * Crop ready notifications
 * Field empty notifications
-* Popup showing items harvested
+* Popup showing items harvested with Replant button
+* Buy and sell max animals by default (instead of 1)
+
+### Flea Market
+
+* Disabled (can be re-enabled in settings)
+
+### Locksmith
+
+* Open max containers by default (instead of 1)
 
 ### Cooking
 
@@ -106,6 +135,10 @@ This frees up points from many activity specific perks to be re-invested in perk
 * Quests: Styled border
 * Quests: Minimizable
 * Popups: Click outside to close
+* Inputs: Cleaner and more consistent
+* Buttons: Cleaner and more consistent
+* Dropdowns: Cleaner, more consistent, and show item icons
+* Wallet: compact money over 1M
 
 ### Export
 
@@ -133,6 +166,14 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.20
+
+* Added: Miner. Static button in bottom right to take the next suggested action on board
+* Added: Static button for Vault like Miner above
+* Fixed: Overlap when fishing on improved explore layout
+* Fixed: Containers not maxing after the first one is opened
+* Fixed: Improved inputs vault field
 
 ### 1.0.19
 

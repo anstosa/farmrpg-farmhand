@@ -23,9 +23,10 @@ export const cleanupExplore: Feature = {
 
     // get console
     const console = document.querySelector<HTMLSpanElement>("#consoletxt");
-    if (!console) {
+    if (!console || !console.parentElement) {
       return;
     }
+    console.parentElement.style.height = "200px";
     const observer = new MutationObserver(() => {
       const results = console.querySelector<HTMLSpanElement>(
         "span[style='font-size:11px']"

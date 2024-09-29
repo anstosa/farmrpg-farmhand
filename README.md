@@ -60,6 +60,7 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 ### Vault
 
 * Prefills vault code with recommended guess
+* Custom vault code keyboard with hints built-in
 * Floating "recommended action" button that clicks submit guess, get more guesses, or get new vault for you
 
 ### Mining
@@ -166,6 +167,14 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.21
+
+* Added: Vault now has custom keyboard with hints built-in
+* Fixed: Miner will now correctly count pickaxes > 1000
+* Fixed: Miner will now click Try Again if attempts left is 0
+* Fixed: Miner will now prioritize candidates in alignment with hits
+* Fixed: Miner will now prioritize the most promising candidates if there are no hits
 
 ### 1.0.20
 

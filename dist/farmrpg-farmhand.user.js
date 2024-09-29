@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.20
+// @version 1.0.21
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -4118,46 +4118,96 @@ const getCellAt = (board, x, y) => {
     return board[rowIndex][columnIndex];
 };
 const fillHints = (board) => {
-    // loop over all cells
-    for (let rowIndex = 0; rowIndex < board.length; rowIndex++) {
-        const row = board[rowIndex];
-        for (const cell of row) {
-            if (cell.status !== "unexplored") {
-                cell.isCandidate = false;
-                continue;
+    const cells = board.flat();
+    // mark candidates
+    for (const cell of cells) {
+        if (cell.status !== "unexplored") {
+            cell.isCandidate = false;
+            continue;
+        }
+        let hasDirection = false;
+        const left = getCellAt(board, cell.x - 1, cell.y);
+        if (left && ["unexplored", "hit"].includes(left.status)) {
+            hasDirection = true;
+        }
+        const right = getCellAt(board, cell.x + 1, cell.y);
+        if (right && ["unexplored", "hit"].includes(right.status)) {
+            hasDirection = true;
+        }
+        const up = getCellAt(board, cell.x, cell.y - 1);
+        if (up && ["unexplored", "hit"].includes(up.status)) {
+            hasDirection = true;
+        }
+        const down = getCellAt(board, cell.x, cell.y + 1);
+        if (down && ["unexplored", "hit"].includes(down.status)) {
+            hasDirection = true;
+        }
+        cell.isCandidate = hasDirection;
+    }
+    // count candidate directions
+    for (const cell of cells) {
+        if (!cell.isCandidate) {
+            continue;
+        }
+        let candidateDirectionCount = 0;
+        const left = getCellAt(board, cell.x - 1, cell.y);
+        if (left === null || left === void 0 ? void 0 : left.isCandidate) {
+            candidateDirectionCount++;
+        }
+        const right = getCellAt(board, cell.x + 1, cell.y);
+        if (right === null || right === void 0 ? void 0 : right.isCandidate) {
+            candidateDirectionCount++;
+        }
+        const up = getCellAt(board, cell.x, cell.y - 1);
+        if (up === null || up === void 0 ? void 0 : up.isCandidate) {
+            candidateDirectionCount++;
+        }
+        const down = getCellAt(board, cell.x, cell.y + 1);
+        if (down === null || down === void 0 ? void 0 : down.isCandidate) {
+            candidateDirectionCount++;
+        }
+        cell.candidateDirectionCount = candidateDirectionCount;
+    }
+    // mark next to hits
+    for (const cell of cells) {
+        if (cell.status !== "hit") {
+            continue;
+        }
+        const left = getCellAt(board, cell.x - 1, cell.y);
+        const isLeftCandidate = left && left.isCandidate;
+        const isLeftHit = left && left.status === "hit";
+        const right = getCellAt(board, cell.x + 1, cell.y);
+        const isRightCandidate = right && right.isCandidate;
+        const isRightHit = right && right.status === "hit";
+        const top = getCellAt(board, cell.x, cell.y - 1);
+        const isTopCandidate = top && top.isCandidate;
+        const isTopHit = top && top.status === "hit";
+        const bottom = getCellAt(board, cell.x, cell.y + 1);
+        const isBottomCandidate = bottom && bottom.isCandidate;
+        const isBottomHit = bottom && bottom.status === "hit";
+        if (left && isLeftCandidate) {
+            left.isNextToHit = true;
+            if (isRightHit) {
+                left.isInlineWithHit = true;
             }
-            let hasDirection = false;
-            let isNextToHit = false;
-            const left = getCellAt(board, cell.x - 1, cell.y);
-            if (left && ["unexplored", "hit"].includes(left.status)) {
-                hasDirection = true;
-                if (left.status === "hit") {
-                    isNextToHit = true;
-                }
+        }
+        if (right && isRightCandidate) {
+            right.isNextToHit = true;
+            if (isLeftHit) {
+                right.isInlineWithHit = true;
             }
-            const right = getCellAt(board, cell.x + 1, cell.y);
-            if (right && ["unexplored", "hit"].includes(right.status)) {
-                hasDirection = true;
-                if (right.status === "hit") {
-                    isNextToHit = true;
-                }
+        }
+        if (top && isTopCandidate) {
+            top.isNextToHit = true;
+            if (isBottomHit) {
+                top.isInlineWithHit = true;
             }
-            const top = getCellAt(board, cell.x, cell.y - 1);
-            if (top && ["unexplored", "hit"].includes(top.status)) {
-                hasDirection = true;
-                if (top.status === "hit") {
-                    isNextToHit = true;
-                }
+        }
+        if (bottom && isBottomCandidate) {
+            bottom.isNextToHit = true;
+            if (isTopHit) {
+                bottom.isInlineWithHit = true;
             }
-            const bottom = getCellAt(board, cell.x, cell.y + 1);
-            if (bottom && ["unexplored", "hit"].includes(bottom.status)) {
-                hasDirection = true;
-                if (bottom.status === "hit") {
-                    isNextToHit = true;
-                }
-            }
-            cell.isNextToHit = isNextToHit;
-            cell.isCandidate = hasDirection;
         }
     }
 };
@@ -4196,6 +4246,14 @@ exports.miner = {
         magicButton.style.alignItems = "center";
         magicButton.innerHTML = `<i class="fa fa-wand-sparkles fa-2x fa-fw" />`;
         magicButton.addEventListener("click", () => {
+            var _a, _b, _c;
+            // try again if no attempts left
+            const tryAgainButton = currentPage.querySelector(".resetlevelbtn");
+            const attemptsLeft = Number((_b = (_a = currentPage.querySelector("#attempts")) === null || _a === void 0 ? void 0 : _a.textContent) !== null && _b !== void 0 ? _b : "1");
+            if (attemptsLeft === 0 && tryAgainButton) {
+                tryAgainButton.click();
+                return;
+            }
             // go to next level if available
             const nextLevelButton = currentPage.querySelector(".nextlevelbtn");
             if (nextLevelButton && nextLevelButton.style.display !== "none") {
@@ -4213,7 +4271,7 @@ exports.miner = {
             if (!picks) {
                 return;
             }
-            const pickCount = Number(picks.textContent || "0");
+            const pickCount = Number(((_c = picks.textContent) === null || _c === void 0 ? void 0 : _c.trim().replaceAll(",", "")) || "0");
             // no picks, make more
             if (!pickCount) {
                 picks.click();
@@ -4239,16 +4297,37 @@ exports.miner = {
             fillHints(board);
             // get candidates
             const candidates = board.flat().filter((cell) => cell.isCandidate);
+            // get inline with hits first
+            const inlineWithHits = candidates.filter((cell) => cell.isInlineWithHit);
+            // if there are any, click the first one
+            if (inlineWithHits.length > 0) {
+                tryCell(inlineWithHits[0]);
+                return;
+            }
             // get candidates next to hits
             const nextToHits = candidates.filter((cell) => cell.isNextToHit);
             // if there are any, click the first one
-            // TODO: prioritize based on alignment
             if (nextToHits.length > 0) {
                 tryCell(nextToHits[0]);
                 return;
             }
-            // click a random candidate
-            // TODO: prioritize based on checkerboard pattern from center
+            // click the most promising candidate
+            const first4DirectionCandidate = candidates.find((cell) => cell.candidateDirectionCount === 4);
+            if (first4DirectionCandidate) {
+                tryCell(first4DirectionCandidate);
+                return;
+            }
+            const first3DirectionCandidate = candidates.find((cell) => cell.candidateDirectionCount === 3);
+            if (first3DirectionCandidate) {
+                tryCell(first3DirectionCandidate);
+                return;
+            }
+            const first2DirectionCandidate = candidates.find((cell) => cell.candidateDirectionCount === 2);
+            if (first2DirectionCandidate) {
+                tryCell(first2DirectionCandidate);
+                return;
+            }
+            // pick a random 1 direction candidate
             tryCell(candidates[Math.floor(Math.random() * candidates.length) || 0]);
         });
         currentPage.append(magicButton);
@@ -4733,6 +4812,73 @@ const SETTING_VAULT_SOLVER = {
     type: "boolean",
     defaultValue: true,
 };
+const generateButton = (digit, currentCode, info) => {
+    const digitInfo = info.find((d) => d.digit === digit);
+    const currentPosition = currentCode.length;
+    let buttonStyles = theme_1.BUTTON_VAULT_GRAY_STYLES;
+    if (currentPosition > 4) {
+        buttonStyles = theme_1.BUTTON_GRAY_STYLES;
+    }
+    else if (digitInfo === null || digitInfo === void 0 ? void 0 : digitInfo.correctPositions.includes(currentPosition)) {
+        buttonStyles = theme_1.BUTTON_VAULT_BLUE_STYLES;
+    }
+    else if (digitInfo === null || digitInfo === void 0 ? void 0 : digitInfo.possiblePositions.includes(currentPosition)) {
+        buttonStyles = theme_1.BUTTON_VAULT_YELLOW_STYLES;
+    }
+    return `
+    <button
+      data-input="${digit}"
+      style="${(0, theme_1.toCSS)(buttonStyles)};"
+    >${digit}</button>
+  `;
+};
+const renderKeyboard = (input, info) => {
+    var _a, _b;
+    (_a = document.querySelector(".fh-vault-keyboard")) === null || _a === void 0 ? void 0 : _a.remove();
+    const submitButton = document.querySelector(".vcbtn");
+    if (!submitButton) {
+        return;
+    }
+    const keyboard = document.createElement("div");
+    keyboard.classList.add("fh-vault-keyboard");
+    keyboard.style.display = "grid";
+    keyboard.style.gridTemplateColumns = "repeat(3, 1fr)";
+    keyboard.style.gap = "15px";
+    keyboard.style.padding = "15px";
+    keyboard.innerHTML = `
+    ${generateButton(1, input.value, info)}
+    ${generateButton(2, input.value, info)}
+    ${generateButton(3, input.value, info)}
+    ${generateButton(4, input.value, info)}
+    ${generateButton(5, input.value, info)}
+    ${generateButton(6, input.value, info)}
+    ${generateButton(7, input.value, info)}
+    ${generateButton(8, input.value, info)}
+    ${generateButton(9, input.value, info)}
+    <button data-input="backspace" style="${(0, theme_1.toCSS)(input.value.length === 0 ? theme_1.BUTTON_GRAY_STYLES : theme_1.BUTTON_BLUE_STYLES)};"><i class="fa fa-fw fa-delete-left"></i></button>
+    ${generateButton(0, input.value, info)}
+    <button data-input="submit" style="${(0, theme_1.toCSS)(input.value.length === 4 ? theme_1.BUTTON_GREEN_STYLES : theme_1.BUTTON_GRAY_STYLES)};">Submit</button>
+  `;
+    keyboard.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!target.dataset.input) {
+            return;
+        }
+        if (target.dataset.input === "backspace") {
+            input.value = input.value.slice(0, -1);
+            renderKeyboard(input, info);
+            return;
+        }
+        if (target.dataset.input === "submit") {
+            submitButton.click();
+            return;
+        }
+        input.value += target.dataset.input;
+        renderKeyboard(input, info);
+    });
+    (_b = submitButton.parentElement) === null || _b === void 0 ? void 0 : _b.before(keyboard);
+    submitButton.style.display = "none";
+};
 exports.vaultSolver = {
     settings: [SETTING_VAULT_SOLVER],
     onPageLoad: (settings, page) => {
@@ -4747,6 +4893,37 @@ exports.vaultSolver = {
         if (!currentPage) {
             return;
         }
+        const input = document.querySelector("#vaultcode");
+        if (!input) {
+            console.error("Input not found");
+            return;
+        }
+        input.setAttribute("inputmode", "none");
+        let info = (0, vault_1.generateDigitInfo)();
+        const guessElements = document.querySelectorAll("[data-page='crack'] .row");
+        const guesses = [];
+        for (const [, guessElement] of guessElements.entries()) {
+            const digitElements = guessElement.querySelectorAll(".col-25");
+            if (digitElements.length > 0) {
+                const guess = [0, 0, 0, 0];
+                const hints = [vault_1.Hint.NONE, vault_1.Hint.NONE, vault_1.Hint.NONE, vault_1.Hint.NONE];
+                for (const [position, digitElement] of digitElements.entries()) {
+                    guess[position] = Number((_a = digitElement.textContent) === null || _a === void 0 ? void 0 : _a.slice(-1));
+                    hints[position] =
+                        // eslint-disable-next-line no-nested-ternary
+                        digitElement.dataset.type === "B"
+                            ? vault_1.Hint.CORRECT
+                            : digitElement.dataset.type === "Y"
+                                ? vault_1.Hint.CLOSE
+                                : vault_1.Hint.NONE;
+                }
+                guesses.push(guess);
+                info = (0, vault_1.applyGuess)(info, guess, hints);
+            }
+        }
+        renderKeyboard(input, info);
+        const guess = (0, vault_1.generateGuess)(info, guesses.length).join("");
+        input.value = guess;
         const magicButton = document.createElement("div");
         magicButton.style.position = "absolute";
         magicButton.style.right = "20px";
@@ -4778,38 +4955,11 @@ exports.vaultSolver = {
             if (moreTriesButton) {
                 moreTriesButton.click();
             }
-            // otherwise, submit the current guess
+            // otherwise, submit the suggested guess
+            input.value = guess;
             (_a = currentPage.querySelector(".vcbtn")) === null || _a === void 0 ? void 0 : _a.click();
         });
         currentPage.append(magicButton);
-        const input = document.querySelector("#vaultcode");
-        if (!input) {
-            console.error("Input not found");
-            return;
-        }
-        let info = (0, vault_1.generateDigitInfo)();
-        const guessElements = document.querySelectorAll("[data-page='crack'] .row");
-        const guesses = [];
-        for (const [, guessElement] of guessElements.entries()) {
-            const digitElements = guessElement.querySelectorAll(".col-25");
-            if (digitElements.length > 0) {
-                const guess = [0, 0, 0, 0];
-                const hints = [vault_1.Hint.NONE, vault_1.Hint.NONE, vault_1.Hint.NONE, vault_1.Hint.NONE];
-                for (const [position, digitElement] of digitElements.entries()) {
-                    guess[position] = Number((_a = digitElement.textContent) === null || _a === void 0 ? void 0 : _a.slice(-1));
-                    hints[position] =
-                        // eslint-disable-next-line no-nested-ternary
-                        digitElement.dataset.type === "B"
-                            ? vault_1.Hint.CORRECT
-                            : digitElement.dataset.type === "Y"
-                                ? vault_1.Hint.CLOSE
-                                : vault_1.Hint.NONE;
-                }
-                guesses.push(guess);
-                info = (0, vault_1.applyGuess)(info, guess, hints);
-            }
-        }
-        input.value = (0, vault_1.generateGuess)(info, guesses.length).join("");
     },
 };
 
@@ -4847,7 +4997,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.20" !== void 0 ? "1.0.20" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.21" !== void 0 ? "1.0.21" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -5861,7 +6011,7 @@ exports.popups = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BUTTON_GRAY_DARK_STYLES = exports.BUTTON_GRAY_STYLES = exports.BUTTON_PURPLE_STYLES = exports.BUTTON_RED_STYLES = exports.BUTTON_GREEN_DARK_STYLES = exports.BUTTON_ORANGE_STYLES = exports.BUTTON_BLUE_STYLES = exports.BUTTON_GREEN_STYLES = exports.BUTTON_GRAY_BORDER = exports.BUTTON_GRAY_BACKGROUND = exports.BUTTON_PURPLE_BORDER = exports.BUTTON_PURPLE_BACKGROUND = exports.BUTTON_RED_BORDER = exports.BUTTON_RED_BACKGROUND = exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.INPUT_STYLES = exports.INPUT_BORDER = exports.INPUT_PADDING = exports.BACKGROUND_DARK = exports.BACKGROUND_BLACK = exports.BACKGROUND_WHITE = exports.BORDER_GRAY = exports.TEXT_BLACK = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.TEXT_GRAY = exports.TEXT_WHITE = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = exports.toCSS = exports.camelToKebab = exports.applyStyles = exports.important = void 0;
+exports.BUTTON_VAULT_BLUE_STYLES = exports.BUTTON_VAULT_YELLOW_STYLES = exports.BUTTON_VAULT_GRAY_STYLES = exports.BUTTON_GRAY_DARK_STYLES = exports.BUTTON_GRAY_STYLES = exports.BUTTON_PURPLE_STYLES = exports.BUTTON_RED_STYLES = exports.BUTTON_GREEN_DARK_STYLES = exports.BUTTON_ORANGE_STYLES = exports.BUTTON_BLUE_STYLES = exports.BUTTON_GREEN_STYLES = exports.generateButton = exports.BUTTON_GRAY_BORDER = exports.BUTTON_GRAY_BACKGROUND = exports.BUTTON_PURPLE_BORDER = exports.BUTTON_PURPLE_BACKGROUND = exports.BUTTON_RED_BORDER = exports.BUTTON_RED_BACKGROUND = exports.BUTTON_BLUE_BORDER = exports.BUTTON_BLUE_BACKGROUND = exports.BUTTON_ORANGE_BORDER = exports.BUTTON_ORANGE_BACKGROUND = exports.BUTTON_GREEN_DARK_BORDER = exports.BUTTON_GREEN_DARK_BACKGROUND = exports.BUTTON_GREEN_BORDER = exports.BUTTON_GREEN_BACKGROUND = exports.INPUT_STYLES = exports.INPUT_BORDER = exports.INPUT_PADDING = exports.BACKGROUND_DARK = exports.BACKGROUND_BLACK = exports.BACKGROUND_WHITE = exports.BORDER_GRAY = exports.TEXT_BLACK = exports.TEXT_SUCCESS = exports.TEXT_WARNING = exports.TEXT_ERROR = exports.TEXT_GRAY = exports.TEXT_WHITE = exports.ALERT_YELLOW_BORDER = exports.ALERT_YELLOW_BACKGROUND = exports.LINK_RED = exports.LINK_GREEN = exports.toCSS = exports.camelToKebab = exports.applyStyles = exports.important = void 0;
 const important = (style) => `${style} !important`;
 exports.important = important;
 const applyStyles = (element, styles) => {
@@ -5923,9 +6073,9 @@ exports.BUTTON_PURPLE_BACKGROUND = "#3A204C";
 exports.BUTTON_PURPLE_BORDER = "#4A315C";
 exports.BUTTON_GRAY_BACKGROUND = "#444444";
 exports.BUTTON_GRAY_BORDER = "#666666";
-const generateButton = (background, border) => ({
+const generateButton = (background, border, borderStyle = "solid") => ({
     background: (0, exports.important)(background),
-    border: (0, exports.important)(`2px solid ${border}`),
+    border: (0, exports.important)(`2px ${borderStyle} ${border}`),
     borderRadius: (0, exports.important)("0"),
     boxShadow: (0, exports.important)("none"),
     color: (0, exports.important)(exports.TEXT_WHITE),
@@ -5936,14 +6086,18 @@ const generateButton = (background, border) => ({
     padding: (0, exports.important)(exports.INPUT_PADDING),
     width: (0, exports.important)("auto"),
 });
-exports.BUTTON_GREEN_STYLES = generateButton(exports.BUTTON_GREEN_BACKGROUND, exports.BUTTON_GREEN_BORDER);
-exports.BUTTON_BLUE_STYLES = generateButton(exports.BUTTON_BLUE_BACKGROUND, exports.BUTTON_BLUE_BORDER);
-exports.BUTTON_ORANGE_STYLES = generateButton(exports.BUTTON_ORANGE_BACKGROUND, exports.BUTTON_ORANGE_BORDER);
-exports.BUTTON_GREEN_DARK_STYLES = generateButton(exports.BUTTON_GREEN_DARK_BACKGROUND, exports.BUTTON_GREEN_DARK_BORDER);
-exports.BUTTON_RED_STYLES = generateButton(exports.BUTTON_RED_BACKGROUND, exports.BUTTON_RED_BORDER);
-exports.BUTTON_PURPLE_STYLES = generateButton(exports.BUTTON_PURPLE_BACKGROUND, exports.BUTTON_PURPLE_BORDER);
-exports.BUTTON_GRAY_STYLES = generateButton(exports.BUTTON_GRAY_BACKGROUND, exports.BUTTON_GRAY_BORDER);
-exports.BUTTON_GRAY_DARK_STYLES = generateButton(exports.BORDER_GRAY, exports.BORDER_GRAY);
+exports.generateButton = generateButton;
+exports.BUTTON_GREEN_STYLES = (0, exports.generateButton)(exports.BUTTON_GREEN_BACKGROUND, exports.BUTTON_GREEN_BORDER);
+exports.BUTTON_BLUE_STYLES = (0, exports.generateButton)(exports.BUTTON_BLUE_BACKGROUND, exports.BUTTON_BLUE_BORDER);
+exports.BUTTON_ORANGE_STYLES = (0, exports.generateButton)(exports.BUTTON_ORANGE_BACKGROUND, exports.BUTTON_ORANGE_BORDER);
+exports.BUTTON_GREEN_DARK_STYLES = (0, exports.generateButton)(exports.BUTTON_GREEN_DARK_BACKGROUND, exports.BUTTON_GREEN_DARK_BORDER);
+exports.BUTTON_RED_STYLES = (0, exports.generateButton)(exports.BUTTON_RED_BACKGROUND, exports.BUTTON_RED_BORDER);
+exports.BUTTON_PURPLE_STYLES = (0, exports.generateButton)(exports.BUTTON_PURPLE_BACKGROUND, exports.BUTTON_PURPLE_BORDER);
+exports.BUTTON_GRAY_STYLES = (0, exports.generateButton)(exports.BUTTON_GRAY_BACKGROUND, exports.BUTTON_GRAY_BORDER);
+exports.BUTTON_GRAY_DARK_STYLES = (0, exports.generateButton)(exports.BORDER_GRAY, exports.BORDER_GRAY);
+exports.BUTTON_VAULT_GRAY_STYLES = (0, exports.generateButton)("#666666", "gray");
+exports.BUTTON_VAULT_YELLOW_STYLES = (0, exports.generateButton)("#999900", "#CCCC00", "dashed");
+exports.BUTTON_VAULT_BLUE_STYLES = (0, exports.generateButton)("#0E7CA6", "#33C7FF");
 
 
 /***/ }),

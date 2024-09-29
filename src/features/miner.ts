@@ -77,6 +77,8 @@ interface Cell {
   y: number;
   isCandidate?: boolean;
   isNextToHit?: boolean;
+  isInlineWithHit?: boolean;
+  candidateDirectionCount?: number;
 }
 
 const getCellAt = (board: Cell[][], x: number, y: number): Cell | undefined => {
@@ -92,46 +94,97 @@ const getCellAt = (board: Cell[][], x: number, y: number): Cell | undefined => {
 };
 
 const fillHints = (board: Cell[][]): void => {
-  // loop over all cells
-  for (let rowIndex = 0; rowIndex < board.length; rowIndex++) {
-    const row = board[rowIndex];
-    for (const cell of row) {
-      if (cell.status !== "unexplored") {
-        cell.isCandidate = false;
-        continue;
+  const cells = board.flat();
+  // mark candidates
+  for (const cell of cells) {
+    if (cell.status !== "unexplored") {
+      cell.isCandidate = false;
+      continue;
+    }
+    let hasDirection = false;
+    const left = getCellAt(board, cell.x - 1, cell.y);
+    if (left && ["unexplored", "hit"].includes(left.status)) {
+      hasDirection = true;
+    }
+    const right = getCellAt(board, cell.x + 1, cell.y);
+    if (right && ["unexplored", "hit"].includes(right.status)) {
+      hasDirection = true;
+    }
+    const up = getCellAt(board, cell.x, cell.y - 1);
+    if (up && ["unexplored", "hit"].includes(up.status)) {
+      hasDirection = true;
+    }
+    const down = getCellAt(board, cell.x, cell.y + 1);
+    if (down && ["unexplored", "hit"].includes(down.status)) {
+      hasDirection = true;
+    }
+    cell.isCandidate = hasDirection;
+  }
+  // count candidate directions
+  for (const cell of cells) {
+    if (!cell.isCandidate) {
+      continue;
+    }
+    let candidateDirectionCount = 0;
+    const left = getCellAt(board, cell.x - 1, cell.y);
+    if (left?.isCandidate) {
+      candidateDirectionCount++;
+    }
+    const right = getCellAt(board, cell.x + 1, cell.y);
+    if (right?.isCandidate) {
+      candidateDirectionCount++;
+    }
+    const up = getCellAt(board, cell.x, cell.y - 1);
+    if (up?.isCandidate) {
+      candidateDirectionCount++;
+    }
+    const down = getCellAt(board, cell.x, cell.y + 1);
+    if (down?.isCandidate) {
+      candidateDirectionCount++;
+    }
+    cell.candidateDirectionCount = candidateDirectionCount;
+  }
+  // mark next to hits
+  for (const cell of cells) {
+    if (cell.status !== "hit") {
+      continue;
+    }
+    const left = getCellAt(board, cell.x - 1, cell.y);
+    const isLeftCandidate = left && left.isCandidate;
+    const isLeftHit = left && left.status === "hit";
+    const right = getCellAt(board, cell.x + 1, cell.y);
+    const isRightCandidate = right && right.isCandidate;
+    const isRightHit = right && right.status === "hit";
+    const top = getCellAt(board, cell.x, cell.y - 1);
+    const isTopCandidate = top && top.isCandidate;
+    const isTopHit = top && top.status === "hit";
+    const bottom = getCellAt(board, cell.x, cell.y + 1);
+    const isBottomCandidate = bottom && bottom.isCandidate;
+    const isBottomHit = bottom && bottom.status === "hit";
+
+    if (left && isLeftCandidate) {
+      left.isNextToHit = true;
+      if (isRightHit) {
+        left.isInlineWithHit = true;
       }
-      let hasDirection = false;
-      let isNextToHit = false;
-      const left = getCellAt(board, cell.x - 1, cell.y);
-      if (left && ["unexplored", "hit"].includes(left.status)) {
-        hasDirection = true;
-        if (left.status === "hit") {
-          isNextToHit = true;
-        }
+    }
+    if (right && isRightCandidate) {
+      right.isNextToHit = true;
+      if (isLeftHit) {
+        right.isInlineWithHit = true;
       }
-      const right = getCellAt(board, cell.x + 1, cell.y);
-      if (right && ["unexplored", "hit"].includes(right.status)) {
-        hasDirection = true;
-        if (right.status === "hit") {
-          isNextToHit = true;
-        }
+    }
+    if (top && isTopCandidate) {
+      top.isNextToHit = true;
+      if (isBottomHit) {
+        top.isInlineWithHit = true;
       }
-      const top = getCellAt(board, cell.x, cell.y - 1);
-      if (top && ["unexplored", "hit"].includes(top.status)) {
-        hasDirection = true;
-        if (top.status === "hit") {
-          isNextToHit = true;
-        }
+    }
+    if (bottom && isBottomCandidate) {
+      bottom.isNextToHit = true;
+      if (isTopHit) {
+        bottom.isInlineWithHit = true;
       }
-      const bottom = getCellAt(board, cell.x, cell.y + 1);
-      if (bottom && ["unexplored", "hit"].includes(bottom.status)) {
-        hasDirection = true;
-        if (bottom.status === "hit") {
-          isNextToHit = true;
-        }
-      }
-      cell.isNextToHit = isNextToHit;
-      cell.isCandidate = hasDirection;
     }
   }
 };
@@ -175,6 +228,17 @@ export const miner: Feature = {
     magicButton.style.alignItems = "center";
     magicButton.innerHTML = `<i class="fa fa-wand-sparkles fa-2x fa-fw" />`;
     magicButton.addEventListener("click", () => {
+      // try again if no attempts left
+      const tryAgainButton =
+        currentPage.querySelector<HTMLButtonElement>(".resetlevelbtn");
+      const attemptsLeft = Number(
+        currentPage.querySelector<HTMLSpanElement>("#attempts")?.textContent ??
+          "1"
+      );
+      if (attemptsLeft === 0 && tryAgainButton) {
+        tryAgainButton.click();
+        return;
+      }
       // go to next level if available
       const nextLevelButton =
         currentPage.querySelector<HTMLAnchorElement>(".nextlevelbtn");
@@ -195,7 +259,9 @@ export const miner: Feature = {
       if (!picks) {
         return;
       }
-      const pickCount = Number(picks.textContent || "0");
+      const pickCount = Number(
+        picks.textContent?.trim().replaceAll(",", "") || "0"
+      );
       // no picks, make more
       if (!pickCount) {
         picks.click();
@@ -222,16 +288,46 @@ export const miner: Feature = {
       fillHints(board);
       // get candidates
       const candidates = board.flat().filter((cell) => cell.isCandidate);
+      // get inline with hits first
+      const inlineWithHits = candidates.filter((cell) => cell.isInlineWithHit);
+      // if there are any, click the first one
+      if (inlineWithHits.length > 0) {
+        tryCell(inlineWithHits[0]);
+        return;
+      }
       // get candidates next to hits
       const nextToHits = candidates.filter((cell) => cell.isNextToHit);
       // if there are any, click the first one
-      // TODO: prioritize based on alignment
       if (nextToHits.length > 0) {
         tryCell(nextToHits[0]);
         return;
       }
-      // click a random candidate
-      // TODO: prioritize based on checkerboard pattern from center
+      // click the most promising candidate
+      const first4DirectionCandidate = candidates.find(
+        (cell) => cell.candidateDirectionCount === 4
+      );
+      if (first4DirectionCandidate) {
+        tryCell(first4DirectionCandidate);
+        return;
+      }
+
+      const first3DirectionCandidate = candidates.find(
+        (cell) => cell.candidateDirectionCount === 3
+      );
+      if (first3DirectionCandidate) {
+        tryCell(first3DirectionCandidate);
+        return;
+      }
+
+      const first2DirectionCandidate = candidates.find(
+        (cell) => cell.candidateDirectionCount === 2
+      );
+      if (first2DirectionCandidate) {
+        tryCell(first2DirectionCandidate);
+        return;
+      }
+
+      // pick a random 1 direction candidate
       tryCell(candidates[Math.floor(Math.random() * candidates.length) || 0]);
     });
     currentPage.append(magicButton);

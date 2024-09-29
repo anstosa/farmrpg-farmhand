@@ -74,13 +74,14 @@ export const BUTTON_PURPLE_BORDER = "#4A315C";
 export const BUTTON_GRAY_BACKGROUND = "#444444";
 export const BUTTON_GRAY_BORDER = "#666666";
 
-const generateButton = (
+export const generateButton = (
   background: string,
-  border: string
+  border: string,
+  borderStyle: string = "solid"
 ): CSSStyleDeclaration =>
   ({
     background: important(background),
-    border: important(`2px solid ${border}`),
+    border: important(`2px ${borderStyle} ${border}`),
     borderRadius: important("0"),
     boxShadow: important("none"),
     color: important(TEXT_WHITE),
@@ -120,3 +121,10 @@ export const BUTTON_GRAY_STYLES = generateButton(
   BUTTON_GRAY_BORDER
 );
 export const BUTTON_GRAY_DARK_STYLES = generateButton(BORDER_GRAY, BORDER_GRAY);
+export const BUTTON_VAULT_GRAY_STYLES = generateButton("#666666", "gray");
+export const BUTTON_VAULT_YELLOW_STYLES = generateButton(
+  "#999900",
+  "#CCCC00",
+  "dashed"
+);
+export const BUTTON_VAULT_BLUE_STYLES = generateButton("#0E7CA6", "#33C7FF");

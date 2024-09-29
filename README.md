@@ -168,6 +168,11 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.22
+
+* Fixed: Version notification Update button actually updates
+* Fixed: Vault button will ask for more tries and new vaults again
+
 ### 1.0.21
 
 * Added: Vault now has custom keyboard with hints built-in

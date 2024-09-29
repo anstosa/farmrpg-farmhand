@@ -55,7 +55,13 @@ const generateButton = (
   `;
 };
 
-const renderKeyboard = (input: HTMLInputElement, info: DigitInfo[]): void => {
+const renderKeyboard = (
+  input: HTMLInputElement | null,
+  info: DigitInfo[]
+): void => {
+  if (!input) {
+    return;
+  }
   document.querySelector(".fh-vault-keyboard")?.remove();
   const submitButton = document.querySelector<HTMLAnchorElement>(".vcbtn");
   if (!submitButton) {
@@ -123,11 +129,7 @@ export const vaultSolver: Feature = {
     }
 
     const input = document.querySelector<HTMLInputElement>("#vaultcode");
-    if (!input) {
-      console.error("Input not found");
-      return;
-    }
-    input.setAttribute("inputmode", "none");
+    input?.setAttribute("inputmode", "none");
     let info = generateDigitInfo();
     const guessElements = document.querySelectorAll("[data-page='crack'] .row");
     const guesses: Code[] = [];
@@ -155,7 +157,9 @@ export const vaultSolver: Feature = {
     }
     renderKeyboard(input, info);
     const guess = generateGuess(info, guesses.length).join("");
-    input.value = guess;
+    if (input) {
+      input.value = guess;
+    }
 
     const magicButton = document.createElement("div");
     magicButton.style.position = "absolute";
@@ -190,8 +194,10 @@ export const vaultSolver: Feature = {
         moreTriesButton.click();
       }
       // otherwise, submit the suggested guess
-      input.value = guess;
-      currentPage.querySelector<HTMLButtonElement>(".vcbtn")?.click();
+      if (input) {
+        input.value = guess;
+        currentPage.querySelector<HTMLButtonElement>(".vcbtn")?.click();
+      }
     });
     currentPage.append(magicButton);
   },

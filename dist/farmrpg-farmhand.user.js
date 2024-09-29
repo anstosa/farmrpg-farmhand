@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.21
+// @version 1.0.22
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -4834,6 +4834,9 @@ const generateButton = (digit, currentCode, info) => {
 };
 const renderKeyboard = (input, info) => {
     var _a, _b;
+    if (!input) {
+        return;
+    }
     (_a = document.querySelector(".fh-vault-keyboard")) === null || _a === void 0 ? void 0 : _a.remove();
     const submitButton = document.querySelector(".vcbtn");
     if (!submitButton) {
@@ -4894,11 +4897,7 @@ exports.vaultSolver = {
             return;
         }
         const input = document.querySelector("#vaultcode");
-        if (!input) {
-            console.error("Input not found");
-            return;
-        }
-        input.setAttribute("inputmode", "none");
+        input === null || input === void 0 ? void 0 : input.setAttribute("inputmode", "none");
         let info = (0, vault_1.generateDigitInfo)();
         const guessElements = document.querySelectorAll("[data-page='crack'] .row");
         const guesses = [];
@@ -4923,7 +4922,9 @@ exports.vaultSolver = {
         }
         renderKeyboard(input, info);
         const guess = (0, vault_1.generateGuess)(info, guesses.length).join("");
-        input.value = guess;
+        if (input) {
+            input.value = guess;
+        }
         const magicButton = document.createElement("div");
         magicButton.style.position = "absolute";
         magicButton.style.right = "20px";
@@ -4956,8 +4957,10 @@ exports.vaultSolver = {
                 moreTriesButton.click();
             }
             // otherwise, submit the suggested guess
-            input.value = guess;
-            (_a = currentPage.querySelector(".vcbtn")) === null || _a === void 0 ? void 0 : _a.click();
+            if (input) {
+                input.value = guess;
+                (_a = currentPage.querySelector(".vcbtn")) === null || _a === void 0 ? void 0 : _a.click();
+            }
         });
         currentPage.append(magicButton);
     },
@@ -4997,7 +5000,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.21" !== void 0 ? "1.0.21" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.22" !== void 0 ? "1.0.22" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -5043,7 +5046,7 @@ exports.versionManager = {
                     },
                     {
                         text: "Update",
-                        handler: notifications_1.Handler.CHANGES,
+                        handler: notifications_1.Handler.UPDATE,
                     },
                 ],
             });

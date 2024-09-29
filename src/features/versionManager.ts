@@ -78,7 +78,7 @@ export const versionManager: Feature = {
           },
           {
             text: "Update",
-            handler: Handler.CHANGES,
+            handler: Handler.UPDATE,
           },
         ],
       });

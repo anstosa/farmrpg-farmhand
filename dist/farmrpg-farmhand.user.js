@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.22
+// @version 1.0.23
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -2924,6 +2924,58 @@ exports.dismissableChatBanners = {
 
 /***/ }),
 
+/***/ 6030:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.exploreFirst = exports.SETTING_EXPLORE_FIRST = void 0;
+const page_1 = __webpack_require__(7952);
+exports.SETTING_EXPLORE_FIRST = {
+    id: "collapseItem",
+    title: "Item: Prioritize Explore",
+    description: "Move Exploring, Fishing, and Mining above Crafting and Cooking",
+    type: "boolean",
+    defaultValue: true,
+};
+const moveSectionUp = (title) => {
+    const itemDetailsCard = (0, page_1.getCardByTitle)("Item Details");
+    if (!itemDetailsCard) {
+        return;
+    }
+    const titleElement = (0, page_1.getTitle)(title);
+    const cardElement = titleElement === null || titleElement === void 0 ? void 0 : titleElement.nextElementSibling;
+    const listElement = cardElement === null || cardElement === void 0 ? void 0 : cardElement.nextElementSibling;
+    if (listElement) {
+        itemDetailsCard.after(listElement);
+    }
+    if (cardElement) {
+        itemDetailsCard.after(cardElement);
+    }
+    if (titleElement) {
+        itemDetailsCard.after(titleElement);
+    }
+};
+exports.exploreFirst = {
+    settings: [exports.SETTING_EXPLORE_FIRST],
+    onPageLoad: (settings, page) => {
+        // make sure we're on the item page
+        if (page !== page_1.Page.ITEM) {
+            return;
+        }
+        // make sure we're enabled
+        if (!settings[exports.SETTING_EXPLORE_FIRST.id].value) {
+            return;
+        }
+        moveSectionUp("Exploring");
+        moveSectionUp("Fishing");
+        moveSectionUp("Mining");
+    },
+};
+
+
+/***/ }),
+
 /***/ 8973:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -5000,7 +5052,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.22" !== void 0 ? "1.0.22" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.23" !== void 0 ? "1.0.23" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -5089,6 +5141,7 @@ const compressChat_1 = __webpack_require__(223);
 const confirmation_1 = __webpack_require__(3906);
 const customNavigation_1 = __webpack_require__(2224);
 const dismissableChatBanners_1 = __webpack_require__(5164);
+const exploreFirst_1 = __webpack_require__(6030);
 const farmhandSettings_1 = __webpack_require__(8973);
 const harvestNotifications_1 = __webpack_require__(4894);
 const fishInBarrel_1 = __webpack_require__(2100);
@@ -5140,6 +5193,7 @@ exports.FEATURES = [
     collapseItemImage_1.collapseItemImage,
     quickSellSafely_1.quicksellSafely,
     linkifyQuickCraft_1.linkifyQuickCraft,
+    exploreFirst_1.exploreFirst,
     // quests
     quests_1.quests,
     questCollapse_1.questCollapse,

@@ -12,6 +12,7 @@ import { compressChat } from "./features/compressChat";
 import { confirmations } from "./utils/confirmation";
 import { customNavigation } from "./features/customNavigation";
 import { dismissableChatBanners } from "./features/dismissableChatBanners";
+import { exploreFirst } from "./features/exploreFirst";
 import { farmhandSettings, getSettings } from "./features/farmhandSettings";
 import { fieldNotifications } from "./features/harvestNotifications";
 import { fishinInBarrel } from "./features/fishInBarrel";
@@ -70,6 +71,7 @@ export const FEATURES = [
   collapseItemImage,
   quicksellSafely,
   linkifyQuickCraft,
+  exploreFirst,
 
   // quests
   quests,

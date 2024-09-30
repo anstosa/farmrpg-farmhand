@@ -42,6 +42,7 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 ### Items
 
 * Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
+* Shows Exploring, Fishing, and Mining sections right under Item Details
 * Locks Quick Sell and Quick Donate for locked items
 * Make missing ingredients in Quick Carft links
 * Show ongoing notifications for meals
@@ -150,10 +151,8 @@ All settings can be exported and imported on other devices
 Future features under consideration or development
 
 * Desktop notifications
-* Dropdowns with icons for seeds, etc
 * Grape juice button after replant popup if available
 * Fix notifications page bouncing issue
-* Improved button styling
 * Use again functionality for meals
 * Ctrl+K quick go to popup for quickly going to any page, item, etc from anywhere
 * Show collected items in success popup when collecting from pets
@@ -167,6 +166,10 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.23
+
+* Added: On item pages, move Exploring, Fishing, and Mining sections above Crafting and Cooking Sections
 
 ### 1.0.22
 

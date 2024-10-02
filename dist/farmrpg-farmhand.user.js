@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.23
+// @version 1.0.24
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -5052,7 +5052,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.23" !== void 0 ? "1.0.23" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.24" !== void 0 ? "1.0.24" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -6229,7 +6229,6 @@ const applyGuess = (info, guess, hints) => {
                 break;
             }
             case Hint.NONE: {
-                digitInfo.correctPositions = [];
                 digitInfo.possiblePositions = [];
                 break;
             }

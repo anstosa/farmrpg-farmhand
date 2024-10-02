@@ -89,7 +89,6 @@ export const applyGuess = (
         break;
       }
       case Hint.NONE: {
-        digitInfo.correctPositions = [];
         digitInfo.possiblePositions = [];
         break;
       }

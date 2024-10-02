@@ -167,6 +167,10 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.24
+
+* Fixed: Fix vault suggestion edge case
+
 ### 1.0.23
 
 * Added: On item pages, move Exploring, Fishing, and Mining sections above Crafting and Cooking Sections

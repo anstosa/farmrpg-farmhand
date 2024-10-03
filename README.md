@@ -167,6 +167,12 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.25
+
+* Added: Option to notify on ovens for every action (now defaults to only if all actions are available for all ovens)
+* Fixed: Remove field-related notifications while on the farm page to avoid jumpiness
+* Fixed: Mega Cotton breaking dropdown item rendering
+
 ### 1.0.24
 
 * Fixed: Fix vault suggestion edge case

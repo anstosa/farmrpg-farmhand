@@ -238,6 +238,7 @@ const NAME_OVERRIDES: Record<string, string> = {
   "Gold Pepper": "Gold Peppers",
   "Mega Beet": "Mega Beet Seeds",
   "Mega Sunflower": "Mega Sunflower Seeds",
+  "Mega Cotton": "Mega Cotton Seeds",
   Pea: "Peas",
   Pepper: "Peppers",
   Pine: "Pine Tree",

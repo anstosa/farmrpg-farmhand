@@ -6,6 +6,7 @@ import {
   harvestAll,
 } from "~/api/farmrpg/farm";
 import { Feature, FeatureSetting, Settings } from "./feature";
+import { getCurrentPage, Page } from "~/utils/page";
 import {
   Handler,
   NotificationId,
@@ -13,7 +14,6 @@ import {
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
-import { Page } from "~/utils/page";
 import { toUrl } from "~/api/state";
 
 const SETTING_HARVEST_NOTIFICATIONS: FeatureSetting = {
@@ -55,6 +55,12 @@ const renderFields = async (
 ): Promise<void> => {
   const farmId = await farmIdState.get();
   if (!state) {
+    return;
+  }
+  // don't show notifications on farm page because it's too jumpy
+  const currentPage = getCurrentPage();
+  if (currentPage && currentPage.dataset.page === Page.FARM) {
+    removeNotification(NotificationId.FIELD);
     return;
   }
   if (

@@ -35,6 +35,17 @@ const SETTING_ATTENTION_NOTIFICATIONS: FeatureSetting = {
   defaultValue: true,
 };
 
+const SETTING_ATTENTION_VERBOSE: FeatureSetting = {
+  id: "attentionNotifications",
+  title: "Kitchen: Ovens attention notification (all actions)",
+  description: `
+    Show notifications when any oven needs attention for any action
+    (normally only shows when all three actions are available for all ovens)
+  `,
+  type: "boolean",
+  defaultValue: false,
+};
+
 const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
   id: "emptyNotifications",
   title: "Kitchen: Ovens empty notification",
@@ -47,10 +58,10 @@ const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
 
 registerNotificationHandler(Handler.COLLECT_MEALS, collectAll);
 
-const renderOvens = (
+const renderOvens = async (
   settings: Settings,
   state: KitchenStatus | undefined
-): void => {
+): Promise<void> => {
   if (!state) {
     return;
   }
@@ -68,12 +79,15 @@ const renderOvens = (
     state.status === OvenStatus.ATTENTION &&
     settings[SETTING_ATTENTION_NOTIFICATIONS.id].value
   ) {
-    sendNotification({
-      class: "btnorange",
-      id: NotificationId.OVEN,
-      text: "Ovens need attention",
-      href: toUrl(Page.KITCHEN, new URLSearchParams()),
-    });
+    const state = await kitchenStatusState.get();
+    if (settings[SETTING_ATTENTION_VERBOSE.id].value || !state?.allReady) {
+      sendNotification({
+        class: "btnorange",
+        id: NotificationId.OVEN,
+        text: "Ovens need attention",
+        href: toUrl(Page.KITCHEN, new URLSearchParams()),
+      });
+    }
   } else if (
     state.status === OvenStatus.READY &&
     settings[SETTING_COMPLETE_NOTIFICATIONS.id].value
@@ -100,6 +114,7 @@ export const kitchenNotifications: Feature = {
   settings: [
     SETTING_COMPLETE_NOTIFICATIONS,
     SETTING_ATTENTION_NOTIFICATIONS,
+    SETTING_ATTENTION_VERBOSE,
     SETTING_EMPTY_NOTIFICATIONS,
   ],
   onInitialize: (settings) => {

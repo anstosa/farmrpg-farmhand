@@ -14,6 +14,7 @@ export enum OvenStatus {
 export interface KitchenStatus {
   status: OvenStatus;
   count: number;
+  allReady: boolean;
   checkAt: number;
 }
 
@@ -23,6 +24,7 @@ const processKitchenStatus = (root: HTMLElement | undefined): KitchenStatus => {
     return {
       status: OvenStatus.EMPTY,
       count: 0,
+      allReady: false,
       checkAt: Number.POSITIVE_INFINITY,
     };
   }
@@ -30,6 +32,7 @@ const processKitchenStatus = (root: HTMLElement | undefined): KitchenStatus => {
   const count = Number(statusText.split(" ")[0]);
   let status = OvenStatus.EMPTY;
   let checkAt = Number.POSITIVE_INFINITY;
+  const allReady = true;
   if (statusText.toLowerCase().includes("cooking")) {
     status = OvenStatus.COOKING;
     checkAt = Date.now() + 60 * 1000;
@@ -40,7 +43,7 @@ const processKitchenStatus = (root: HTMLElement | undefined): KitchenStatus => {
     status = OvenStatus.READY;
     checkAt = Number.POSITIVE_INFINITY;
   }
-  return { status, count, checkAt };
+  return { status, count, checkAt, allReady };
 };
 
 const processKitchenPage = (root: HTMLElement): KitchenStatus | undefined => {
@@ -48,6 +51,7 @@ const processKitchenPage = (root: HTMLElement): KitchenStatus | undefined => {
   const count = ovens.length;
   let status = OvenStatus.EMPTY;
   let checkAt = Number.POSITIVE_INFINITY;
+  let allReady = true;
   for (const oven of ovens) {
     const statusText = oven.querySelector<HTMLSpanElement>(".item-after span");
     if (!statusText?.dataset.countdownTo) {
@@ -66,12 +70,20 @@ const processKitchenPage = (root: HTMLElement): KitchenStatus | undefined => {
       [OvenStatus.EMPTY, OvenStatus.COOKING].includes(status)
     ) {
       status = OvenStatus.ATTENTION;
+      if (allReady && images.length !== 3) {
+        allReady = false;
+      }
     } else if (status === OvenStatus.EMPTY) {
       status = OvenStatus.COOKING;
     }
     checkAt = Math.min(checkAt, Date.now() + 60 * 1000);
   }
-  return { status, count, checkAt };
+  return {
+    allReady,
+    checkAt,
+    count,
+    status,
+  };
 };
 
 const scheduledUpdates: Record<number, NodeJS.Timeout> = {};
@@ -87,6 +99,7 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
     defaultState: {
       status: OvenStatus.EMPTY,
       count: 0,
+      allReady: false,
       checkAt: Number.POSITIVE_INFINITY,
     },
     interceptors: [

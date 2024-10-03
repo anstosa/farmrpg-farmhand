@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.24
+// @version 1.0.25
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -123,6 +123,7 @@ const NAME_OVERRIDES = {
     "Gold Pepper": "Gold Peppers",
     "Mega Beet": "Mega Beet Seeds",
     "Mega Sunflower": "Mega Sunflower Seeds",
+    "Mega Cotton": "Mega Cotton Seeds",
     Pea: "Peas",
     Pepper: "Peppers",
     Pine: "Pine Tree",
@@ -648,6 +649,7 @@ const processKitchenStatus = (root) => {
         return {
             status: OvenStatus.EMPTY,
             count: 0,
+            allReady: false,
             checkAt: Number.POSITIVE_INFINITY,
         };
     }
@@ -655,6 +657,7 @@ const processKitchenStatus = (root) => {
     const count = Number(statusText.split(" ")[0]);
     let status = OvenStatus.EMPTY;
     let checkAt = Number.POSITIVE_INFINITY;
+    const allReady = true;
     if (statusText.toLowerCase().includes("cooking")) {
         status = OvenStatus.COOKING;
         checkAt = Date.now() + 60 * 1000;
@@ -667,13 +670,14 @@ const processKitchenStatus = (root) => {
         status = OvenStatus.READY;
         checkAt = Number.POSITIVE_INFINITY;
     }
-    return { status, count, checkAt };
+    return { status, count, checkAt, allReady };
 };
 const processKitchenPage = (root) => {
     const ovens = root.querySelectorAll("a[href^='oven.php']");
     const count = ovens.length;
     let status = OvenStatus.EMPTY;
     let checkAt = Number.POSITIVE_INFINITY;
+    let allReady = true;
     for (const oven of ovens) {
         const statusText = oven.querySelector(".item-after span");
         if (!(statusText === null || statusText === void 0 ? void 0 : statusText.dataset.countdownTo)) {
@@ -690,13 +694,21 @@ const processKitchenPage = (root) => {
         if (images.length > 1 &&
             [OvenStatus.EMPTY, OvenStatus.COOKING].includes(status)) {
             status = OvenStatus.ATTENTION;
+            if (allReady && images.length !== 3) {
+                allReady = false;
+            }
         }
         else if (status === OvenStatus.EMPTY) {
             status = OvenStatus.COOKING;
         }
         checkAt = Math.min(checkAt, Date.now() + 60 * 1000);
     }
-    return { status, count, checkAt };
+    return {
+        allReady,
+        checkAt,
+        count,
+        status,
+    };
 };
 const scheduledUpdates = {};
 exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
@@ -707,6 +719,7 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
     defaultState: {
         status: OvenStatus.EMPTY,
         count: 0,
+        allReady: false,
         checkAt: Number.POSITIVE_INFINITY,
     },
     interceptors: [
@@ -3401,8 +3414,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fieldNotifications = exports.SETTING_HARVEST_POPUP = void 0;
 const farm_1 = __webpack_require__(9888);
-const notifications_1 = __webpack_require__(6783);
 const page_1 = __webpack_require__(7952);
+const notifications_1 = __webpack_require__(6783);
 const state_1 = __webpack_require__(4619);
 const SETTING_HARVEST_NOTIFICATIONS = {
     id: "harvestNotifications",
@@ -3436,6 +3449,12 @@ const SETTING_EMPTY_NOTIFICATIONS = {
 const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
     const farmId = yield farm_1.farmIdState.get();
     if (!state) {
+        return;
+    }
+    // don't show notifications on farm page because it's too jumpy
+    const currentPage = (0, page_1.getCurrentPage)();
+    if (currentPage && currentPage.dataset.page === page_1.Page.FARM) {
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.FIELD);
         return;
     }
     if (state.status === farm_1.CropStatus.EMPTY &&
@@ -3694,9 +3713,18 @@ exports.improvedInputs = {
 /***/ }),
 
 /***/ 9737:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.kitchenNotifications = void 0;
 const kitchen_1 = __webpack_require__(182);
@@ -3721,6 +3749,16 @@ const SETTING_ATTENTION_NOTIFICATIONS = {
     type: "boolean",
     defaultValue: true,
 };
+const SETTING_ATTENTION_VERBOSE = {
+    id: "attentionNotifications",
+    title: "Kitchen: Ovens attention notification (all actions)",
+    description: `
+    Show notifications when any oven needs attention for any action
+    (normally only shows when all three actions are available for all ovens)
+  `,
+    type: "boolean",
+    defaultValue: false,
+};
 const SETTING_EMPTY_NOTIFICATIONS = {
     id: "emptyNotifications",
     title: "Kitchen: Ovens empty notification",
@@ -3731,7 +3769,7 @@ const SETTING_EMPTY_NOTIFICATIONS = {
     defaultValue: true,
 };
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_MEALS, kitchen_1.collectAll);
-const renderOvens = (settings, state) => {
+const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
     if (!state) {
         return;
     }
@@ -3746,12 +3784,15 @@ const renderOvens = (settings, state) => {
     }
     else if (state.status === kitchen_1.OvenStatus.ATTENTION &&
         settings[SETTING_ATTENTION_NOTIFICATIONS.id].value) {
-        (0, notifications_1.sendNotification)({
-            class: "btnorange",
-            id: notifications_1.NotificationId.OVEN,
-            text: "Ovens need attention",
-            href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
-        });
+        const state = yield kitchen_1.kitchenStatusState.get();
+        if (settings[SETTING_ATTENTION_VERBOSE.id].value || !(state === null || state === void 0 ? void 0 : state.allReady)) {
+            (0, notifications_1.sendNotification)({
+                class: "btnorange",
+                id: notifications_1.NotificationId.OVEN,
+                text: "Ovens need attention",
+                href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+            });
+        }
     }
     else if (state.status === kitchen_1.OvenStatus.READY &&
         settings[SETTING_COMPLETE_NOTIFICATIONS.id].value) {
@@ -3772,11 +3813,12 @@ const renderOvens = (settings, state) => {
     else {
         (0, notifications_1.removeNotification)(notifications_1.NotificationId.OVEN);
     }
-};
+});
 exports.kitchenNotifications = {
     settings: [
         SETTING_COMPLETE_NOTIFICATIONS,
         SETTING_ATTENTION_NOTIFICATIONS,
+        SETTING_ATTENTION_VERBOSE,
         SETTING_EMPTY_NOTIFICATIONS,
     ],
     onInitialize: (settings) => {
@@ -5052,7 +5094,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.24" !== void 0 ? "1.0.24" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.25" !== void 0 ? "1.0.25" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -5644,8 +5686,6 @@ const replaceSelect = (proxySelect, options) => {
         optionElement.addEventListener("click", () => {
             proxySelect.value = option.value;
             proxySelect.dispatchEvent(new Event("change"));
-            // proxySelect.selectedIndex = option.proxyOption.index;
-            // option.proxyOption.click();
             (0, exports.replaceSelect)(proxySelect, options);
         });
         menu.append(optionElement);

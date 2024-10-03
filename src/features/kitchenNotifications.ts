@@ -36,7 +36,7 @@ const SETTING_ATTENTION_NOTIFICATIONS: FeatureSetting = {
 };
 
 const SETTING_ATTENTION_VERBOSE: FeatureSetting = {
-  id: "attentionNotifications",
+  id: "attentionNotificationsVerbose",
   title: "Kitchen: Ovens attention notification (all actions)",
   description: `
     Show notifications when any oven needs attention for any action
@@ -80,7 +80,7 @@ const renderOvens = async (
     settings[SETTING_ATTENTION_NOTIFICATIONS.id].value
   ) {
     const state = await kitchenStatusState.get();
-    if (settings[SETTING_ATTENTION_VERBOSE.id].value || !state?.allReady) {
+    if (settings[SETTING_ATTENTION_VERBOSE.id].value || state?.allReady) {
       sendNotification({
         class: "btnorange",
         id: NotificationId.OVEN,

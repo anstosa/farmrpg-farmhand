@@ -17,7 +17,7 @@ import { farmhandSettings, getSettings } from "./features/farmhandSettings";
 import { fieldNotifications } from "./features/harvestNotifications";
 import { fishinInBarrel } from "./features/fishInBarrel";
 import { fleaMarket } from "./features/fleaMarket";
-import { getPage } from "~/utils/page";
+import { getCurrentPage, getPage } from "~/utils/page";
 import { highlightSelfInChat } from "./features/highlightSelfInChat";
 import { improvedInputs } from "./features/improvedInputs";
 import { kitchenNotifications } from "./features/kitchenNotifications";
@@ -32,12 +32,12 @@ import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
 import { popups } from "./utils/popup";
+import { queryInterceptors, urlMatches, watchQueries } from "./api/state";
 import { questCollapse } from "./features/questCollapse";
 import { quests } from "./features/quests";
 import { quicksellSafely } from "./features/quickSellSafely";
 import { vaultSolver } from "./features/vaultSolver";
 import { versionManager } from "./features/versionManager";
-import { watchQueries } from "./api/state";
 
 export const FEATURES = [
   // internal
@@ -167,6 +167,31 @@ const watchSubtree = (
   for (const { onInitialize } of FEATURES) {
     if (onInitialize) {
       onInitialize(settings);
+    }
+  }
+
+  // run any interceptors for the first page
+  const currentPage = getCurrentPage();
+  if (currentPage) {
+    for (const [state, interceptor] of queryInterceptors) {
+      const url = window.location.href.replace("/index.php#!", "");
+      if (urlMatches(url, ...interceptor.match)) {
+        const previous = await state.get({ doNotFetch: true });
+        interceptor.callback(settings, state, previous, {
+          headers: new Headers(),
+          ok: true,
+          redirected: false,
+          status: 200,
+          statusText: "OK",
+          type: "default",
+          url,
+          text: () => Promise.resolve(currentPage.innerHTML),
+          json: () => Promise.resolve({}),
+          formData: () => Promise.resolve(new FormData()),
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+          blob: () => Promise.resolve(new Blob([])),
+        });
+      }
     }
   }
 

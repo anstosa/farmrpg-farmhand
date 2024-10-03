@@ -39,6 +39,8 @@ const processKitchenStatus = (root: HTMLElement | undefined): KitchenStatus => {
   } else if (statusText.toLowerCase().includes("attention")) {
     status = OvenStatus.ATTENTION;
     checkAt = Date.now() + 60 * 1000;
+    // something needs attention, figure out what
+    kitchenStatusState.get();
   } else if (statusText.toLowerCase().includes("ready")) {
     status = OvenStatus.READY;
     checkAt = Number.POSITIVE_INFINITY;

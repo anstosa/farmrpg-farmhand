@@ -167,6 +167,11 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.27
+
+* Fixed: Oven notification settings interference
+* Fixed: First page loaded not being parsed
+
 ### 1.0.26
 
 * Fixed: low-noise oven notifications triggering at 2 actions instead of 3

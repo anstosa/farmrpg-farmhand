@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.26
+// @version 1.0.27
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -665,6 +665,8 @@ const processKitchenStatus = (root) => {
     else if (statusText.toLowerCase().includes("attention")) {
         status = OvenStatus.ATTENTION;
         checkAt = Date.now() + 60 * 1000;
+        // something needs attention, figure out what
+        exports.kitchenStatusState.get();
     }
     else if (statusText.toLowerCase().includes("ready")) {
         status = OvenStatus.READY;
@@ -3750,7 +3752,7 @@ const SETTING_ATTENTION_NOTIFICATIONS = {
     defaultValue: true,
 };
 const SETTING_ATTENTION_VERBOSE = {
-    id: "attentionNotifications",
+    id: "attentionNotificationsVerbose",
     title: "Kitchen: Ovens attention notification (all actions)",
     description: `
     Show notifications when any oven needs attention for any action
@@ -3785,7 +3787,7 @@ const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, funct
     else if (state.status === kitchen_1.OvenStatus.ATTENTION &&
         settings[SETTING_ATTENTION_NOTIFICATIONS.id].value) {
         const state = yield kitchen_1.kitchenStatusState.get();
-        if (settings[SETTING_ATTENTION_VERBOSE.id].value || !(state === null || state === void 0 ? void 0 : state.allReady)) {
+        if (settings[SETTING_ATTENTION_VERBOSE.id].value || (state === null || state === void 0 ? void 0 : state.allReady)) {
             (0, notifications_1.sendNotification)({
                 class: "btnorange",
                 id: notifications_1.NotificationId.OVEN,
@@ -5094,7 +5096,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.26" !== void 0 ? "1.0.26" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.27" !== void 0 ? "1.0.27" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -5203,12 +5205,12 @@ const compressNavigation_1 = __webpack_require__(2827);
 const notifications_1 = __webpack_require__(6783);
 const perkManagement_1 = __webpack_require__(682);
 const popup_1 = __webpack_require__(469);
+const state_1 = __webpack_require__(4619);
 const questCollapse_1 = __webpack_require__(1768);
 const quests_1 = __webpack_require__(3710);
 const quickSellSafely_1 = __webpack_require__(8760);
 const vaultSolver_1 = __webpack_require__(3026);
 const versionManager_1 = __webpack_require__(70);
-const state_1 = __webpack_require__(4619);
 exports.FEATURES = [
     // internal
     notifications_1.notifications,
@@ -5317,6 +5319,30 @@ const watchSubtree = (selector, handler, filter) => {
         for (const { onInitialize } of exports.FEATURES) {
             if (onInitialize) {
                 onInitialize(settings);
+            }
+        }
+        // run any interceptors for the first page
+        const currentPage = (0, page_1.getCurrentPage)();
+        if (currentPage) {
+            for (const [state, interceptor] of state_1.queryInterceptors) {
+                const url = window.location.href.replace("/index.php#!", "");
+                if ((0, state_1.urlMatches)(url, ...interceptor.match)) {
+                    const previous = yield state.get({ doNotFetch: true });
+                    interceptor.callback(settings, state, previous, {
+                        headers: new Headers(),
+                        ok: true,
+                        redirected: false,
+                        status: 200,
+                        statusText: "OK",
+                        type: "default",
+                        url,
+                        text: () => Promise.resolve(currentPage.innerHTML),
+                        json: () => Promise.resolve({}),
+                        formData: () => Promise.resolve(new FormData()),
+                        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+                        blob: () => Promise.resolve(new Blob([])),
+                    });
+                }
             }
         }
         yield (0, state_1.watchQueries)(settings);

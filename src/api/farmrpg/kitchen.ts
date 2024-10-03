@@ -64,13 +64,13 @@ const processKitchenPage = (root: HTMLElement): KitchenStatus | undefined => {
       checkAt = Math.min(checkAt, Number.POSITIVE_INFINITY);
       break;
     }
-    const images = oven.querySelectorAll<HTMLImageElement>("img");
+    const tasks = oven.querySelectorAll<HTMLImageElement>("img:not(.itemimg)");
     if (
-      images.length > 1 &&
+      tasks.length > 0 &&
       [OvenStatus.EMPTY, OvenStatus.COOKING].includes(status)
     ) {
       status = OvenStatus.ATTENTION;
-      if (allReady && images.length !== 3) {
+      if (allReady && tasks.length !== 3) {
         allReady = false;
       }
     } else if (status === OvenStatus.EMPTY) {

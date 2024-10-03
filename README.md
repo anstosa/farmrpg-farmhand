@@ -167,6 +167,10 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.26
+
+* Fixed: low-noise oven notifications triggering at 2 actions instead of 3
+
 ### 1.0.25
 
 * Added: Option to notify on ovens for every action (now defaults to only if all actions are available for all ovens)

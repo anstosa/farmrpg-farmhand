@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.25
+// @version 1.0.26
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -690,11 +690,11 @@ const processKitchenPage = (root) => {
             checkAt = Math.min(checkAt, Number.POSITIVE_INFINITY);
             break;
         }
-        const images = oven.querySelectorAll("img");
-        if (images.length > 1 &&
+        const tasks = oven.querySelectorAll("img:not(.itemimg)");
+        if (tasks.length > 0 &&
             [OvenStatus.EMPTY, OvenStatus.COOKING].includes(status)) {
             status = OvenStatus.ATTENTION;
-            if (allReady && images.length !== 3) {
+            if (allReady && tasks.length !== 3) {
                 allReady = false;
             }
         }
@@ -5094,7 +5094,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.25" !== void 0 ? "1.0.25" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.26" !== void 0 ? "1.0.26" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;

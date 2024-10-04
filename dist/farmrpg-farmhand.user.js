@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.27
+// @version 1.0.28
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -657,7 +657,7 @@ const processKitchenStatus = (root) => {
     const count = Number(statusText.split(" ")[0]);
     let status = OvenStatus.EMPTY;
     let checkAt = Number.POSITIVE_INFINITY;
-    const allReady = true;
+    let allReady = false;
     if (statusText.toLowerCase().includes("cooking")) {
         status = OvenStatus.COOKING;
         checkAt = Date.now() + 60 * 1000;
@@ -671,6 +671,7 @@ const processKitchenStatus = (root) => {
     else if (statusText.toLowerCase().includes("ready")) {
         status = OvenStatus.READY;
         checkAt = Number.POSITIVE_INFINITY;
+        allReady = true;
     }
     return { status, count, checkAt, allReady };
 };
@@ -762,6 +763,28 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
             }),
         },
         {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.SEASON_MEALS }),
+            ],
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a, _b, _c;
+                state.fetch();
+                const root = yield (0, utils_1.getDocument)(response);
+                const successCount = (_c = (_b = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/success/g)) === null || _b === void 0 ? void 0 : _b.length) !== null && _c !== void 0 ? _c : 0;
+                if (successCount) {
+                    (0, popup_1.showPopup)({
+                        title: "Success!",
+                        contentHTML: `${successCount} meal${successCount === 1 ? "" : "s"} collected`,
+                    });
+                }
+                yield state.set({
+                    status: OvenStatus.EMPTY,
+                    checkAt: Number.POSITIVE_INFINITY,
+                });
+            }),
+        },
+        {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COOK_ALL })],
             callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
                 yield state.set({
@@ -795,6 +818,125 @@ const collectAll = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }));
 });
 exports.collectAll = collectAll;
+
+
+/***/ }),
+
+/***/ 1431:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.collectMailbox = exports.mailboxState = exports.mergeContents = void 0;
+const state_1 = __webpack_require__(4619);
+const page_1 = __webpack_require__(7952);
+const utils_1 = __webpack_require__(7683);
+const api_1 = __webpack_require__(3413);
+const notifications_1 = __webpack_require__(6783);
+const api_2 = __webpack_require__(126);
+const popup_1 = __webpack_require__(469);
+const mergeContents = (contents) => {
+    const results = [];
+    for (const { item, count } of contents) {
+        const existing = results.find((result) => result.item === item);
+        if (existing) {
+            existing.count += count;
+        }
+        else {
+            results.push({ item, count });
+        }
+    }
+    return results;
+};
+exports.mergeContents = mergeContents;
+const processPostoffice = (root) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    // get contents
+    const contents = [];
+    const mailboxList = (0, page_1.getListByTitle)(/Your Mailbox/, root.body);
+    const itemWrappers = (_a = mailboxList === null || mailboxList === void 0 ? void 0 : mailboxList.querySelectorAll(".collectbtnnc")) !== null && _a !== void 0 ? _a : [];
+    for (const itemWrapper of itemWrappers) {
+        const from = ((_c = (_b = itemWrapper.querySelector("span")) === null || _b === void 0 ? void 0 : _b.textContent) !== null && _c !== void 0 ? _c : "").replace("From ", "");
+        const item = (_e = (_d = itemWrapper.querySelector("strong")) === null || _d === void 0 ? void 0 : _d.textContent) !== null && _e !== void 0 ? _e : "";
+        const count = Number((_h = (_g = (_f = itemWrapper
+            .querySelector(".item-after")) === null || _f === void 0 ? void 0 : _f.textContent) === null || _g === void 0 ? void 0 : _g.replaceAll(/,|x/g, "")) !== null && _h !== void 0 ? _h : "0");
+        contents.push({ from, item, count });
+    }
+    // get size
+    const increaseCard = (0, page_1.getCardByTitle)("Increase Mailbox Size", root.body);
+    const size = Number((_k = (_j = increaseCard === null || increaseCard === void 0 ? void 0 : increaseCard.querySelector("strong")) === null || _j === void 0 ? void 0 : _j.textContent) !== null && _k !== void 0 ? _k : "5");
+    return { contents, size };
+};
+exports.mailboxState = new state_1.CachedState(state_1.StorageKey.MAILBOX, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_2.requestHTML)(page_1.Page.POST_OFFICE);
+    return processPostoffice(response);
+}), {
+    defaultState: {
+        contents: [],
+        size: 5,
+    },
+    interceptors: [
+        {
+            match: [page_1.Page.POST_OFFICE, new URLSearchParams()],
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(processPostoffice(yield (0, utils_1.getDocument)(response)));
+            }),
+        },
+        {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MAIL_ITEMS }),
+            ],
+            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set({ contents: [] });
+            }),
+        },
+    ],
+});
+const collectMailbox = () => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.mailboxState.get();
+    if (!state) {
+        return;
+    }
+    const mergedItems = (0, exports.mergeContents)(state.contents);
+    const items = yield Promise.all(mergedItems.map((mail) => __awaiter(void 0, void 0, void 0, function* () {
+        return ({
+            item: yield (0, api_1.getItemByName)(mail.item),
+            count: mail.count,
+        });
+    })));
+    (0, notifications_1.removeNotification)(notifications_1.NotificationId.MAILBOX);
+    (0, popup_1.showPopup)({
+        title: "Collected Mail",
+        contentHTML: `
+      ${items
+            .map((mail) => mail.item
+            ? `
+              <img
+                src="${mail.item.image}"
+                style="
+                  vertical-align: middle;
+                  width: 18px;
+                "
+              >
+              (x${mail.count})
+            `
+            : ``)
+            .join("&nbsp;")}
+    `,
+    });
+    yield (0, api_2.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MAIL_ITEMS }));
+});
+exports.collectMailbox = collectMailbox;
 
 
 /***/ }),
@@ -1007,6 +1149,107 @@ exports.activatePerkSet = activatePerkSet;
 
 /***/ }),
 
+/***/ 5262:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.collectPets = exports.petState = void 0;
+const state_1 = __webpack_require__(4619);
+const utils_1 = __webpack_require__(7683);
+const api_1 = __webpack_require__(3413);
+const page_1 = __webpack_require__(7952);
+const mail_1 = __webpack_require__(1431);
+const notifications_1 = __webpack_require__(6783);
+const api_2 = __webpack_require__(126);
+const popup_1 = __webpack_require__(469);
+const processPets = (root) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    // get contents
+    const contents = [];
+    const listTitle = (0, page_1.getTitle)("All Items Found", root.body);
+    const list = (_b = (_a = listTitle === null || listTitle === void 0 ? void 0 : listTitle.nextElementSibling) === null || _a === void 0 ? void 0 : _a.nextElementSibling) === null || _b === void 0 ? void 0 : _b.firstElementChild;
+    const itemWrappers = (_c = list === null || list === void 0 ? void 0 : list.querySelectorAll("li")) !== null && _c !== void 0 ? _c : [];
+    for (const itemWrapper of itemWrappers) {
+        const from = ((_e = (_d = itemWrapper.querySelector("span")) === null || _d === void 0 ? void 0 : _d.textContent) !== null && _e !== void 0 ? _e : "").replace("From ", "");
+        const item = (_g = (_f = itemWrapper.querySelector("strong")) === null || _f === void 0 ? void 0 : _f.textContent) !== null && _g !== void 0 ? _g : "";
+        const count = Number((_k = (_j = (_h = itemWrapper
+            .querySelector(".item-after")) === null || _h === void 0 ? void 0 : _h.textContent) === null || _j === void 0 ? void 0 : _j.replaceAll(",", "")) !== null && _k !== void 0 ? _k : "0");
+        contents.push({ from, item, count });
+    }
+    return contents;
+};
+exports.petState = new state_1.CachedState(state_1.StorageKey.PETS, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, api_2.requestHTML)(page_1.Page.PETS);
+    return processPets(response);
+}), {
+    defaultState: [],
+    interceptors: [
+        {
+            match: [page_1.Page.PETS, new URLSearchParams()],
+            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(processPets(yield (0, utils_1.getDocument)(response)));
+            }),
+        },
+        {
+            match: [
+                page_1.Page.WORKER,
+                new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_PET_ITEMS }),
+            ],
+            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set([]);
+            }),
+        },
+    ],
+});
+const collectPets = () => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.petState.get();
+    if (!state) {
+        return;
+    }
+    const mergedItems = (0, mail_1.mergeContents)(state);
+    const items = yield Promise.all(mergedItems.map((mail) => __awaiter(void 0, void 0, void 0, function* () {
+        return ({
+            item: yield (0, api_1.getItemByName)(mail.item),
+            count: mail.count,
+        });
+    })));
+    (0, notifications_1.removeNotification)(notifications_1.NotificationId.PETS);
+    (0, popup_1.showPopup)({
+        title: "Collected Pet Items",
+        contentHTML: `
+      ${items
+            .map((mail) => mail.item
+            ? `
+              <img
+                src="${mail.item.image}"
+                style="
+                  vertical-align: middle;
+                  width: 18px;
+                "
+              >
+              (x${mail.count})
+            `
+            : ``)
+            .join("&nbsp;")}
+    `,
+    });
+    yield (0, api_2.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_PET_ITEMS }));
+});
+exports.collectPets = collectPets;
+
+
+/***/ }),
+
 /***/ 1604:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -1104,6 +1347,7 @@ var StorageKey;
     StorageKey["MEALS_STATUS"] = "mealsStatus";
     StorageKey["PAGE_DATA"] = "pageData";
     StorageKey["PERKS_SETS"] = "perkSets";
+    StorageKey["PETS"] = "pets";
     StorageKey["RECENT_UPDATE"] = "recentUpdate";
     StorageKey["STATS"] = "stats";
     StorageKey["USERNAME"] = "username";
@@ -3416,8 +3660,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fieldNotifications = exports.SETTING_HARVEST_POPUP = void 0;
 const farm_1 = __webpack_require__(9888);
-const page_1 = __webpack_require__(7952);
 const notifications_1 = __webpack_require__(6783);
+const page_1 = __webpack_require__(7952);
 const state_1 = __webpack_require__(4619);
 const SETTING_HARVEST_NOTIFICATIONS = {
     id: "harvestNotifications",
@@ -3453,12 +3697,6 @@ const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, func
     if (!state) {
         return;
     }
-    // don't show notifications on farm page because it's too jumpy
-    const currentPage = (0, page_1.getCurrentPage)();
-    if (currentPage && currentPage.dataset.page === page_1.Page.FARM) {
-        (0, notifications_1.removeNotification)(notifications_1.NotificationId.FIELD);
-        return;
-    }
     if (state.status === farm_1.CropStatus.EMPTY &&
         settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
         (0, notifications_1.sendNotification)({
@@ -3466,6 +3704,7 @@ const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, func
             id: notifications_1.NotificationId.FIELD,
             text: "Fields are empty!",
             href: (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) })),
+            excludePages: [page_1.Page.FARM],
         });
     }
     else if (state.status === farm_1.CropStatus.READY &&
@@ -3483,6 +3722,7 @@ const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, func
                     handler: notifications_1.Handler.HARVEST,
                 },
             ],
+            excludePages: [page_1.Page.FARM],
         });
     }
     else {
@@ -3782,6 +4022,7 @@ const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, funct
             id: notifications_1.NotificationId.OVEN,
             text: "Ovens are empty!",
             href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+            excludePages: [page_1.Page.KITCHEN],
         });
     }
     else if (state.status === kitchen_1.OvenStatus.ATTENTION &&
@@ -3793,7 +4034,11 @@ const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, funct
                 id: notifications_1.NotificationId.OVEN,
                 text: "Ovens need attention",
                 href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+                excludePages: [page_1.Page.KITCHEN],
             });
+        }
+        else {
+            (0, notifications_1.removeNotification)(notifications_1.NotificationId.OVEN);
         }
     }
     else if (state.status === kitchen_1.OvenStatus.READY &&
@@ -3810,6 +4055,7 @@ const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, funct
                     handler: notifications_1.Handler.COLLECT_MEALS,
                 },
             ],
+            excludePages: [page_1.Page.KITCHEN],
         });
     }
     else {
@@ -3881,6 +4127,73 @@ exports.linkifyQuickCraft = {
             missingIngredientsWrapper.append(link);
         }
     }),
+};
+
+
+/***/ }),
+
+/***/ 6297:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.mailboxNotifications = void 0;
+const mail_1 = __webpack_require__(1431);
+const notifications_1 = __webpack_require__(6783);
+const page_1 = __webpack_require__(7952);
+const state_1 = __webpack_require__(4619);
+(0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_MAIL, mail_1.collectMailbox);
+const renderNotification = (state) => __awaiter(void 0, void 0, void 0, function* () {
+    state = state !== null && state !== void 0 ? state : (yield mail_1.mailboxState.get());
+    if (!state) {
+        return;
+    }
+    let mailboxCount = 0;
+    for (const mail of state.contents) {
+        mailboxCount += mail.count;
+    }
+    if (!state || state.contents.length === 0) {
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.MAILBOX);
+        return;
+    }
+    (0, notifications_1.sendNotification)({
+        class: "btnpurple",
+        id: notifications_1.NotificationId.MAILBOX,
+        text: `Mailbox is ready! (${mailboxCount} / ${state.size})`,
+        href: (0, state_1.toUrl)(page_1.Page.POST_OFFICE),
+        replacesHref: `${page_1.Page.POST_OFFICE}.php`,
+        actions: [
+            {
+                text: "View",
+                href: (0, state_1.toUrl)(page_1.Page.POST_OFFICE),
+            },
+            {
+                text: "Collect",
+                handler: notifications_1.Handler.COLLECT_MAIL,
+            },
+        ],
+        excludePages: [page_1.Page.POST_OFFICE],
+    });
+});
+exports.mailboxNotifications = {
+    onInitialize: () => {
+        mail_1.mailboxState.onUpdate((state) => renderNotification(state));
+    },
+    onNotificationLoad: () => {
+        const mailboxNotification = document.querySelector(`a[href="${page_1.Page.POST_OFFICE}.php"].button.btnpurple`);
+        if (mailboxNotification) {
+            renderNotification();
+        }
+    },
 };
 
 
@@ -4664,6 +4977,75 @@ exports.perkManagment = {
 
 /***/ }),
 
+/***/ 8278:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.petNotifications = void 0;
+const pets_1 = __webpack_require__(5262);
+const notifications_1 = __webpack_require__(6783);
+const page_1 = __webpack_require__(7952);
+const state_1 = __webpack_require__(4619);
+(0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_PETS, pets_1.collectPets);
+const renderNotification = (state) => __awaiter(void 0, void 0, void 0, function* () {
+    state = state !== null && state !== void 0 ? state : (yield pets_1.petState.get());
+    if (!state) {
+        return;
+    }
+    let petCount = 0;
+    for (const mail of state) {
+        petCount += mail.count;
+    }
+    if (!state || (state === null || state === void 0 ? void 0 : state.length) === 0) {
+        (0, notifications_1.removeNotification)(notifications_1.NotificationId.PETS);
+        return;
+    }
+    (0, notifications_1.sendNotification)({
+        class: "btnorange",
+        id: notifications_1.NotificationId.PETS,
+        text: `Your pets have ${petCount} items ready!`,
+        href: (0, state_1.toUrl)(page_1.Page.PETS),
+        replacesHref: `${page_1.Page.PETS}.php?${new URLSearchParams({
+            from: "home",
+        }).toString()}`,
+        actions: [
+            {
+                text: "View",
+                href: (0, state_1.toUrl)(page_1.Page.PETS),
+            },
+            {
+                text: "Collect",
+                handler: notifications_1.Handler.COLLECT_PETS,
+            },
+        ],
+        excludePages: [page_1.Page.PETS],
+    });
+});
+exports.petNotifications = {
+    onInitialize: () => {
+        pets_1.petState.onUpdate((state) => renderNotification(state));
+    },
+    onNotificationLoad: () => {
+        const petsNotification = document.querySelector(`a[href="${page_1.Page.PETS}.php?from=home"]`);
+        if (petsNotification) {
+            renderNotification();
+        }
+    },
+};
+
+
+/***/ }),
+
 /***/ 1768:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -5096,7 +5478,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.27" !== void 0 ? "1.0.27" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.28" !== void 0 ? "1.0.28" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -5195,6 +5577,7 @@ const highlightSelfInChat_1 = __webpack_require__(5454);
 const improvedInputs_1 = __webpack_require__(1108);
 const kitchenNotifications_1 = __webpack_require__(9737);
 const linkifyQuickCraft_1 = __webpack_require__(7092);
+const mailboxNotifications_1 = __webpack_require__(6297);
 const maxContainers_1 = __webpack_require__(9735);
 const maxCows_1 = __webpack_require__(1103);
 const maxPigs_1 = __webpack_require__(2934);
@@ -5204,6 +5587,7 @@ const moveUpdateToTop_1 = __webpack_require__(4417);
 const compressNavigation_1 = __webpack_require__(2827);
 const notifications_1 = __webpack_require__(6783);
 const perkManagement_1 = __webpack_require__(682);
+const petNotifications_1 = __webpack_require__(8278);
 const popup_1 = __webpack_require__(469);
 const state_1 = __webpack_require__(4619);
 const questCollapse_1 = __webpack_require__(1768);
@@ -5244,6 +5628,10 @@ exports.FEATURES = [
     compactSilver_1.compactSilver,
     // bank
     banker_1.banker,
+    // mailbox
+    mailboxNotifications_1.mailboxNotifications,
+    // pets
+    petNotifications_1.petNotifications,
     // vault
     vaultSolver_1.vaultSolver,
     // mining
@@ -5350,6 +5738,7 @@ const watchSubtree = (selector, handler, filter) => {
         // separating the handlers makes everything harder
         watchSubtree(".view-main .pages", "onPageLoad", ".page");
         watchSubtree(".view-main .navbar", "onPageLoad", ".navbar-inner");
+        watchSubtree(".view-main .pages", "onNotificationLoad", ".page > .button");
         // watch quest popup
         watchSubtree(".view-main .toolbar", "onQuestLoad");
         // watch menu
@@ -5747,15 +6136,19 @@ const KEY_NOTIFICATIONS = "notifications";
 var NotificationId;
 (function (NotificationId) {
     NotificationId["FIELD"] = "field";
+    NotificationId["MAILBOX"] = "mailbox";
     NotificationId["MEAL"] = "meal";
     NotificationId["OVEN"] = "oven";
     NotificationId["PERKS"] = "perks";
+    NotificationId["PETS"] = "pets";
     NotificationId["UPDATE"] = "update";
 })(NotificationId || (exports.NotificationId = NotificationId = {}));
 var Handler;
 (function (Handler) {
     Handler["CHANGES"] = "updateChanges";
+    Handler["COLLECT_MAIL"] = "collectMail";
     Handler["COLLECT_MEALS"] = "collectMeals";
+    Handler["COLLECT_PETS"] = "collectPets";
     Handler["HARVEST"] = "harvest";
     Handler["UPDATE"] = "update";
 })(Handler || (exports.Handler = Handler = {}));
@@ -5790,7 +6183,7 @@ const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, f
 });
 exports.removeNotification = removeNotification;
 const renderNotifications = (force = false) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const pageContent = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".page-content");
     if (!pageContent) {
         console.error("Page content not found");
@@ -5806,8 +6199,20 @@ const renderNotifications = (force = false) => {
     }
     // add new notifications
     for (const notification of state.notifications.toSorted((a, b) => a.id.localeCompare(b.id) || 0)) {
+        const currentPage = (0, page_1.getCurrentPage)();
+        // skip notifications that are excluded from the current page
+        if ((_b = notification.excludePages) === null || _b === void 0 ? void 0 : _b.includes((_c = currentPage === null || currentPage === void 0 ? void 0 : currentPage.dataset.page) !== null && _c !== void 0 ? _c : "")) {
+            return;
+        }
+        // replace native notification if relevant
         if (notification.replacesHref) {
-            (_c = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(`a[href="${notification.replacesHref}"]`)) === null || _c === void 0 ? void 0 : _c.remove();
+            const link = currentPage === null || currentPage === void 0 ? void 0 : currentPage.querySelector(`a[href="${notification.replacesHref}"]`);
+            if ((_d = link === null || link === void 0 ? void 0 : link.classList) === null || _d === void 0 ? void 0 : _d.contains("button")) {
+                link.remove();
+            }
+            if ((_f = (_e = link === null || link === void 0 ? void 0 : link.parentElement) === null || _e === void 0 ? void 0 : _e.classList) === null || _f === void 0 ? void 0 : _f.contains("button")) {
+                link.parentElement.remove();
+            }
         }
         const notificationElement = document.createElement(isTextNotification(notification) ? "span" : "a");
         notificationElement.classList.add("button");
@@ -5837,14 +6242,15 @@ const renderNotifications = (force = false) => {
         else if (isLinkNotification(notification)) {
             notificationElement.setAttribute("href", notification.href);
         }
-        for (const action of (_d = notification.actions) !== null && _d !== void 0 ? _d : []) {
-            notificationElement.append(document.createTextNode(((_e = notification.actions) === null || _e === void 0 ? void 0 : _e.indexOf(action)) === 0 ? " " : " / "));
+        for (const action of (_g = notification.actions) !== null && _g !== void 0 ? _g : []) {
+            notificationElement.append(document.createTextNode(((_h = notification.actions) === null || _h === void 0 ? void 0 : _h.indexOf(action)) === 0 ? " " : " / "));
             const actionElement = document.createElement("a");
             actionElement.classList.add("fh-notification-action");
             actionElement.style.cursor = "pointer";
             actionElement.textContent = action.text;
             if (isHandlerNotificationAction(action)) {
                 actionElement.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+                    actionElement.textContent = "Loading...";
                     event.preventDefault();
                     event.stopPropagation();
                     const handler = notificationHandlers.get(action.handler);
@@ -5862,7 +6268,7 @@ const renderNotifications = (force = false) => {
             }
             notificationElement.append(actionElement);
         }
-        if ((_f = pageContent.firstElementChild) === null || _f === void 0 ? void 0 : _f.classList.contains("pull-to-refresh-layer")) {
+        if ((_j = pageContent.firstElementChild) === null || _j === void 0 ? void 0 : _j.classList.contains("pull-to-refresh-layer")) {
             pageContent.insertBefore(notificationElement, pageContent.children[1]);
         }
         else {
@@ -5921,6 +6327,7 @@ var Page;
     Page["MINING"] = "mining";
     Page["PASTURE"] = "pasture";
     Page["PERKS"] = "perks";
+    Page["PETS"] = "allpetitems";
     Page["PIG_PEN"] = "pigpen";
     Page["POST_OFFICE"] = "postoffice";
     Page["QUEST"] = "quest";
@@ -5936,6 +6343,7 @@ var Page;
 var WorkerGo;
 (function (WorkerGo) {
     WorkerGo["ACTIVATE_PERK_SET"] = "activateperkset";
+    WorkerGo["COLLECT_ALL_PET_ITEMS"] = "collectallpetitems";
     WorkerGo["COLLECT_ALL_MAIL_ITEMS"] = "collectallmailitems";
     WorkerGo["COLLECT_ALL_MEALS"] = "cookreadyall";
     WorkerGo["COOK_ALL"] = "cookitemall";
@@ -5946,6 +6354,9 @@ var WorkerGo;
     WorkerGo["PLANT_ALL"] = "plantall";
     WorkerGo["READY_COUNT"] = "readycount";
     WorkerGo["RESET_PERKS"] = "resetperks";
+    WorkerGo["SEASON_MEALS"] = "seasonmealsall";
+    WorkerGo["STIR_MEALS"] = "stirmealsall";
+    WorkerGo["TASTE_MEALS"] = "tastemealsall";
     WorkerGo["USE_ITEM"] = "useitem";
     WorkerGo["WITHDRAW_SILVER"] = "withdrawalsilver";
 })(WorkerGo || (exports.WorkerGo = WorkerGo = {}));

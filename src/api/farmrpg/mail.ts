@@ -6,7 +6,11 @@ import {
   WorkerGo,
 } from "../../utils/page";
 import { getDocument } from "../utils";
+import { getItemByName } from "../buddyfarm/api";
+import { Item } from "../buddyfarm/state";
+import { NotificationId, removeNotification } from "~/utils/notifications";
 import { requestHTML } from "./api";
+import { showPopup } from "~/utils/popup";
 
 export interface MailboxContent {
   from: string;
@@ -19,16 +23,36 @@ export interface MailboxState {
   size: number;
 }
 
+export const mergeContents = (
+  contents: MailboxContent[]
+): Pick<MailboxContent, "count" | "item">[] => {
+  const results: Pick<MailboxContent, "count" | "item">[] = [];
+  for (const { item, count } of contents) {
+    const existing = results.find((result) => result.item === item);
+    if (existing) {
+      existing.count += count;
+    } else {
+      results.push({ item, count });
+    }
+  }
+  return results;
+};
+
 const processPostoffice = (root: Document): MailboxState => {
   // get contents
   const contents: MailboxContent[] = [];
-  const mailboxList = getListByTitle("Your Mailbox", root.body);
+  const mailboxList = getListByTitle(/Your Mailbox/, root.body);
   const itemWrappers = mailboxList?.querySelectorAll(".collectbtnnc") ?? [];
   for (const itemWrapper of itemWrappers) {
-    const from = itemWrapper.querySelector("span")?.textContent ?? "";
-    const item = itemWrapper.querySelector("b")?.textContent ?? "";
+    const from = (itemWrapper.querySelector("span")?.textContent ?? "").replace(
+      "From ",
+      ""
+    );
+    const item = itemWrapper.querySelector("strong")?.textContent ?? "";
     const count = Number(
-      itemWrapper.querySelector("font")?.textContent?.replaceAll(",", "") ?? "0"
+      itemWrapper
+        .querySelector(".item-after")
+        ?.textContent?.replaceAll(/,|x/g, "") ?? "0"
     );
     contents.push({ from, item, count });
   }
@@ -74,6 +98,39 @@ export const mailboxState = new CachedState<MailboxState>(
 );
 
 export const collectMailbox = async (): Promise<void> => {
+  const state = await mailboxState.get();
+  if (!state) {
+    return;
+  }
+  const mergedItems = mergeContents(state.contents);
+  const items: { item: Item | undefined; count: number }[] = await Promise.all(
+    mergedItems.map(async (mail) => ({
+      item: await getItemByName(mail.item),
+      count: mail.count,
+    }))
+  );
+  removeNotification(NotificationId.MAILBOX);
+  showPopup({
+    title: "Collected Mail",
+    contentHTML: `
+      ${items
+        .map((mail) =>
+          mail.item
+            ? `
+              <img
+                src="${mail.item.image}"
+                style="
+                  vertical-align: middle;
+                  width: 18px;
+                "
+              >
+              (x${mail.count})
+            `
+            : ``
+        )
+        .join("&nbsp;")}
+    `,
+  });
   await requestHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MAIL_ITEMS })

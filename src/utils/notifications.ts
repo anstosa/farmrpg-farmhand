@@ -7,15 +7,19 @@ const KEY_NOTIFICATIONS = "notifications";
 
 export enum NotificationId {
   FIELD = "field",
+  MAILBOX = "mailbox",
   MEAL = "meal",
   OVEN = "oven",
   PERKS = "perks",
+  PETS = "pets",
   UPDATE = "update",
 }
 
 export enum Handler {
   CHANGES = "updateChanges",
+  COLLECT_MAIL = "collectMail",
   COLLECT_MEALS = "collectMeals",
+  COLLECT_PETS = "collectPets",
   HARVEST = "harvest",
   UPDATE = "update",
 }
@@ -27,6 +31,7 @@ interface TextNotification<T> {
   data?: T;
   replacesHref?: string;
   actions?: NotificationAction[];
+  excludePages?: string[];
 }
 
 interface BaseNotificationAction {
@@ -132,13 +137,26 @@ const renderNotifications = (force: boolean = false): void => {
   for (const notification of state.notifications.toSorted(
     (a, b) => a.id.localeCompare(b.id) || 0
   )) {
-    if (notification.replacesHref) {
-      getCurrentPage()
-        ?.querySelector<HTMLAnchorElement>(
-          `a[href="${notification.replacesHref}"]`
-        )
-        ?.remove();
+    const currentPage = getCurrentPage();
+
+    // skip notifications that are excluded from the current page
+    if (notification.excludePages?.includes(currentPage?.dataset.page ?? "")) {
+      return;
     }
+
+    // replace native notification if relevant
+    if (notification.replacesHref) {
+      const link = currentPage?.querySelector<HTMLAnchorElement>(
+        `a[href="${notification.replacesHref}"]`
+      );
+      if (link?.classList?.contains("button")) {
+        link.remove();
+      }
+      if (link?.parentElement?.classList?.contains("button")) {
+        link.parentElement.remove();
+      }
+    }
+
     const notificationElement = document.createElement(
       isTextNotification(notification) ? "span" : "a"
     );
@@ -181,6 +199,7 @@ const renderNotifications = (force: boolean = false): void => {
 
       if (isHandlerNotificationAction(action)) {
         actionElement.addEventListener("click", async (event) => {
+          actionElement.textContent = "Loading...";
           event.preventDefault();
           event.stopPropagation();
           const handler = notificationHandlers.get(action.handler);

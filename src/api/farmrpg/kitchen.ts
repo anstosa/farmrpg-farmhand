@@ -32,7 +32,7 @@ const processKitchenStatus = (root: HTMLElement | undefined): KitchenStatus => {
   const count = Number(statusText.split(" ")[0]);
   let status = OvenStatus.EMPTY;
   let checkAt = Number.POSITIVE_INFINITY;
-  const allReady = true;
+  let allReady = false;
   if (statusText.toLowerCase().includes("cooking")) {
     status = OvenStatus.COOKING;
     checkAt = Date.now() + 60 * 1000;
@@ -44,6 +44,7 @@ const processKitchenStatus = (root: HTMLElement | undefined): KitchenStatus => {
   } else if (statusText.toLowerCase().includes("ready")) {
     status = OvenStatus.READY;
     checkAt = Number.POSITIVE_INFINITY;
+    allReady = true;
   }
   return { status, count, checkAt, allReady };
 };
@@ -128,6 +129,30 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
           new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MEALS }),
         ],
         callback: async (settings, state, previous, response) => {
+          const root = await getDocument(response);
+          const successCount =
+            root.body.textContent?.match(/success/g)?.length ?? 0;
+          if (successCount) {
+            showPopup({
+              title: "Success!",
+              contentHTML: `${successCount} meal${
+                successCount === 1 ? "" : "s"
+              } collected`,
+            });
+          }
+          await state.set({
+            status: OvenStatus.EMPTY,
+            checkAt: Number.POSITIVE_INFINITY,
+          });
+        },
+      },
+      {
+        match: [
+          Page.WORKER,
+          new URLSearchParams({ go: WorkerGo.SEASON_MEALS }),
+        ],
+        callback: async (settings, state, previous, response) => {
+          state.fetch();
           const root = await getDocument(response);
           const successCount =
             root.body.textContent?.match(/success/g)?.length ?? 0;

@@ -22,6 +22,7 @@ import { highlightSelfInChat } from "./features/highlightSelfInChat";
 import { improvedInputs } from "./features/improvedInputs";
 import { kitchenNotifications } from "./features/kitchenNotifications";
 import { linkifyQuickCraft } from "./features/linkifyQuickCraft";
+import { mailboxNotifications } from "./features/mailboxNotifications";
 import { maxContainers } from "./features/maxContainers";
 import { maxCows } from "./features/maxCows";
 import { maxPigs } from "./features/maxPigs";
@@ -31,6 +32,7 @@ import { moveUpdateToTop } from "./features/moveUpdateToTop";
 import { navigationStyle } from "./features/compressNavigation";
 import { notifications } from "./utils/notifications";
 import { perkManagment } from "./features/perkManagement";
+import { petNotifications } from "./features/petNotifications";
 import { popups } from "./utils/popup";
 import { queryInterceptors, urlMatches, watchQueries } from "./api/state";
 import { questCollapse } from "./features/questCollapse";
@@ -81,6 +83,12 @@ export const FEATURES = [
   // bank
   banker,
 
+  // mailbox
+  mailboxNotifications,
+
+  // pets
+  petNotifications,
+
   // vault
   vaultSolver,
 
@@ -115,7 +123,12 @@ export const FEATURES = [
 
 const watchSubtree = (
   selector: string,
-  handler: "onPageLoad" | "onChatLoad" | "onMenuLoad" | "onQuestLoad",
+  handler:
+    | "onPageLoad"
+    | "onChatLoad"
+    | "onMenuLoad"
+    | "onQuestLoad"
+    | "onNotificationLoad",
   filter?: string
 ): void => {
   const target = document.querySelector(selector);
@@ -201,6 +214,7 @@ const watchSubtree = (
   // separating the handlers makes everything harder
   watchSubtree(".view-main .pages", "onPageLoad", ".page");
   watchSubtree(".view-main .navbar", "onPageLoad", ".navbar-inner");
+  watchSubtree(".view-main .pages", "onNotificationLoad", ".page > .button");
   // watch quest popup
   watchSubtree(".view-main .toolbar", "onQuestLoad");
   // watch menu

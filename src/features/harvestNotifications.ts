@@ -6,7 +6,6 @@ import {
   harvestAll,
 } from "~/api/farmrpg/farm";
 import { Feature, FeatureSetting, Settings } from "./feature";
-import { getCurrentPage, Page } from "~/utils/page";
 import {
   Handler,
   NotificationId,
@@ -14,6 +13,7 @@ import {
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
+import { Page } from "~/utils/page";
 import { toUrl } from "~/api/state";
 
 const SETTING_HARVEST_NOTIFICATIONS: FeatureSetting = {
@@ -57,12 +57,6 @@ const renderFields = async (
   if (!state) {
     return;
   }
-  // don't show notifications on farm page because it's too jumpy
-  const currentPage = getCurrentPage();
-  if (currentPage && currentPage.dataset.page === Page.FARM) {
-    removeNotification(NotificationId.FIELD);
-    return;
-  }
   if (
     state.status === CropStatus.EMPTY &&
     settings[SETTING_EMPTY_NOTIFICATIONS.id].value
@@ -72,6 +66,7 @@ const renderFields = async (
       id: NotificationId.FIELD,
       text: "Fields are empty!",
       href: toUrl(Page.FARM, new URLSearchParams({ id: String(farmId) })),
+      excludePages: [Page.FARM],
     });
   } else if (
     state.status === CropStatus.READY &&
@@ -93,6 +88,7 @@ const renderFields = async (
           handler: Handler.HARVEST,
         },
       ],
+      excludePages: [Page.FARM],
     });
   } else {
     removeNotification(NotificationId.FIELD);

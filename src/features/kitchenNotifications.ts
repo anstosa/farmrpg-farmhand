@@ -74,6 +74,7 @@ const renderOvens = async (
       id: NotificationId.OVEN,
       text: "Ovens are empty!",
       href: toUrl(Page.KITCHEN, new URLSearchParams()),
+      excludePages: [Page.KITCHEN],
     });
   } else if (
     state.status === OvenStatus.ATTENTION &&
@@ -86,7 +87,10 @@ const renderOvens = async (
         id: NotificationId.OVEN,
         text: "Ovens need attention",
         href: toUrl(Page.KITCHEN, new URLSearchParams()),
+        excludePages: [Page.KITCHEN],
       });
+    } else {
+      removeNotification(NotificationId.OVEN);
     }
   } else if (
     state.status === OvenStatus.READY &&
@@ -104,6 +108,7 @@ const renderOvens = async (
           handler: Handler.COLLECT_MEALS,
         },
       ],
+      excludePages: [Page.KITCHEN],
     });
   } else {
     removeNotification(NotificationId.OVEN);

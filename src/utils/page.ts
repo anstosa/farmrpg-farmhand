@@ -14,6 +14,7 @@ export enum Page {
   MINING = "mining",
   PASTURE = "pasture",
   PERKS = "perks",
+  PETS = "allpetitems",
   PIG_PEN = "pigpen",
   POST_OFFICE = "postoffice",
   QUEST = "quest",
@@ -29,6 +30,7 @@ export enum Page {
 
 export enum WorkerGo {
   ACTIVATE_PERK_SET = "activateperkset",
+  COLLECT_ALL_PET_ITEMS = "collectallpetitems",
   COLLECT_ALL_MAIL_ITEMS = "collectallmailitems",
   COLLECT_ALL_MEALS = "cookreadyall",
   COOK_ALL = "cookitemall",
@@ -39,6 +41,9 @@ export enum WorkerGo {
   PLANT_ALL = "plantall",
   READY_COUNT = "readycount",
   RESET_PERKS = "resetperks",
+  SEASON_MEALS = "seasonmealsall",
+  STIR_MEALS = "stirmealsall",
+  TASTE_MEALS = "tastemealsall",
   USE_ITEM = "useitem",
   WITHDRAW_SILVER = "withdrawalsilver",
 }

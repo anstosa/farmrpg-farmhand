@@ -66,6 +66,7 @@ export enum StorageKey {
   MEALS_STATUS = "mealsStatus",
   PAGE_DATA = "pageData",
   PERKS_SETS = "perkSets",
+  PETS = "pets",
   RECENT_UPDATE = "recentUpdate",
   STATS = "stats",
   USERNAME = "username",

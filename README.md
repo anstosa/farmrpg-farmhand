@@ -118,6 +118,14 @@ This frees up points from many activity specific perks to be re-invested in perk
 
 * Disabled (can be re-enabled in settings)
 
+### Mailbox
+
+* Quick collect from notification
+
+### Pets
+
+* Quick collection option from notification shows summary of what was collected
+
 ### Locksmith
 
 * Open max containers by default (instead of 1)
@@ -155,8 +163,6 @@ Future features under consideration or development
 * Fix notifications page bouncing issue
 * Use again functionality for meals
 * Ctrl+K quick go to popup for quickly going to any page, item, etc from anywhere
-* Show collected items in success popup when collecting from pets
-* Quick collect link in mailbox notification like with pets that shows collected items in success popup
 * Contextual status information in custom navigation items (e.g. crops growing for farm, chores completed for Chores, items exchanged for exchange, etc)
 * Notification for wine at max value
 * Compressed view for home and town pages (square tiles)
@@ -166,6 +172,13 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.28
+
+* Added: Quick collect option for pets now shows popup of what was collected
+* Added: Quick collect option for mailbox notifications
+* Fixed: Improved logic for excluding notifications on certain pages (e.g. no harvest notifications on farm page, no oven notifications on kitchen page)
+* Fixed: Another kitchen notification verbosity bug
 
 ### 1.0.27
 

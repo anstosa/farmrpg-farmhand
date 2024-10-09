@@ -1,8 +1,9 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, getTitle, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_MAX_ANIMALS: FeatureSetting = {
-  id: "maxAnimals",
+const SETTING_MAX_ANIMALS: FeatureSetting = {
+  id: SettingId.MAX_ANIMALS,
   title: "Farm: Buy Max Animals",
   description: "Buy max animals by default (instead of 1)",
   type: "boolean",
@@ -15,7 +16,7 @@ export const maxPigs: Feature = {
     if (page !== Page.PIG_PEN) {
       return;
     }
-    if (!settings[SETTING_MAX_ANIMALS.id].value) {
+    if (!settings[SettingId.MAX_ANIMALS]) {
       return;
     }
     const currentPage = getCurrentPage();

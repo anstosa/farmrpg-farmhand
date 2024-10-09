@@ -1,8 +1,9 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_QUICKSELL_SAFELY: FeatureSetting = {
-  id: "quicksellSafely",
+const SETTING_QUICKSELL_SAFELY: FeatureSetting = {
+  id: SettingId.QUICKSELL_SAFELY,
   title: "Item: Safe Quick Sell",
   description:
     "If item is locked, also lock the Quick Sell and Quick Give buttons",
@@ -28,7 +29,7 @@ export const quicksellSafely: Feature = {
       return;
     }
 
-    const isSafetyOn = settings[SETTING_QUICKSELL_SAFELY.id].value;
+    const isSafetyOn = settings[SettingId.QUICKSELL_SAFELY];
     const lockButton =
       getCurrentPage()?.querySelector<HTMLButtonElement>(".lockbtn");
     const unlockButton =

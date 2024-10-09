@@ -1,16 +1,17 @@
-import { BasicEntity } from "~/api/buddyfarm/state";
-import { Feature, FeatureSetting } from "./feature";
+import { BasicEntity } from "~/api/buddyfarm/types";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { registerAutocomplete } from "~/utils/autocomplete";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_AUTOCOMPLETE_USERS: FeatureSetting = {
-  id: "autocompleteUsers",
+const SETTING_AUTOCOMPLETE_USERS: FeatureSetting = {
+  id: SettingId.AUTOCOMPLETE_USERS,
   title: "Chat: Autocomplete @Users:",
   description: "Auto-complete usernames in chat",
   type: "boolean",
   defaultValue: true,
 };
 
-export const getUsers = (): BasicEntity[] => {
+const getUsers = (): BasicEntity[] => {
   const users: Record<string, BasicEntity> = {};
   const messages = document.querySelectorAll(".chat-txt");
   for (const message of messages) {
@@ -28,7 +29,7 @@ export const autocompleteUsers: Feature = {
   settings: [SETTING_AUTOCOMPLETE_USERS],
   onInitialize: (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_AUTOCOMPLETE_USERS.id].value) {
+    if (!settings[SettingId.AUTOCOMPLETE_USERS]) {
       return;
     }
     registerAutocomplete({

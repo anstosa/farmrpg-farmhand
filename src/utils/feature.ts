@@ -1,12 +1,13 @@
 import { Page } from "~/utils/page";
+import { SettingId } from "./settings";
 
 interface BaseFeatureSetting {
-  id: string;
+  id: SettingId;
   title: string;
   description: string;
-  dataKey?: string;
   buttonText?: string;
-  buttonAction?: (settings: Settings, settingWrapper: HTMLElement) => void;
+  buttonAction?: (settings: SettingValues, settingWrapper: HTMLElement) => void;
+  data?: any;
 }
 
 export interface BooleanFeatureSetting extends BaseFeatureSetting {
@@ -35,15 +36,18 @@ export type FeatureSetting =
   | StringFeatureSetting;
 
 export type Settings = Record<BaseFeatureSetting["id"], FeatureSetting>;
+export type SettingValues = Partial<
+  Record<BaseFeatureSetting["id"], FeatureSetting["value"]>
+>;
 
 export type LoadHandler = (
-  settings: Settings,
+  settings: SettingValues,
   page: Page | undefined,
   parameters: URLSearchParams
 ) => void;
 
 export interface Feature {
-  onInitialize?: (settings: Settings) => void;
+  onInitialize?: (settings: SettingValues) => void;
   onPageLoad?: LoadHandler;
   onChatLoad?: LoadHandler;
   onMenuLoad?: LoadHandler;

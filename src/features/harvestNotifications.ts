@@ -4,8 +4,8 @@ import {
   FarmStatus,
   farmStatusState,
   harvestAll,
-} from "~/api/farmrpg/farm";
-import { Feature, FeatureSetting, Settings } from "./feature";
+} from "~/api/farmrpg/apis/farm";
+import { Feature, FeatureSetting, SettingValues } from "../utils/feature";
 import {
   Handler,
   NotificationId,
@@ -14,10 +14,11 @@ import {
   sendNotification,
 } from "~/utils/notifications";
 import { Page } from "~/utils/page";
-import { toUrl } from "~/api/state";
+import { SettingId } from "~/utils/settings";
+import { toUrl } from "~/api/farmrpg/utils/requests";
 
 const SETTING_HARVEST_NOTIFICATIONS: FeatureSetting = {
-  id: "harvestNotifications",
+  id: SettingId.HARVEST_NOTIFICATIONS,
   title: "Farm: Harvest Notifications",
   description: `
     Show notification when crops are ready to harvest
@@ -26,8 +27,8 @@ const SETTING_HARVEST_NOTIFICATIONS: FeatureSetting = {
   defaultValue: true,
 };
 
-export const SETTING_HARVEST_POPUP: FeatureSetting = {
-  id: "harvestPopup",
+const SETTING_HARVEST_POPUP: FeatureSetting = {
+  id: SettingId.HARVEST_POPUP,
   title: "Farm: Harvest Popup",
   description: `
     Show popup on Farm page when crops are harvested with the harvest results including bonuses</br>
@@ -38,7 +39,7 @@ export const SETTING_HARVEST_POPUP: FeatureSetting = {
 };
 
 const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
-  id: "emptyNotifications",
+  id: SettingId.FIELD_EMPTY_NOTIFICATIONS,
   title: "Farm: Empty Notifications",
   description: `
     Show notification when fields are empty
@@ -50,7 +51,7 @@ const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
 registerNotificationHandler(Handler.HARVEST, harvestAll);
 
 const renderFields = async (
-  settings: Settings,
+  settings: SettingValues,
   state: FarmStatus | undefined
 ): Promise<void> => {
   const farmId = await farmIdState.get();
@@ -59,7 +60,7 @@ const renderFields = async (
   }
   if (
     state.status === CropStatus.EMPTY &&
-    settings[SETTING_EMPTY_NOTIFICATIONS.id].value
+    settings[SettingId.FIELD_EMPTY_NOTIFICATIONS]
   ) {
     sendNotification({
       class: "btnorange",
@@ -70,7 +71,7 @@ const renderFields = async (
     });
   } else if (
     state.status === CropStatus.READY &&
-    settings[SETTING_HARVEST_NOTIFICATIONS.id].value
+    settings[SettingId.HARVEST_NOTIFICATIONS]
   ) {
     const farmUrl = toUrl(
       Page.FARM,

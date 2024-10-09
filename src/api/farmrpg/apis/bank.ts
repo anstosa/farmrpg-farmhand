@@ -1,7 +1,7 @@
-import { CachedState, parseUrl, StorageKey } from "../state";
-import { getDocument } from "../utils";
-import { Page, WorkerGo } from "../../utils/page";
-import { requestHTML } from "./api";
+import { CachedState, StorageKey } from "../../../utils/state";
+import { getDocument } from "../../../utils/requests";
+import { getHTML, parseUrl } from "../utils/requests";
+import { Page, WorkerGo } from "../../../utils/page";
 
 export interface Stats {
   silver: number;
@@ -26,7 +26,7 @@ const processStats = (root: Document): Stats => {
 export const statsState = new CachedState<Stats>(
   StorageKey.STATS,
   async () => {
-    const response = await requestHTML(
+    const response = await getHTML(
       Page.WORKER,
       new URLSearchParams({ go: WorkerGo.GET_STATS })
     );
@@ -36,7 +36,7 @@ export const statsState = new CachedState<Stats>(
     interceptors: [
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.GET_STATS })],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           state.set(processStats(await getDocument(response)));
         },
       },
@@ -45,7 +45,7 @@ export const statsState = new CachedState<Stats>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.DEPOSIT_SILVER }),
         ],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           if (!previous) {
             return;
@@ -61,7 +61,7 @@ export const statsState = new CachedState<Stats>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.WITHDRAW_SILVER }),
         ],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           if (!previous) {
             return;
@@ -82,14 +82,14 @@ export const statsState = new CachedState<Stats>(
 );
 
 export const depositSilver = async (amount: number): Promise<void> => {
-  await requestHTML(
+  await getHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.DEPOSIT_SILVER, amt: amount.toString() })
   );
 };
 
 export const withdrawSilver = async (amount: number): Promise<void> => {
-  await requestHTML(
+  await getHTML(
     Page.WORKER,
     new URLSearchParams({
       go: WorkerGo.WITHDRAW_SILVER,

@@ -1,13 +1,13 @@
-import { Feature } from "./feature";
+import { Feature } from "../utils/feature";
 import { getCurrentPage, getTitle, Page } from "~/utils/page";
-import { SETTING_MAX_ANIMALS } from "./maxPigs";
+import { SettingId } from "~/utils/settings";
 
 export const maxCows: Feature = {
   onPageLoad: (settings, page) => {
     if (page !== Page.PASTURE) {
       return;
     }
-    if (!settings[SETTING_MAX_ANIMALS.id].value) {
+    if (!settings[SettingId.MAX_ANIMALS]) {
       return;
     }
     const currentPage = getCurrentPage();

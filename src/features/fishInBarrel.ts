@@ -1,7 +1,8 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_FISH_IN_BARREL: FeatureSetting = {
-  id: "fishInBarrel",
+const SETTING_FISH_IN_BARREL: FeatureSetting = {
+  id: SettingId.FISH_IN_BARREL,
   title: "Fishing: Barrel Mode",
   description: "Fish always appear in middle of pond",
   type: "boolean",
@@ -12,7 +13,7 @@ export const fishinInBarrel: Feature = {
   settings: [SETTING_FISH_IN_BARREL],
   onInitialize: (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_FISH_IN_BARREL.id].value) {
+    if (!settings[SettingId.FISH_IN_BARREL]) {
       return;
     }
 

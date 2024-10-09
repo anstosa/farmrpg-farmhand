@@ -1,17 +1,18 @@
-import { depositSilver, withdrawSilver } from "~/api/farmrpg/bank";
-import { Feature, FeatureSetting } from "./feature";
+import { depositSilver, withdrawSilver } from "~/api/farmrpg/apis/bank";
+import { Feature, FeatureSetting } from "../utils/feature";
 import {
   getCardByTitle,
   getCurrentPage,
   getListByTitle,
   Page,
 } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 import { showConfirmation } from "~/utils/confirmation";
 import { showPopup } from "~/utils/popup";
 import { TEXT_SUCCESS, TEXT_WARNING } from "~/utils/theme";
 
-export const SETTING_BANKER: FeatureSetting = {
-  id: "banker",
+const SETTING_BANKER: FeatureSetting = {
+  id: SettingId.BANKER,
   title: "Bank: Banker",
   description: `
     * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br>
@@ -26,7 +27,7 @@ export const banker: Feature = {
   settings: [SETTING_BANKER],
   onPageLoad: (settings, page) => {
     // make sure the banker is enabled
-    if (!settings[SETTING_BANKER.id].value) {
+    if (!settings[SettingId.BANKER]) {
       return;
     }
 

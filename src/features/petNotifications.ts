@@ -1,5 +1,5 @@
-import { collectPets, petState } from "~/api/farmrpg/pets";
-import { Feature } from "./feature";
+import { collectPets, petState } from "~/api/farmrpg/apis/pets";
+import { Feature } from "../utils/feature";
 import {
   Handler,
   NotificationId,
@@ -7,9 +7,9 @@ import {
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
-import { MailboxContent } from "~/api/farmrpg/mail";
+import { MailboxContent } from "~/api/farmrpg/apis/mail";
 import { Page } from "~/utils/page";
-import { toUrl } from "~/api/state";
+import { toUrl } from "~/api/farmrpg/utils/requests";
 
 registerNotificationHandler(Handler.COLLECT_PETS, collectPets);
 

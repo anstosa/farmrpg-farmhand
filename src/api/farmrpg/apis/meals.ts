@@ -1,7 +1,8 @@
-import { CachedState, StorageKey } from "../state";
-import { getDocument } from "../utils";
+import { CachedState, StorageKey } from "../../../utils/state";
+import { getDocument } from "../../../utils/requests";
+import { getHTML } from "../utils/requests";
 import { getListByTitle, Page, WorkerGo } from "~/utils/page";
-import { requestHTML, timestampToDate } from "./api";
+import { timestampToDate } from "../utils/time";
 
 export interface ActiveMeal {
   meal: string;
@@ -40,7 +41,7 @@ const processMealStatus = (root: HTMLElement): MealsStatus => {
 export const mealsStatusState = new CachedState<MealsStatus>(
   StorageKey.MEALS_STATUS,
   async () => {
-    const response = await requestHTML(Page.HOME_PATH);
+    const response = await getHTML(Page.HOME_PATH);
     return processMealStatus(response.body);
   },
   {
@@ -50,7 +51,7 @@ export const mealsStatusState = new CachedState<MealsStatus>(
     interceptors: [
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processMealStatus(root.body));
         },
@@ -59,7 +60,7 @@ export const mealsStatusState = new CachedState<MealsStatus>(
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.USE_ITEM })],
         callback: async () => {
           // request homepage to trigger meals state update
-          await requestHTML(Page.HOME_PATH);
+          await getHTML(Page.HOME_PATH);
         },
       },
     ],

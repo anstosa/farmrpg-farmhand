@@ -1,9 +1,10 @@
 import { debounce } from "~/utils/debounce";
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_MAX_CONTAINERS: FeatureSetting = {
-  id: "maxContainers",
+const SETTING_MAX_CONTAINERS: FeatureSetting = {
+  id: SettingId.MAX_CONTAINERS,
   title: "Locksmith: Max containers",
   description: "Open max containers by default (instead of 1)",
   type: "boolean",
@@ -13,7 +14,7 @@ export const SETTING_MAX_CONTAINERS: FeatureSetting = {
 export const maxContainers: Feature = {
   settings: [SETTING_MAX_CONTAINERS],
   onPageLoad: (settings, page) => {
-    if (!settings[SETTING_MAX_CONTAINERS.id].value) {
+    if (!settings[SettingId.MAX_CONTAINERS]) {
       return;
     }
     if (page !== Page.LOCKSMITH) {

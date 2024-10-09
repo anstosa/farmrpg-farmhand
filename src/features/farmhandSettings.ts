@@ -1,56 +1,13 @@
-import { Feature, FeatureSetting, Settings } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import {
+  getData,
+  getSettings,
+  setData,
+  setSetting,
+  SettingId,
+} from "~/utils/settings";
 import { showPopup } from "~/utils/popup";
-
-export const getSettings = async (features: Feature[]): Promise<Settings> => {
-  const settings: Settings = {};
-  for (const feature of features) {
-    for (const setting of feature.settings ?? []) {
-      setting.value = (await GM.getValue(
-        setting.id,
-        setting.defaultValue
-      )) as any;
-      settings[setting.id] = setting;
-    }
-  }
-  return settings;
-};
-
-export const getSetting = async (
-  setting: FeatureSetting
-): Promise<FeatureSetting> => ({
-  ...setting,
-  value: (await GM.getValue(setting.id, setting.defaultValue)) as any,
-});
-
-export const getData = async <T>(
-  setting: FeatureSetting | string,
-  defaultValue: T
-): Promise<T> => {
-  const key = typeof setting === "string" ? setting : setting.dataKey;
-  if (!key) {
-    return defaultValue;
-  }
-  const rawData = await GM.getValue<string>(key, "");
-  if (!rawData) {
-    return defaultValue;
-  }
-  return JSON.parse(rawData) as T;
-};
-
-export const setData = async <T>(
-  setting: FeatureSetting | string,
-  data: T
-): Promise<void> => {
-  const key = typeof setting === "string" ? setting : setting.dataKey;
-  if (!key) {
-    return;
-  }
-  await GM.setValue(key, JSON.stringify(data));
-};
-
-export const setSetting = (setting: FeatureSetting): Promise<void> =>
-  GM.setValue(setting.id, setting.value ?? "");
 
 const getWrapper = (
   { id, type, value }: FeatureSetting,
@@ -175,17 +132,15 @@ const getValue = (
   }
 };
 
-type ExportedSettings = Array<FeatureSetting & { data: any }>;
-
-export const SETTING_EXPORT: FeatureSetting = {
-  id: "export",
+const SETTING_EXPORT: FeatureSetting = {
+  id: SettingId.EXPORT,
   title: "Settings: Export",
   description: "Exports Farmhand Settings to sync to other device",
   type: "string",
   defaultValue: "",
   buttonText: "Export",
   buttonAction: async (settings, settingWrapper) => {
-    const exportedSettings = Object.values(settings) as ExportedSettings;
+    const exportedSettings = Object.values(getSettings());
     for (const setting of exportedSettings) {
       setting.data = await getData(setting, "");
     }
@@ -203,8 +158,8 @@ export const SETTING_EXPORT: FeatureSetting = {
   },
 };
 
-export const SETTING_IMPORT: FeatureSetting = {
-  id: "import",
+const SETTING_IMPORT: FeatureSetting = {
+  id: SettingId.IMPORT,
   title: "Settings: Import",
   description: "Paste export into box and click Import",
   type: "string",
@@ -214,7 +169,7 @@ export const SETTING_IMPORT: FeatureSetting = {
   buttonAction: async (settings, settingWrapper) => {
     const input =
       settingWrapper.querySelector<HTMLInputElement>(".fh-input")?.value;
-    const importedSettings = JSON.parse(input ?? "[]") as ExportedSettings;
+    const importedSettings = JSON.parse(input ?? "[]") as FeatureSetting[];
     for (const setting of importedSettings) {
       await setSetting(setting);
       if (setting.data) {
@@ -247,7 +202,7 @@ export const farmhandSettings: Feature = {
     `
     );
   },
-  onPageLoad: (settings, page) => {
+  onPageLoad: (settingValues, page) => {
     // make sure we are on the settings page
     if (page !== Page.SETTINGS_OPTIONS) {
       return;
@@ -281,7 +236,8 @@ export const farmhandSettings: Feature = {
     settingsList.append(farmhandSettingsLi);
 
     // add settings
-    for (const setting of Object.values(settings)) {
+    for (const setting of getSettings()) {
+      setting.value = settingValues[setting.id];
       const hasButton = setting.buttonText && setting.buttonAction;
       const settingLi = document.createElement("li");
       settingLi.innerHTML = `
@@ -331,7 +287,7 @@ export const farmhandSettings: Feature = {
         ?.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
-          setting.buttonAction?.(settings, settingLi);
+          setting.buttonAction?.(settingValues, settingLi);
         });
       settingsList.append(settingLi);
     }
@@ -343,10 +299,11 @@ export const farmhandSettings: Feature = {
       return;
     }
 
-    saveButton.addEventListener("click", () => {
-      for (const setting of Object.values(settings)) {
+    saveButton.addEventListener("click", async () => {
+      saveButton.textContent = "Saving...";
+      for (const setting of Object.values(getSettings())) {
         setting.value = getValue(setting, currentPage);
-        setSetting(setting);
+        await setSetting(setting);
       }
       setTimeout(() => window.location.reload(), 1000);
     });

@@ -1,9 +1,9 @@
-import { CachedState, StorageKey } from "../state";
-import { getDocument } from "../utils";
+import { CachedState, StorageKey } from "../../../utils/state";
+import { getDocument } from "../../../utils/requests";
+import { getHTML, getJSON } from "../utils/requests";
 import { getPage, Page, WorkerGo } from "~/utils/page";
-import { Item } from "../buddyfarm/state";
-import { requestHTML, requestJSON } from "./api";
-import { SETTING_HARVEST_POPUP } from "~/features/harvestNotifications";
+import { getSettingValues, SettingId } from "~/utils/settings";
+import { Item } from "../../buddyfarm/types";
 import { showPopup } from "~/utils/popup";
 
 export interface FarmState {
@@ -84,7 +84,7 @@ const scheduledUpdates: Record<number, NodeJS.Timeout> = {};
 export const farmStatusState = new CachedState<FarmStatus>(
   StorageKey.FARM_STATUS,
   async () => {
-    const response = await requestHTML(Page.FARM, new URLSearchParams());
+    const response = await getHTML(Page.FARM, new URLSearchParams());
     return processFarmPage(response.body);
   },
   {
@@ -97,21 +97,21 @@ export const farmStatusState = new CachedState<FarmStatus>(
     interceptors: [
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.READY_COUNT })],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           state.set(processFarmStatus(root.body));
         },
       },
       {
         match: [Page.FARM, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processFarmPage(root.body));
         },
       },
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const linkStatus = root.body.querySelector<HTMLDivElement>(
             "a[href^='xfarm.php'] .item-after"
@@ -124,11 +124,11 @@ export const farmStatusState = new CachedState<FarmStatus>(
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.FARM_STATUS })],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const raw = await response.text();
           const rawPlots = raw.split(";");
           if (rawPlots.length < (previous?.count ?? 4)) {
-            await state.set({ status: CropStatus.EMPTY });
+            await state.set({ ...previous, status: CropStatus.EMPTY });
             return;
           }
           let status: CropStatus = CropStatus.EMPTY;
@@ -144,13 +144,13 @@ export const farmStatusState = new CachedState<FarmStatus>(
               status = CropStatus.GROWING;
             }
           }
-          await state.set({ status });
+          await state.set({ ...previous, status });
         },
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.HARVEST_ALL })],
-        callback: async (settings, state, previous, response) => {
-          await state.set({ status: CropStatus.EMPTY });
+        callback: async (state, previous, response) => {
+          await state.set({ ...previous, status: CropStatus.EMPTY });
           const { drops } = (await response.json()) as {
             result: "success";
             drops: Record<
@@ -163,7 +163,8 @@ export const farmStatusState = new CachedState<FarmStatus>(
             >;
           };
           const [page] = getPage();
-          if (page !== Page.FARM || settings[SETTING_HARVEST_POPUP.id].value) {
+          const settings = await getSettingValues();
+          if (page !== Page.FARM || settings[SettingId.HARVEST_NOTIFICATIONS]) {
             showPopup({
               title: "Harvested Crops",
               contentHTML: `
@@ -197,7 +198,7 @@ export const farmStatusState = new CachedState<FarmStatus>(
                         .querySelector<HTMLAnchorElement>(".plantallbtn")
                         ?.click();
                     } else {
-                      await requestHTML(
+                      await getHTML(
                         Page.WORKER,
                         new URLSearchParams({
                           go: WorkerGo.PLANT_ALL,
@@ -214,8 +215,8 @@ export const farmStatusState = new CachedState<FarmStatus>(
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.PLANT_ALL })],
-        callback: async (settings, state) => {
-          await state.set({ status: CropStatus.GROWING });
+        callback: async (state, previous) => {
+          await state.set({ ...previous, status: CropStatus.GROWING });
         },
       },
     ],
@@ -223,12 +224,12 @@ export const farmStatusState = new CachedState<FarmStatus>(
 );
 
 const updateStatus = async (): Promise<void> => {
-  const state = await farmStatusState.get({ doNotFetch: true });
+  const state = farmStatusState.read();
   if (!state) {
     return;
   }
   if (state.readyAt < Date.now()) {
-    await farmStatusState.set({ status: CropStatus.READY });
+    await farmStatusState.set({ ...state, status: CropStatus.READY });
   }
 };
 
@@ -254,7 +255,7 @@ const processFarmId = (root: HTMLElement): number | undefined => {
 export const farmIdState = new CachedState<number>(
   StorageKey.FARM_ID,
   async () => {
-    const response = await requestHTML(Page.FARM, new URLSearchParams());
+    const response = await getHTML(Page.FARM, new URLSearchParams());
     return processFarmId(response.body);
   },
   {
@@ -263,14 +264,14 @@ export const farmIdState = new CachedState<number>(
     interceptors: [
       {
         match: [Page.FARM, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processFarmId(root.body));
         },
       },
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const status = root.body.querySelector<HTMLDivElement>(
             "a[href^='xfarm.php'] .item-after span"
@@ -287,7 +288,7 @@ export const farmIdState = new CachedState<number>(
 
 export const harvestAll = async (): Promise<void> => {
   const farmId = await farmIdState.get();
-  await requestJSON(
+  await getJSON(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.HARVEST_ALL, id: String(farmId) })
   );

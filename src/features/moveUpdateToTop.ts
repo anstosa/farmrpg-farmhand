@@ -1,8 +1,23 @@
-import { Feature } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCardByTitle, getCurrentPage, getTitle, Page } from "~/utils/page";
-import { StorageKey } from "~/api/state";
+import { getData, setData, SettingId } from "~/utils/settings";
+
+interface UpdateData {
+  latestRead: string;
+}
+
+const SETTING_UPDATE_AT_TOP: FeatureSetting = {
+  id: SettingId.UPDATE_AT_TOP,
+  title: "Home: Move updates to top",
+  description: `
+    Move the most recent update to the top of the home page and make it hidable
+  `,
+  type: "boolean",
+  defaultValue: true,
+};
 
 export const moveUpdateToTop: Feature = {
+  settings: [SETTING_UPDATE_AT_TOP],
   onPageLoad: async (settings, page) => {
     // make sure we're on the home page
     if (page !== Page.HOME_PAGE) {
@@ -23,7 +38,9 @@ export const moveUpdateToTop: Feature = {
     }
 
     // check if it's newer
-    const latestRead = await GM.getValue(StorageKey.RECENT_UPDATE, "");
+    const { latestRead } = await getData<UpdateData>(SettingId.UPDATE_AT_TOP, {
+      latestRead: "",
+    });
     if (latestUpdate === latestRead) {
       return;
     }
@@ -51,7 +68,7 @@ export const moveUpdateToTop: Feature = {
       hideButton.textContent = "Hide";
       hideButton.addEventListener("click", async () => {
         // mark current as read
-        await GM.setValue(StorageKey.RECENT_UPDATE, latestUpdate);
+        await setData(SettingId.UPDATE_AT_TOP, { latestRead: latestUpdate });
         window.location.reload();
       });
       recentUpdatesTitle.append(hideButton);

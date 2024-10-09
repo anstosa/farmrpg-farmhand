@@ -1,8 +1,9 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_EXPLORE_RESULTS: FeatureSetting = {
-  id: "",
+const SETTING_EXPLORE_IMPROVED: FeatureSetting = {
+  id: SettingId.EXPLORE_IMPROVED,
   title: "Explore: Improved Layout",
   description: "Larger icons and stable sort",
   type: "boolean",
@@ -12,12 +13,12 @@ export const SETTING_EXPLORE_RESULTS: FeatureSetting = {
 let maxHeight = 0;
 
 export const cleanupExplore: Feature = {
-  settings: [SETTING_EXPLORE_RESULTS],
+  settings: [SETTING_EXPLORE_IMPROVED],
   onPageLoad: (settings, page) => {
     if (!page || ![Page.AREA, Page.FISHING].includes(page)) {
       return;
     }
-    if (!settings[SETTING_EXPLORE_RESULTS.id].value) {
+    if (!settings[SettingId.EXPLORE_IMPROVED]) {
       return;
     }
 

@@ -1,10 +1,10 @@
 import { BORDER_GRAY } from "~/utils/theme";
-import { Feature, FeatureSetting } from "./feature";
-import { getData, setData } from "./farmhandSettings";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { getData, setData, SettingId } from "~/utils/settings";
 import { showConfirmation } from "~/utils/confirmation";
 
-export const SETTING_CUSTOM_NAVIGATION: FeatureSetting = {
-  id: "customNav",
+const SETTING_CUSTOM_NAVIGATION: FeatureSetting = {
+  id: SettingId.NAV_CUSTOM,
   title: "Customize Navigation",
   description: `
     Enables customization of the Navigation menu<br>
@@ -12,14 +12,13 @@ export const SETTING_CUSTOM_NAVIGATION: FeatureSetting = {
   `,
   type: "boolean",
   defaultValue: true,
-  dataKey: "customNav_data",
 };
 
 const state: { isEditing: boolean; editingIndex?: number } = {
   isEditing: false,
 };
 
-interface NavigationItem {
+export interface NavigationItem {
   icon: string;
   text: string;
   path: string;
@@ -68,9 +67,9 @@ const icons = ((): string[] => {
 })();
 
 const renderNavigation = async (force: boolean = false): Promise<void> => {
-  const navigationData = await getData<NavigationItem[]>(
+  const { items } = await getData<{ items: NavigationItem[] }>(
     SETTING_CUSTOM_NAVIGATION,
-    DEFAULT_NAVIGATION
+    { items: DEFAULT_NAVIGATION }
   );
   const navigationList =
     document.querySelector<HTMLUListElement>(".panel-left ul");
@@ -101,7 +100,7 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
     resetButton.classList.add("fa-arrow-left-rotate");
     resetButton.addEventListener("click", () => {
       showConfirmation("Reset Navigation?", async () => {
-        await setData(SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items: DEFAULT_NAVIGATION });
         state.isEditing = false;
         renderNavigation(true);
       });
@@ -112,8 +111,8 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
   navigationList.innerHTML = "";
   navigationList.dataset.isCustomized = "true";
   navigationList.dataset.isEditing = String(state.isEditing);
-  for (const item of navigationData) {
-    const currentIndex = navigationData.indexOf(item);
+  for (const item of items) {
+    const currentIndex = items.indexOf(item);
     const navigationItem = document.createElement("li");
     navigationItem.innerHTML = `
       <a
@@ -245,7 +244,7 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
           return;
         }
         item.icon = (event.target as HTMLElement).dataset.icon ?? "";
-        await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items });
         renderNavigation(true);
       });
     navigationItem
@@ -260,7 +259,7 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
         event.preventDefault();
         event.stopPropagation();
         item.text = (event.target as HTMLInputElement).value;
-        await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items });
         renderNavigation(true);
       });
     navigationItem
@@ -286,7 +285,7 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
         event.preventDefault();
         event.stopPropagation();
         item.path = (event.target as HTMLInputElement).value;
-        await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items });
         renderNavigation(true);
       });
     navigationItem
@@ -297,10 +296,10 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
         if (currentIndex === 0) {
           return;
         }
-        navigationData.splice(currentIndex, 1);
-        navigationData.splice(currentIndex - 1, 0, item);
+        items.splice(currentIndex, 1);
+        items.splice(currentIndex - 1, 0, item);
         state.editingIndex = currentIndex - 1;
-        await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items });
         renderNavigation(true);
       });
     navigationItem
@@ -308,13 +307,13 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
       ?.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (currentIndex === navigationData.length - 1) {
+        if (currentIndex === items.length - 1) {
           return;
         }
-        navigationData.splice(currentIndex, 1);
-        navigationData.splice(currentIndex + 1, 0, item);
+        items.splice(currentIndex, 1);
+        items.splice(currentIndex + 1, 0, item);
         state.editingIndex = currentIndex + 1;
-        await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items });
         renderNavigation(true);
       });
     navigationItem
@@ -334,8 +333,8 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
       ?.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        navigationData.splice(currentIndex, 1);
-        await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
+        items.splice(currentIndex, 1);
+        await setData(SETTING_CUSTOM_NAVIGATION, { items });
         renderNavigation(true);
       });
     navigationList.append(navigationItem);
@@ -376,13 +375,13 @@ const renderNavigation = async (force: boolean = false): Promise<void> => {
     addNavigationItem.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      navigationData.push({
+      items.push({
         icon: "sack-dollar",
         text: "Tip anstosa",
         path: "profile.php?user_name=anstosa",
       });
-      await setData(SETTING_CUSTOM_NAVIGATION, navigationData);
-      state.editingIndex = navigationData.length - 1;
+      await setData(SETTING_CUSTOM_NAVIGATION, { items });
+      state.editingIndex = items.length - 1;
       renderNavigation(true);
     });
     navigationList.append(addNavigationItem);
@@ -393,7 +392,7 @@ export const customNavigation: Feature = {
   settings: [SETTING_CUSTOM_NAVIGATION],
   onMenuLoad: (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_CUSTOM_NAVIGATION.id].value) {
+    if (!settings[SettingId.NAV_CUSTOM]) {
       return;
     }
 

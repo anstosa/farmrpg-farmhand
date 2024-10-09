@@ -1,7 +1,11 @@
-import { CachedState, parseUrl, StateQueryOptions, StorageKey } from "../state";
-import { getDocument } from "../utils";
-import { getListByTitle, Page, WorkerGo } from "../../utils/page";
-import { requestHTML } from "./api";
+import {
+  CachedState,
+  StateQueryOptions,
+  StorageKey,
+} from "../../../utils/state";
+import { getDocument } from "../../../utils/requests";
+import { getHTML, parseUrl } from "../utils/requests";
+import { getListByTitle, Page, WorkerGo } from "../../../utils/page";
 
 export enum PerkActivity {
   DEFAULT = "Default",
@@ -47,7 +51,7 @@ const processPerks = (root: Document): PerksState => {
 export const perksState = new CachedState<PerksState>(
   StorageKey.PERKS_SETS,
   async () => {
-    const response = await requestHTML(Page.PERKS);
+    const response = await getHTML(Page.PERKS);
     return processPerks(response);
   },
   {
@@ -59,7 +63,7 @@ export const perksState = new CachedState<PerksState>(
     interceptors: [
       {
         match: [Page.PERKS, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           await state.set(processPerks(await getDocument(response)));
         },
       },
@@ -68,9 +72,10 @@ export const perksState = new CachedState<PerksState>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.ACTIVATE_PERK_SET }),
         ],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const [_, query] = parseUrl(response.url);
           await state.set({
+            ...previous,
             currentPerkSetId: Number(query.get("id")),
           });
         },
@@ -104,10 +109,7 @@ export const isActivePerkSet = async (
 
 export const resetPerks = async (): Promise<void> => {
   const state = await perksState.get();
-  await requestHTML(
-    Page.WORKER,
-    new URLSearchParams({ go: WorkerGo.RESET_PERKS })
-  );
+  await getHTML(Page.WORKER, new URLSearchParams({ go: WorkerGo.RESET_PERKS }));
   perksState.set({
     perkSets: state?.perkSets ?? [],
     currentPerkSetId: undefined,
@@ -123,7 +125,7 @@ export const activatePerkSet = async (
   }
   console.debug(`Activating ${set.name} Perks`);
   await resetPerks();
-  await requestHTML(
+  await getHTML(
     Page.WORKER,
     new URLSearchParams({
       go: WorkerGo.ACTIVATE_PERK_SET,

@@ -1,32 +1,33 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCardByTitle, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_HIDE_PLAYERS: FeatureSetting = {
-  id: "homeHidePlayers",
+const SETTING_HIDE_PLAYERS: FeatureSetting = {
+  id: SettingId.HOME_HIDE_PLAYERS,
   title: "Home: Hide players",
   description: "Hide Online, new, find players options",
   type: "boolean",
   defaultValue: false,
 };
 
-export const SETTING_HIDE_THEME: FeatureSetting = {
-  id: "homeHideTheme",
+const SETTING_HIDE_THEME: FeatureSetting = {
+  id: SettingId.HOME_HIDE_THEME,
   title: "Home: Hide theme switcher",
   description: "Hide theme switcher on homepage",
   type: "boolean",
   defaultValue: false,
 };
 
-export const SETTING_HIDE_FOOTER: FeatureSetting = {
-  id: "homeHideFooter",
+const SETTING_HIDE_FOOTER: FeatureSetting = {
+  id: SettingId.HOME_HIDE_FOOTER,
   title: "Home: Hide footer",
   description: "Hide footer (Privacy, CoC, T&C, Support) ",
   type: "boolean",
   defaultValue: false,
 };
 
-export const SETTING_COMPRESS_SKILLS: FeatureSetting = {
-  id: "homeCompressSkills",
+const SETTING_COMPRESS_SKILLS: FeatureSetting = {
+  id: SettingId.HOME_COMPRESS_SKILLS,
   title: "Home: Compress Skills",
   description: "Hide Level 99 skills",
   type: "boolean",
@@ -41,7 +42,7 @@ export const cleanupHome: Feature = {
     SETTING_COMPRESS_SKILLS,
   ],
   onInitialize: (settings) => {
-    if (settings[SETTING_HIDE_PLAYERS.id].value) {
+    if (settings[SettingId.HOME_HIDE_PLAYERS]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
@@ -56,7 +57,7 @@ export const cleanupHome: Feature = {
       );
     }
 
-    if (settings[SETTING_HIDE_THEME.id].value) {
+    if (settings[SettingId.HOME_HIDE_THEME]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
@@ -71,7 +72,7 @@ export const cleanupHome: Feature = {
       );
     }
 
-    if (settings[SETTING_HIDE_FOOTER.id].value) {
+    if (settings[SettingId.HOME_HIDE_FOOTER]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
@@ -89,7 +90,7 @@ export const cleanupHome: Feature = {
     if (page !== Page.HOME_PAGE) {
       return;
     }
-    if (!settings[SETTING_COMPRESS_SKILLS.id].value) {
+    if (!settings[SettingId.HOME_COMPRESS_SKILLS]) {
       return;
     }
 

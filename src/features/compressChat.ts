@@ -1,8 +1,9 @@
 import { BORDER_GRAY } from "~/utils/theme";
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_CHAT_COMPRESS: FeatureSetting = {
-  id: "compressChat",
+const SETTING_CHAT_COMPRESS: FeatureSetting = {
+  id: SettingId.CHAT_COMPRESS,
   title: "Chat: Compress messages",
   description: "Compress chat messages to make more visible at once",
   type: "boolean",
@@ -42,7 +43,7 @@ export const compressChat: Feature = {
     );
 
     // make sure setting is enabled
-    if (!settings[SETTING_CHAT_COMPRESS.id].value) {
+    if (!settings[SettingId.CHAT_COMPRESS]) {
       return;
     }
 

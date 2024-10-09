@@ -1,6 +1,6 @@
-import { Feature } from "./feature";
+import { Feature } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
-import { getItemByName } from "~/api/buddyfarm/api";
+import { itemDataState } from "~/api/buddyfarm/api";
 
 export const linkifyQuickCraft: Feature = {
   onPageLoad: async (settings, page) => {
@@ -23,7 +23,7 @@ export const linkifyQuickCraft: Feature = {
       missingIngredientsWrapper.textContent?.split(", ");
     missingIngredientsWrapper.textContent = "";
     for (const ingredient of missingIngredients ?? []) {
-      const data = await getItemByName(ingredient);
+      const data = await itemDataState.get({ query: ingredient });
       if (!data) {
         console.error(`No data for ${ingredient}`);
         continue;

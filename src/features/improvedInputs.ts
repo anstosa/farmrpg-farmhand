@@ -9,13 +9,14 @@ import {
   INPUT_STYLES,
   toCSS,
 } from "~/utils/theme";
-import { Feature, FeatureSetting } from "./feature";
+import { clearDropdown, ItemOption, replaceSelect } from "~/utils/dropdown";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { getAbridgedItem } from "~/api/buddyfarm/api";
 import { getCurrentPage } from "~/utils/page";
-import { getItemByName } from "~/api/buddyfarm/api";
-import { ItemOption, replaceSelect } from "~/utils/dropdown";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_IMPROVED_INPUTS: FeatureSetting = {
-  id: "improvedInputs",
+const SETTING_IMPROVED_INPUTS: FeatureSetting = {
+  id: SettingId.IMPROVED_INPUTS,
   title: "UI: Improved Inputs",
   description:
     "Consistent button and field styling and improved item selector UI",
@@ -26,7 +27,7 @@ export const SETTING_IMPROVED_INPUTS: FeatureSetting = {
 export const improvedInputs: Feature = {
   settings: [SETTING_IMPROVED_INPUTS],
   onInitialize: (settings) => {
-    if (!settings[SETTING_IMPROVED_INPUTS.id].value) {
+    if (!settings[SettingId.IMPROVED_INPUTS]) {
       return;
     }
     document.head.insertAdjacentHTML(
@@ -34,8 +35,9 @@ export const improvedInputs: Feature = {
       `
         <style>
           .newinput,
+          .searchbar input[type="search"],
           input[type="number"]:not(#vaultcode),
-          input[type="text"]:not(#chat_txt_desktop) {
+          input[type="text"]:not(#chat_txt_desktop):not("chat_txt_mobile"), {
             ${toCSS(INPUT_STYLES)}
           }
 
@@ -108,21 +110,19 @@ export const improvedInputs: Feature = {
       `
     );
   },
-  onPageLoad: (settings) => {
-    if (!settings[SETTING_IMPROVED_INPUTS.id].value) {
+  onPageLoad: async (settings) => {
+    if (!settings[SettingId.IMPROVED_INPUTS]) {
       return;
     }
-    const selector = getCurrentPage()?.querySelector<HTMLSelectElement>(
+    clearDropdown();
+    const selectors = getCurrentPage()?.querySelectorAll<HTMLSelectElement>(
       "select[class*='id']:not(.locide):not(.type_id)"
     );
-    if (!selector) {
-      return;
-    }
-    (async () => {
+    for (const selector of selectors ?? []) {
       const options: Array<ItemOption | undefined> = await Promise.all(
         [...selector.options].map(async (option) => {
           if (option.dataset.name === "Shovel") {
-            const shovel = await getItemByName("Shovel");
+            const shovel = await getAbridgedItem("Shovel");
             return {
               name: "Dig Up",
               quantity: Number(option.dataset.amt),
@@ -133,11 +133,17 @@ export const improvedInputs: Feature = {
           }
           const match = option.textContent?.match(/^(.*) \(([\d,]+)\)$/);
           if (!match) {
+            if (
+              option.textContent === "--- select ---" ||
+              option.textContent === "Nothing Selected"
+            ) {
+              return;
+            }
             console.error("Failed to parse option", option);
             return;
           }
           const [, name, quantity] = match;
-          const item = await getItemByName(name);
+          const item = await getAbridgedItem(name);
           if (!item) {
             console.error("Failed to get item", name);
             return;
@@ -155,6 +161,6 @@ export const improvedInputs: Feature = {
         selector,
         options.filter((option) => option !== undefined)
       );
-    })();
+    }
   },
 };

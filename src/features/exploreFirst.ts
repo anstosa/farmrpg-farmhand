@@ -1,8 +1,9 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCardByTitle, getTitle, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_EXPLORE_FIRST: FeatureSetting = {
-  id: "collapseItem",
+const SETTING_EXPLORE_FIRST: FeatureSetting = {
+  id: SettingId.EXPLORE_FIRST,
   title: "Item: Prioritize Explore",
   description: "Move Exploring, Fishing, and Mining above Crafting and Cooking",
   type: "boolean",
@@ -37,7 +38,7 @@ export const exploreFirst: Feature = {
     }
 
     // make sure we're enabled
-    if (!settings[SETTING_EXPLORE_FIRST.id].value) {
+    if (!settings[SettingId.EXPLORE_FIRST]) {
       return;
     }
 

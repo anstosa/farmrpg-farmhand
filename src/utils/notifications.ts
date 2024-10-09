@@ -1,7 +1,7 @@
-import { Feature } from "../features/feature";
+import { Feature } from "./feature";
 import { getCurrentPage } from "~/utils/page";
 import { isObject } from "./object";
-import { setData } from "../features/farmhandSettings";
+import { setData } from "./settings";
 
 const KEY_NOTIFICATIONS = "notifications";
 
@@ -100,7 +100,7 @@ export const sendNotification = async <T>(
     ...state.notifications.filter(({ id }) => id !== notification.id),
     notification,
   ];
-  await setData(KEY_NOTIFICATIONS, state.notifications);
+  await setData(KEY_NOTIFICATIONS, state);
   renderNotifications(true);
 };
 
@@ -113,7 +113,7 @@ export const removeNotification = async (
   state.notifications = state.notifications.filter(
     ({ id }) => id !== notificationId
   );
-  await setData(KEY_NOTIFICATIONS, state.notifications);
+  await setData(KEY_NOTIFICATIONS, state);
   renderNotifications();
 };
 
@@ -227,13 +227,6 @@ const renderNotifications = (force: boolean = false): void => {
 };
 
 export const notifications: Feature = {
-  onInitialize: async () => {
-    // const savedNotifications = await getData<Notification<any>[]>(
-    //   KEY_NOTIFICATIONS,
-    //   []
-    // );
-    // state.notifications = savedNotifications;
-  },
   onPageLoad: () => {
     setTimeout(renderNotifications, 500);
   },

@@ -1,7 +1,8 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_COMPACT_SILVER: FeatureSetting = {
-  id: "compactSilver",
+const SETTING_COMPACT_SILVER: FeatureSetting = {
+  id: SettingId.COMPACT_SILVER,
   title: "Wallet: Compact silver",
   description: "Display compact numbers for silver over 1M",
   type: "boolean",
@@ -9,6 +10,7 @@ export const SETTING_COMPACT_SILVER: FeatureSetting = {
 };
 
 export const compactSilver: Feature = {
+  settings: [SETTING_COMPACT_SILVER],
   onQuestLoad: () => {
     for (const silver of document.querySelectorAll<HTMLDivElement>(
       "#statszone span:first-child"

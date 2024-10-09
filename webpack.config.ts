@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/prefer-module */
 import { HeadersProps, UserscriptPlugin } from "webpack-userscript";
 import { Configuration as WebpackDevelopmentServerConfiguration } from "webpack-dev-server";
+import CircularDependencyPlugin from "circular-dependency-plugin";
 import ESLintPlugin from "eslint-webpack-plugin";
 import ForkTSCheckerPlugin from "fork-ts-checker-webpack-plugin";
 import manifest from "package.json";
@@ -101,6 +102,11 @@ const config: Configuration = {
     ],
   },
   plugins: [
+    new CircularDependencyPlugin({
+      exclude: /node_modules/,
+      failOnError: true,
+    }) as any,
+
     // lint source with eslint config
     new ESLintPlugin({
       extensions: ["js", "ts", "json"],
@@ -117,9 +123,11 @@ const config: Configuration = {
       headers(original) {
         const overrides: HeadersProps = {
           grant: [
+            "GM.deleteValue",
             "GM.getValue",
-            "GM.setValue",
+            "GM.listValues",
             "GM.setClipboard",
+            "GM.setValue",
             "GM.xmlHttpRequest",
           ],
           icon: "https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com",

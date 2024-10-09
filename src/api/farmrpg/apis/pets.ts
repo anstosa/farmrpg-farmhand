@@ -1,11 +1,11 @@
-import { CachedState, StorageKey } from "../state";
-import { getDocument } from "../utils";
-import { getItemByName } from "../buddyfarm/api";
-import { getTitle, Page, WorkerGo } from "../../utils/page";
-import { Item } from "../buddyfarm/state";
+import { CachedState, StorageKey } from "../../../utils/state";
+import { getDocument } from "../../../utils/requests";
+import { getHTML } from "../utils/requests";
+import { getTitle, Page, WorkerGo } from "../../../utils/page";
+import { Item } from "../../buddyfarm/types";
+import { itemDataState } from "~/api/buddyfarm/api";
 import { MailboxContent, mergeContents } from "./mail";
 import { NotificationId, removeNotification } from "~/utils/notifications";
-import { requestHTML } from "./api";
 import { showPopup } from "~/utils/popup";
 
 const processPets = (root: Document): MailboxContent[] => {
@@ -35,15 +35,16 @@ const processPets = (root: Document): MailboxContent[] => {
 export const petState = new CachedState<MailboxContent[]>(
   StorageKey.PETS,
   async () => {
-    const response = await requestHTML(Page.PETS);
+    const response = await getHTML(Page.PETS);
     return processPets(response);
   },
   {
+    persist: false,
     defaultState: [],
     interceptors: [
       {
         match: [Page.PETS, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           await state.set(processPets(await getDocument(response)));
         },
       },
@@ -52,7 +53,7 @@ export const petState = new CachedState<MailboxContent[]>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.COLLECT_ALL_PET_ITEMS }),
         ],
-        callback: async (settings, state) => {
+        callback: async (state) => {
           await state.set([]);
         },
       },
@@ -68,7 +69,7 @@ export const collectPets = async (): Promise<void> => {
   const mergedItems = mergeContents(state);
   const items: { item: Item | undefined; count: number }[] = await Promise.all(
     mergedItems.map(async (mail) => ({
-      item: await getItemByName(mail.item),
+      item: await itemDataState.get({ query: mail.item }),
       count: mail.count,
     }))
   );
@@ -94,7 +95,7 @@ export const collectPets = async (): Promise<void> => {
         .join("&nbsp;")}
     `,
   });
-  await requestHTML(
+  await getHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.COLLECT_ALL_PET_ITEMS })
   );

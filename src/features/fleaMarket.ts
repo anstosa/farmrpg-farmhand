@@ -1,7 +1,8 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_FLEA_MARKET: FeatureSetting = {
-  id: "fleaMarket",
+const SETTING_FLEA_MARKET: FeatureSetting = {
+  id: SettingId.FLEA_MARKET,
   title: "Flea Market: Disable",
   description: "Flea Market is disabled because it's a waste of gold",
   type: "boolean",
@@ -12,7 +13,7 @@ export const fleaMarket: Feature = {
   settings: [SETTING_FLEA_MARKET],
   onInitialize: (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_FLEA_MARKET.id].value) {
+    if (!settings[SettingId.FLEA_MARKET]) {
       return;
     }
 

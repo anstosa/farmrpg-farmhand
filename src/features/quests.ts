@@ -1,5 +1,5 @@
 import { BORDER_GRAY } from "~/utils/theme";
-import { Feature } from "./feature";
+import { Feature } from "../utils/feature";
 
 export const quests: Feature = {
   onInitialize: () => {

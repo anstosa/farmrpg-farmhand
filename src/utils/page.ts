@@ -1,6 +1,7 @@
 export enum Page {
   AREA = "area",
   BANK = "bank",
+  BIO = "settings_bio",
   FARM = "xfarm",
   FARMERS_MARKET = "market",
   FISHING = "fishing",
@@ -17,7 +18,9 @@ export enum Page {
   PETS = "allpetitems",
   PIG_PEN = "pigpen",
   POST_OFFICE = "postoffice",
+  PROFILE = "profile",
   QUEST = "quest",
+  QUESTS = "quests",
   SETTINGS = "settings",
   SETTINGS_OPTIONS = "settings_options",
   TEMPLE = "mailitems", // not a typo
@@ -30,6 +33,7 @@ export enum Page {
 
 export enum WorkerGo {
   ACTIVATE_PERK_SET = "activateperkset",
+  SET_BIO = "settings_bio",
   COLLECT_ALL_PET_ITEMS = "collectallpetitems",
   COLLECT_ALL_MAIL_ITEMS = "collectallmailitems",
   COLLECT_ALL_MEALS = "cookreadyall",
@@ -38,6 +42,7 @@ export enum WorkerGo {
   FARM_STATUS = "farmstatus",
   GET_STATS = "getstats",
   HARVEST_ALL = "harvestall",
+  NOTES = "notes",
   PLANT_ALL = "plantall",
   READY_COUNT = "readycount",
   RESET_PERKS = "resetperks",

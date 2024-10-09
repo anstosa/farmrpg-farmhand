@@ -1,9 +1,10 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getBasicItems } from "~/api/buddyfarm/api";
 import { registerAutocomplete } from "~/utils/autocomplete";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_AUTOCOMPLETE_ITEMS: FeatureSetting = {
-  id: "autocompleteItems",
+const SETTING_AUTOCOMPLETE_ITEMS: FeatureSetting = {
+  id: SettingId.AUTOCOMPLETE_ITEMS,
   title: "Chat: Autocomplete ((items))",
   description: "Auto-complete item names in chat",
   type: "boolean",
@@ -14,7 +15,7 @@ export const autocompleteItems: Feature = {
   settings: [SETTING_AUTOCOMPLETE_ITEMS],
   onInitialize: (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_AUTOCOMPLETE_ITEMS.id].value) {
+    if (!settings[SettingId.AUTOCOMPLETE_ITEMS]) {
       return;
     }
     registerAutocomplete({

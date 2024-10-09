@@ -1,4 +1,4 @@
-import { Feature } from "~/features/feature";
+import { Feature } from "~/utils/feature";
 
 export interface Action {
   name: string;

@@ -21,11 +21,12 @@ import {
   TEXT_WHITE,
   toCSS,
 } from "~/utils/theme";
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
 const SETTING_VAULT_SOLVER: FeatureSetting = {
-  id: "vaultSolver",
+  id: SettingId.VAULT_SOLVER,
   title: "Vault: Auto Solver",
   description: "Auto-fill solution suggestions in the vault input box",
   type: "boolean",
@@ -119,7 +120,7 @@ export const vaultSolver: Feature = {
       return;
     }
 
-    if (!settings[SETTING_VAULT_SOLVER.id].value) {
+    if (!settings[SettingId.VAULT_SOLVER]) {
       return;
     }
 

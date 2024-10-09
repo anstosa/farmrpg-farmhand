@@ -1,8 +1,9 @@
-import { CachedState, StorageKey } from "../state";
-import { getDocument } from "../utils";
+import { CachedState, StorageKey } from "../../../utils/state";
+import { getDocument } from "../../../utils/requests";
+import { getHTML } from "../utils/requests";
 import { Page, WorkerGo } from "~/utils/page";
-import { requestHTML, timestampToDate } from "./api";
 import { showPopup } from "~/utils/popup";
+import { timestampToDate } from "../utils/time";
 
 export enum OvenStatus {
   EMPTY = "empty",
@@ -94,7 +95,7 @@ const scheduledUpdates: Record<number, NodeJS.Timeout> = {};
 export const kitchenStatusState = new CachedState<KitchenStatus>(
   StorageKey.KITHCEN_STATUS,
   async () => {
-    const response = await requestHTML(Page.KITCHEN, new URLSearchParams());
+    const response = await getHTML(Page.KITCHEN, new URLSearchParams());
     return processKitchenPage(response.body);
   },
   {
@@ -108,7 +109,7 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
     interceptors: [
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const kitchenStatus = root?.querySelector<HTMLSpanElement>(
             "a[href='kitchen.php'] .item-after span"
@@ -118,7 +119,7 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
       },
       {
         match: [Page.KITCHEN, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           await state.set(processKitchenPage(root.body));
         },
@@ -128,7 +129,7 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MEALS }),
         ],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const successCount =
             root.body.textContent?.match(/success/g)?.length ?? 0;
@@ -141,6 +142,7 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
             });
           }
           await state.set({
+            ...previous,
             status: OvenStatus.EMPTY,
             checkAt: Number.POSITIVE_INFINITY,
           });
@@ -151,8 +153,7 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.SEASON_MEALS }),
         ],
-        callback: async (settings, state, previous, response) => {
-          state.fetch();
+        callback: async (state, previous, response) => {
           const root = await getDocument(response);
           const successCount =
             root.body.textContent?.match(/success/g)?.length ?? 0;
@@ -165,15 +166,18 @@ export const kitchenStatusState = new CachedState<KitchenStatus>(
             });
           }
           await state.set({
+            ...previous,
             status: OvenStatus.EMPTY,
             checkAt: Number.POSITIVE_INFINITY,
           });
+          await state.get();
         },
       },
       {
         match: [Page.WORKER, new URLSearchParams({ go: WorkerGo.COOK_ALL })],
-        callback: async (settings, state) => {
+        callback: async (state, previous) => {
           await state.set({
+            ...previous,
             status: OvenStatus.COOKING,
             checkAt: Date.now() + 60 * 1000,
           });
@@ -208,7 +212,7 @@ kitchenStatusState.onUpdate((state) => {
 });
 
 export const collectAll = async (): Promise<void> => {
-  await requestHTML(
+  await getHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MEALS })
   );

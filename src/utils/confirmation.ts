@@ -1,4 +1,4 @@
-import { Feature } from "~/features/feature";
+import { Feature } from "~/utils/feature";
 
 export const showConfirmation = (
   message: string,

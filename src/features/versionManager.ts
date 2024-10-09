@@ -1,5 +1,5 @@
-import { corsFetch } from "~/api/utils";
-import { Feature } from "~/features/feature";
+import { corsFetch } from "~/utils/requests";
+import { Feature } from "~/utils/feature";
 import {
   Handler,
   NotificationId,

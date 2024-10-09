@@ -56,6 +56,7 @@ export const INPUT_STYLES = {
   color: important(TEXT_WHITE),
   height: important("36px"),
   padding: important(INPUT_PADDING),
+  minWidth: important("100px"),
 } as CSSStyleDeclaration;
 
 // buttons

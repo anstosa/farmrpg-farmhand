@@ -1,5 +1,9 @@
-import { collectMailbox, MailboxState, mailboxState } from "~/api/farmrpg/mail";
-import { Feature } from "./feature";
+import {
+  collectMailbox,
+  MailboxState,
+  mailboxState,
+} from "~/api/farmrpg/apis/mail";
+import { Feature } from "../utils/feature";
 import {
   Handler,
   NotificationId,
@@ -8,7 +12,7 @@ import {
   sendNotification,
 } from "~/utils/notifications";
 import { Page } from "~/utils/page";
-import { toUrl } from "~/api/state";
+import { toUrl } from "~/api/farmrpg/utils/requests";
 
 registerNotificationHandler(Handler.COLLECT_MAIL, collectMailbox);
 

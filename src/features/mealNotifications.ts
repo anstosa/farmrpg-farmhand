@@ -1,13 +1,14 @@
-import { Feature, FeatureSetting } from "./feature";
-import { mealsStatusState } from "~/api/farmrpg/meals";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { mealsStatusState } from "~/api/farmrpg/apis/meals";
 import {
   NotificationId,
   removeNotification,
   sendNotification,
 } from "~/utils/notifications";
+import { SettingId } from "~/utils/settings";
 
 const SETTING_MEAL_NOTIFICATIONS: FeatureSetting = {
-  id: "mealNotifications",
+  id: SettingId.MEAL_NOTIFICATIONS,
   title: "Meal Notifications",
   description: `
     Show notification when meals are active with their countdowns
@@ -57,7 +58,7 @@ const renderMeals = async (): Promise<void> => {
 export const mealNotifications: Feature = {
   settings: [SETTING_MEAL_NOTIFICATIONS],
   onInitialize: (settings) => {
-    if (!settings[SETTING_MEAL_NOTIFICATIONS.id].value) {
+    if (!settings[SettingId.MEAL_NOTIFICATIONS]) {
       return;
     }
     mealsStatusState.onUpdate(renderMeals);

@@ -1,6 +1,6 @@
 import { BACKGROUND_DARK, BUTTON_BLUE_BACKGROUND } from "./theme";
-import { BasicEntity } from "../api/buddyfarm/state";
-import { Feature } from "~/features/feature";
+import { BasicEntity } from "../api/buddyfarm/types";
+import { Feature } from "~/utils/feature";
 
 interface AutocompleteConfig {
   trigger: RegExp;

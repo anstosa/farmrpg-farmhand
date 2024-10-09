@@ -1,8 +1,9 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_COLLAPSE_ITEM: FeatureSetting = {
-  id: "collapseItem",
+const SETTING_COLLAPSE_ITEM: FeatureSetting = {
+  id: SettingId.COLLAPSE_ITEM,
   title: "Item: Collapse Item Image",
   description: "Move item image in header to save space",
   type: "boolean",
@@ -12,7 +13,7 @@ export const SETTING_COLLAPSE_ITEM: FeatureSetting = {
 export const collapseItemImage: Feature = {
   settings: [SETTING_COLLAPSE_ITEM],
   onInitialize: (settings) => {
-    if (settings[SETTING_COLLAPSE_ITEM.id].value) {
+    if (settings[SettingId.COLLAPSE_ITEM]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `

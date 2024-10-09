@@ -3,11 +3,12 @@ import {
   BUTTON_GREEN_BORDER,
   TEXT_WHITE,
 } from "~/utils/theme";
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
+import { SettingId } from "~/utils/settings";
 
 const SETTING_MINER: FeatureSetting = {
-  id: "miner",
+  id: SettingId.MINER,
   title: "Mining: Auto Miner",
   description: "Adds button to take the next suggested action",
   type: "boolean",
@@ -15,7 +16,7 @@ const SETTING_MINER: FeatureSetting = {
 };
 
 const SETTING_MINER_EXPLOSIVES: FeatureSetting = {
-  id: "minerExplosives",
+  id: SettingId.MINER_EXPLOSIVES,
   title: "Mining: Use Explosives",
   description: "Use explosives as suggested action",
   type: "boolean",
@@ -23,7 +24,7 @@ const SETTING_MINER_EXPLOSIVES: FeatureSetting = {
 };
 
 const SETTING_MINER_BOMBS: FeatureSetting = {
-  id: "minerBombs",
+  id: SettingId.MINER_BOMBS,
   title: "Mining: Use Bombs",
   description: "Use bombs as suggested action",
   type: "boolean",
@@ -200,7 +201,7 @@ export const miner: Feature = {
       return;
     }
 
-    if (!settings[SETTING_MINER.id].value) {
+    if (!settings[SettingId.MINER]) {
       return;
     }
 

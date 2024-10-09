@@ -1,5 +1,5 @@
 import { BACKGROUND_DARK } from "~/utils/theme";
-import { Feature } from "./feature";
+import { Feature } from "../utils/feature";
 
 const openAutocomplete = (dropdown: HTMLDivElement): void => {
   const currentLink =

@@ -2,8 +2,8 @@ import {
   activatePerkSet,
   getActivityPerksSet,
   PerkActivity,
-} from "~/api/farmrpg/perks";
-import { Feature, FeatureSetting } from "./feature";
+} from "~/api/farmrpg/apis/perks";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
 import {
   Notification,
@@ -12,9 +12,10 @@ import {
   sendNotification,
 } from "~/utils/notifications";
 import { onQuicksellClick } from "./quickSellSafely";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_PERK_MANAGER: FeatureSetting = {
-  id: "perkManager",
+const SETTING_PERK_MANAGER: FeatureSetting = {
+  id: SettingId.PERK_MANAGER,
   title: "Perks: Auto manage",
   description: `
     1. Save your default perks set as "Default"<br>
@@ -35,7 +36,7 @@ export const perkManagment: Feature = {
   settings: [SETTING_PERK_MANAGER],
   onPageLoad: async (settings, page) => {
     // make sure the setting is enabled
-    if (!settings[SETTING_PERK_MANAGER.id].value) {
+    if (!settings[SettingId.PERK_MANAGER]) {
       return;
     }
 

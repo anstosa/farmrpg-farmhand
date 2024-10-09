@@ -1,8 +1,13 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { getData, setData, SettingId } from "~/utils/settings";
 import { Page } from "~/utils/page";
 
-export const SETTING_QUEST_COLLAPSE: FeatureSetting = {
-  id: "questCollapse",
+interface questCollapseData {
+  questCollapse: boolean;
+}
+
+const SETTING_QUEST_COLLAPSE: FeatureSetting = {
+  id: SettingId.QUEST_COLLAPSE,
   title: "Quest: Global collapse status",
   description:
     "Remember the quest details collapse status globally instead of per-quest",
@@ -12,9 +17,9 @@ export const SETTING_QUEST_COLLAPSE: FeatureSetting = {
 
 export const questCollapse: Feature = {
   settings: [SETTING_QUEST_COLLAPSE],
-  onPageLoad: (settings, page) => {
+  onPageLoad: async (settings, page) => {
     // make sure setting is enabled
-    if (!settings[SETTING_QUEST_COLLAPSE.id].value) {
+    if (!settings[SettingId.QUEST_COLLAPSE]) {
       return;
     }
 
@@ -37,17 +42,25 @@ export const questCollapse: Feature = {
     if (!link) {
       return;
     }
+    const questCollapse = await getData<questCollapseData>(
+      SettingId.QUEST_COLLAPSE,
+      {
+        questCollapse: true,
+      }
+    );
     link.addEventListener("click", () => {
       setTimeout(() => {
-        localStorage.questCollapse = !accordion.classList.contains(
-          "accordion-item-expanded"
-        );
+        setData(SettingId.QUEST_COLLAPSE, {
+          questCollapse: !accordion.classList.contains(
+            "accordion-item-expanded"
+          ),
+        });
       }, 500);
     });
-    if (isCollapsed && localStorage.questCollapse === "false") {
+    if (isCollapsed && !questCollapse) {
       accordion.classList.add("accordion-item-expanded");
     }
-    if (!isCollapsed && localStorage.questCollapse === "true") {
+    if (!isCollapsed && questCollapse) {
       accordion.classList.remove("accordion-item-expanded");
     }
   },

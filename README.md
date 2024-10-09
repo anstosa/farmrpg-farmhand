@@ -23,7 +23,7 @@ Farmhand purposefully avoids any features that would violate the letter or spiri
 ### Desktop
 
 1. Install a browser that supports extensions (including [Firefox](https://www.mozilla.org/en-US/firefox/new) on mobile)
-2. [Install Tampermonkey](https://www.tampermonkey.net/) or another Greasemonkey script manager like [Userscripts on iOS](https://apps.apple.com/us/app/userscripts/id1463298887)
+2. [Install Violentmonkey](https://violentmonkey.github.io/) or another Greasemonkey script manager like [Userscripts on iOS](https://apps.apple.com/us/app/userscripts/id1463298887)
 3. Install Farmhand via [Greasy Fork](https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand) (or [directly from this repository](https://github.com/anstosa/farmrpg-farmhand/blob/main/dist/farmrpg-farmhand.user.js))
 4. If you're on mobile, you can use your browser to add <https://farmrpg.com> to your homescreen so it feels like an app
 
@@ -51,6 +51,11 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 
 * Adds shortcut to view page in [Buddy's Almanac](https://buddy.farm)
 * Remember quest detail collapse state globally instead of per-quest
+* Sort by completion
+* Tagging
+  * Starred quests appear with an icon at the top of the request list
+  * low priority quests appear at the bottom of the quest list, grayed out
+  * Untagged quests appear in the middle
 
 ### Banker
 
@@ -75,6 +80,7 @@ All features are configurable via new settings in [My Settings > Change Game Opt
 
 ### Chat
 
+* Add popup on username hover/long press that shows mailbox size, bio, and looking for
 * Compress chat view so more messages are visible
 * Dismissable chat banners
 * Highlight messages tagging you in chat
@@ -150,9 +156,11 @@ This frees up points from many activity specific perks to be re-invested in perk
 * Dropdowns: Cleaner, more consistent, and show item icons
 * Wallet: compact money over 1M
 
-### Export
+### Export/Sync
 
-All settings can be exported and imported on other devices
+All settings can be exported and imported on other devices.
+
+Settings and data are also synced using the notes field on the home page if you are an [Alpha Supporter](https://farmrpg.com/index.php#!/wiki.php?page=Alpha+Testing)
 
 ## Roadmap
 
@@ -172,6 +180,17 @@ Future features under consideration or development
 Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profile.php?user_name=anstosa)
 
 ## Changelog
+
+### 1.0.29
+
+* Added: Cross device sync using the notes field if you are an alpha supporter
+* Added: Data for quest collapse, hidden banners, hidden updates, and more added to export
+* Added: User info popup in chat. Hover/long press to show mailbox size, bio, and looking for
+* Added: Request Tagging. Quests can now be starred or low priority.
+  * Starred quests appear with an icon at the top of the request list
+  * low priority quests appear at the bottom of the quest list, grayed out
+  * Untagged quests appear in the middle
+* Fixed: Slow page response on pages with large item dropdowns like Storehouse
 
 ### 1.0.28
 

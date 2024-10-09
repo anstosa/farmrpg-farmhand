@@ -1,9 +1,10 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
 import { getCardByTitle, getCurrentPage, Page } from "~/utils/page";
-import { nameToSlug } from "~/api/buddyfarm/state";
+import { nameToSlug } from "~/api/buddyfarm/requests";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_BUDDY_FARM: FeatureSetting = {
-  id: "buddyFarm",
+const SETTING_BUDDY_FARM: FeatureSetting = {
+  id: SettingId.BUDDY_FARM,
   title: "Item: Buddy's Almanac",
   description: "Add shortcut to look up items and quests on buddy.farm",
   type: "boolean",
@@ -14,7 +15,7 @@ export const buddyFarm: Feature = {
   settings: [SETTING_BUDDY_FARM],
   onPageLoad: (settings, page) => {
     // make sure setting is enabled
-    if (!settings[SETTING_BUDDY_FARM.id].value) {
+    if (!settings[SettingId.BUDDY_FARM]) {
       return;
     }
 

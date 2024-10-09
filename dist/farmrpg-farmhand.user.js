@@ -1,15 +1,17 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.28
+// @version 1.0.29
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
 // @connect greasyfork.org
 // @connect github.com
+// @grant GM.deleteValue
 // @grant GM.getValue
-// @grant GM.setValue
+// @grant GM.listValues
 // @grant GM.setClipboard
+// @grant GM.setValue
 // @grant GM.xmlHttpRequest
 // @icon https://www.google.com/s2/favicons?sz=64&domain=farmrpg.com
 // @license MIT
@@ -34,37 +36,56 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.pageDataState = exports.getBasicItems = exports.getItemByName = void 0;
-const state_1 = __webpack_require__(4456);
-const state_2 = __webpack_require__(4619);
-const itemDataState = new state_2.CachedState(state_2.StorageKey.ITEM_DATA, () => Promise.resolve({}), {
-    timeout: 60 * 60 * 24, // 1 day
-    defaultState: {},
-});
-const getItemByName = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
+exports.pageDataState = exports.getBasicItems = exports.getAbridgedItem = exports.itemDataState = void 0;
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(6747);
+exports.itemDataState = new state_1.CachedState(state_1.StorageKey.ITEM_DATA, (state, itemName) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    const items = yield itemDataState.get();
-    if (items === null || items === void 0 ? void 0 : items[itemName]) {
-        return items[itemName];
+    if (!itemName) {
+        return;
     }
-    const response = yield fetch(`https://buddy.farm/page-data/i/${(0, state_1.nameToSlug)(itemName)}/page-data.json`);
+    const previous = state.state[itemName];
+    if (previous) {
+        return previous;
+    }
+    if (!itemName) {
+        return;
+    }
+    const response = yield fetch(`https://buddy.farm/page-data/i/${(0, requests_1.nameToSlug)(itemName)}/page-data.json`);
     const data = (yield response.json());
     const item = (_d = (_c = (_b = (_a = data === null || data === void 0 ? void 0 : data.result) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.farmrpg) === null || _c === void 0 ? void 0 : _c.items) === null || _d === void 0 ? void 0 : _d[0];
     if (!item) {
         console.error(`Item ${itemName} not found`);
-        return;
+        return previous;
     }
-    itemDataState.set(Object.assign(Object.assign({}, items), { [itemName]: item }));
     return item;
+}), {
+    timeout: 60 * 24 * 7, // 1 week
 });
-exports.getItemByName = getItemByName;
+const getAbridgedItem = (itemName) => __awaiter(void 0, void 0, void 0, function* () {
+    const item = yield exports.itemDataState.get({ query: itemName, lazy: true });
+    return item
+        ? {
+            __typename: item.__typename,
+            id: item.id,
+            image: item.image,
+            name: item.name,
+        }
+        : {
+            __typename: "FarmRPG_Item",
+            id: 0,
+            image: "data:image/svg+xml;charset=utf-8;base64,PHN2ZyB2aWV3Qm94PScwIDAgMTIwIDEyMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB4bWxuczp4bGluaz0naHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayc+PGRlZnM+PGxpbmUgaWQ9J2wnIHgxPSc2MCcgeDI9JzYwJyB5MT0nNycgeTI9JzI3JyBzdHJva2U9JyM2YzZjNmMnIHN0cm9rZS13aWR0aD0nMTEnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcvPjwvZGVmcz48Zz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuMjcnLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuMjcnIHRyYW5zZm9ybT0ncm90YXRlKDMwIDYwLDYwKScvPjx1c2UgeGxpbms6aHJlZj0nI2wnIG9wYWNpdHk9Jy4yNycgdHJhbnNmb3JtPSdyb3RhdGUoNjAgNjAsNjApJy8+PHVzZSB4bGluazpocmVmPScjbCcgb3BhY2l0eT0nLjI3JyB0cmFuc2Zvcm09J3JvdGF0ZSg5MCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuMjcnIHRyYW5zZm9ybT0ncm90YXRlKDEyMCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuMjcnIHRyYW5zZm9ybT0ncm90YXRlKDE1MCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuMzcnIHRyYW5zZm9ybT0ncm90YXRlKDE4MCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuNDYnIHRyYW5zZm9ybT0ncm90YXRlKDIxMCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuNTYnIHRyYW5zZm9ybT0ncm90YXRlKDI0MCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuNjYnIHRyYW5zZm9ybT0ncm90YXRlKDI3MCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuNzUnIHRyYW5zZm9ybT0ncm90YXRlKDMwMCA2MCw2MCknLz48dXNlIHhsaW5rOmhyZWY9JyNsJyBvcGFjaXR5PScuODUnIHRyYW5zZm9ybT0ncm90YXRlKDMzMCA2MCw2MCknLz48L2c+PC9zdmc+",
+            name: itemName,
+        };
+});
+exports.getAbridgedItem = getAbridgedItem;
 const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const { items } = (_a = (yield exports.pageDataState.get())) !== null && _a !== void 0 ? _a : {};
     return (_b = items === null || items === void 0 ? void 0 : items.map(({ name, image }) => ({ name, image }))) !== null && _b !== void 0 ? _b : [];
 });
 exports.getBasicItems = getBasicItems;
-exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, () => __awaiter(void 0, void 0, void 0, function* () {
+exports.pageDataState = new state_1.CachedState(state_1.StorageKey.PAGE_DATA, () => __awaiter(void 0, void 0, void 0, function* () {
     const pages = {
         townsfolk: [],
         questlines: [],
@@ -112,7 +133,7 @@ exports.pageDataState = new state_2.CachedState(state_2.StorageKey.PAGE_DATA, ()
 
 /***/ }),
 
-/***/ 4456:
+/***/ 6747:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -138,7 +159,7 @@ const nameToSlug = (name) => {
     // lowercase
     slug = slug.toLowerCase();
     // replace punctuation and whitespace with hyphens
-    slug = slug.replaceAll(/[ ',.]/g, "-");
+    slug = slug.replaceAll(/[^\da-z]/g, "-");
     return slug;
 };
 exports.nameToSlug = nameToSlug;
@@ -146,135 +167,7 @@ exports.nameToSlug = nameToSlug;
 
 /***/ }),
 
-/***/ 126:
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = exports.timestampToDate = exports.requestJSON = exports.requestHTML = void 0;
-const state_1 = __webpack_require__(4619);
-const index_1 = __webpack_require__(6217);
-const utils_1 = __webpack_require__(7683);
-const farmhandSettings_1 = __webpack_require__(8973);
-const requestHTML = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch((0, state_1.toUrl)(page, query), {
-        method: "POST",
-        mode: "cors",
-        credentials: "include",
-    });
-    return (0, utils_1.getDocument)(response);
-});
-exports.requestHTML = requestHTML;
-const requestJSON = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield fetch((0, state_1.toUrl)(page, query), {
-        method: "POST",
-        mode: "cors",
-        credentials: "include",
-    });
-    const settings = yield (0, farmhandSettings_1.getSettings)(index_1.FEATURES);
-    (0, state_1.onFetchResponse)(settings, response);
-    return yield response.json();
-});
-exports.requestJSON = requestJSON;
-const timestampToDate = (timestamp) => new Date(`${timestamp}-05:00`);
-exports.timestampToDate = timestampToDate;
-//   let skills = state.get("skills");
-//   const skillsCard = getCardByTitle("My skills", root);
-//   if (!skillsCard) {
-//     console.error("failed to find skills card");
-//     return;
-//   }
-//   let cookingSkill = 0;
-//   let craftingSkill = 0;
-//   let exploringSkill = 0;
-//   let farmingSkill = 0;
-//   let fishingSkill = 0;
-//   let miningSkill = 0;
-//   for (const skillBlock of skillsCard.querySelectorAll(".col-33")) {
-//     let level = Number(skillBlock.textContent?.match(/Level (\d+)/)?.[1] ?? 0);
-//     if (!level) {
-//       console.error(`failed to read skill level ${skillBlock.textContent}`);
-//       return;
-//     }
-//     // add incremental level based on progress
-//     level +=
-//       Number(
-//         skillBlock.querySelector<HTMLDivElement>(".progressbar")?.dataset
-//           .progress || "0"
-//       ) / 100;
-//     if (skillBlock.textContent?.includes("Cooking")) {
-//       cookingSkill = level;
-//     } else if (skillBlock.textContent?.includes("Crafting")) {
-//       craftingSkill = level;
-//     } else if (skillBlock.textContent?.includes("Exploring")) {
-//       exploringSkill = level;
-//     } else if (skillBlock.textContent?.includes("Farming")) {
-//       farmingSkill = level;
-//     } else if (skillBlock.textContent?.includes("Fishing")) {
-//       fishingSkill = level;
-//     } else if (skillBlock.textContent?.includes("Mining")) {
-//       miningSkill = level;
-//     }
-//     skills = {
-//       cooking: cookingSkill,
-//       crafting: craftingSkill,
-//       exploring: exploringSkill,
-//       farming: farmingSkill,
-//       fishing: fishingSkill,
-//       mining: miningSkill,
-//     };
-//   }
-exports.usernameState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
-    var _a;
-    return Promise.resolve(((_a = document.querySelector("#logged_in_username")) === null || _a === void 0 ? void 0 : _a.textContent) || undefined);
-}, {
-    timeout: Number.POSITIVE_INFINITY, // never expire
-    persist: false,
-    defaultState: "",
-});
-exports.userIdState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
-    var _a;
-    const userIdRaw = (_a = document.querySelector("#logged_in_userid")) === null || _a === void 0 ? void 0 : _a.textContent;
-    return Promise.resolve(userIdRaw ? Number(userIdRaw) : undefined);
-}, {
-    timeout: Number.POSITIVE_INFINITY, // never expire
-    persist: false,
-    defaultState: -1,
-});
-exports.betaState = new state_1.CachedState(state_1.StorageKey.IS_BETA, () => { var _a; return Promise.resolve(((_a = document.querySelector("#is_beta")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: Number.POSITIVE_INFINITY, // never expire
-    persist: false,
-    defaultState: false,
-});
-exports.darkModeState = new state_1.CachedState(state_1.StorageKey.IS_DARK_MODE, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: Number.POSITIVE_INFINITY, // never expire
-    persist: false,
-    defaultState: false,
-});
-exports.musicState = new state_1.CachedState(state_1.StorageKey.IS_MUSIC_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: Number.POSITIVE_INFINITY, // never expire
-    persist: false,
-    defaultState: true,
-});
-exports.chatState = new state_1.CachedState(state_1.StorageKey.IS_CHAT_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#chat")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
-    timeout: Number.POSITIVE_INFINITY, // never expire
-    persist: false,
-    defaultState: true,
-});
-
-
-/***/ }),
-
-/***/ 9022:
+/***/ 4938:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -289,10 +182,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.withdrawSilver = exports.depositSilver = exports.statsState = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const page_1 = __webpack_require__(7952);
-const api_1 = __webpack_require__(126);
 const processStats = (root) => {
     var _a;
     const matches = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/[^\d,]+([\d,]+)[^\d,]+([\d,]+)[^\d,]+([\d,]+)/);
@@ -306,14 +199,14 @@ const processStats = (root) => {
     return { silver, gold, ancientCoins };
 };
 exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS }));
+    const response = yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS }));
     return processStats(response);
 }), {
     interceptors: [
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.GET_STATS })],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                state.set(processStats(yield (0, utils_1.getDocument)(response)));
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                state.set(processStats(yield (0, requests_1.getDocument)(response)));
             }),
         },
         {
@@ -321,8 +214,8 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER }),
             ],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const [_, query] = (0, state_1.parseUrl)(response.url);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const [_, query] = (0, requests_2.parseUrl)(response.url);
                 if (!previous) {
                     return;
                 }
@@ -334,8 +227,8 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.WITHDRAW_SILVER }),
             ],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const [_, query] = (0, state_1.parseUrl)(response.url);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const [_, query] = (0, requests_2.parseUrl)(response.url);
                 if (!previous) {
                     return;
                 }
@@ -350,11 +243,11 @@ exports.statsState = new state_1.CachedState(state_1.StorageKey.STATS, () => __a
     },
 });
 const depositSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER, amt: amount.toString() }));
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.DEPOSIT_SILVER, amt: amount.toString() }));
 });
 exports.depositSilver = depositSilver;
 const withdrawSilver = (amount) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({
         go: page_1.WorkerGo.WITHDRAW_SILVER,
         amt: amount.toString(),
     }));
@@ -364,7 +257,7 @@ exports.withdrawSilver = withdrawSilver;
 
 /***/ }),
 
-/***/ 9888:
+/***/ 6228:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -379,11 +272,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.harvestAll = exports.farmIdState = exports.farmStatusState = exports.CropStatus = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const page_1 = __webpack_require__(7952);
-const api_1 = __webpack_require__(126);
-const harvestNotifications_1 = __webpack_require__(4894);
+const settings_1 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
 var CropStatus;
 (function (CropStatus) {
@@ -436,7 +329,7 @@ const processFarmPage = (root) => {
 };
 const scheduledUpdates = {};
 exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.requestHTML)(page_1.Page.FARM, new URLSearchParams());
+    const response = yield (0, requests_2.getHTML)(page_1.Page.FARM, new URLSearchParams());
     return processFarmPage(response.body);
 }), {
     timeout: 5,
@@ -448,22 +341,22 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
     interceptors: [
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.READY_COUNT })],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 state.set(processFarmStatus(root.body));
             }),
         },
         {
             match: [page_1.Page.FARM, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 yield state.set(processFarmPage(root.body));
             }),
         },
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 const linkStatus = root.body.querySelector("a[href^='xfarm.php'] .item-after");
                 if (!linkStatus) {
                     return;
@@ -473,12 +366,12 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.FARM_STATUS })],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a;
                 const raw = yield response.text();
                 const rawPlots = raw.split(";");
                 if (rawPlots.length < ((_a = previous === null || previous === void 0 ? void 0 : previous.count) !== null && _a !== void 0 ? _a : 4)) {
-                    yield state.set({ status: CropStatus.EMPTY });
+                    yield state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.EMPTY }));
                     return;
                 }
                 let status = CropStatus.EMPTY;
@@ -494,16 +387,17 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
                         status = CropStatus.GROWING;
                     }
                 }
-                yield state.set({ status });
+                yield state.set(Object.assign(Object.assign({}, previous), { status }));
             }),
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL })],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set({ status: CropStatus.EMPTY });
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.EMPTY }));
                 const { drops } = (yield response.json());
                 const [page] = (0, page_1.getPage)();
-                if (page !== page_1.Page.FARM || settings[harvestNotifications_1.SETTING_HARVEST_POPUP.id].value) {
+                const settings = yield (0, settings_1.getSettingValues)();
+                if (page !== page_1.Page.FARM || settings[settings_1.SettingId.HARVEST_NOTIFICATIONS]) {
                     (0, popup_1.showPopup)({
                         title: "Harvested Crops",
                         contentHTML: `
@@ -536,7 +430,7 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
                                             .querySelector(".plantallbtn")) === null || _a === void 0 ? void 0 : _a.click();
                                     }
                                     else {
-                                        yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
+                                        yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({
                                             go: page_1.WorkerGo.PLANT_ALL,
                                             id: String(farmId),
                                         }));
@@ -550,19 +444,19 @@ exports.farmStatusState = new state_1.CachedState(state_1.StorageKey.FARM_STATUS
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.PLANT_ALL })],
-            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set({ status: CropStatus.GROWING });
+            callback: (state, previous) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(Object.assign(Object.assign({}, previous), { status: CropStatus.GROWING }));
             }),
         },
     ],
 });
 const updateStatus = () => __awaiter(void 0, void 0, void 0, function* () {
-    const state = yield exports.farmStatusState.get({ doNotFetch: true });
+    const state = exports.farmStatusState.read();
     if (!state) {
         return;
     }
     if (state.readyAt < Date.now()) {
-        yield exports.farmStatusState.set({ status: CropStatus.READY });
+        yield exports.farmStatusState.set(Object.assign(Object.assign({}, state), { status: CropStatus.READY }));
     }
 });
 // automatically update crops when finished
@@ -581,7 +475,7 @@ const processFarmId = (root) => {
     return farmIdRaw ? Number(farmIdRaw) : undefined;
 };
 exports.farmIdState = new state_1.CachedState(state_1.StorageKey.FARM_ID, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.requestHTML)(page_1.Page.FARM, new URLSearchParams());
+    const response = yield (0, requests_2.getHTML)(page_1.Page.FARM, new URLSearchParams());
     return processFarmId(response.body);
 }), {
     timeout: Number.POSITIVE_INFINITY,
@@ -589,15 +483,15 @@ exports.farmIdState = new state_1.CachedState(state_1.StorageKey.FARM_ID, () => 
     interceptors: [
         {
             match: [page_1.Page.FARM, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 yield state.set(processFarmId(root.body));
             }),
         },
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 const status = root.body.querySelector("a[href^='xfarm.php'] .item-after span");
                 if (!status) {
                     return;
@@ -609,14 +503,62 @@ exports.farmIdState = new state_1.CachedState(state_1.StorageKey.FARM_ID, () => 
 });
 const harvestAll = () => __awaiter(void 0, void 0, void 0, function* () {
     const farmId = yield exports.farmIdState.get();
-    yield (0, api_1.requestJSON)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL, id: String(farmId) }));
+    yield (0, requests_2.getJSON)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.HARVEST_ALL, id: String(farmId) }));
 });
 exports.harvestAll = harvestAll;
 
 
 /***/ }),
 
-/***/ 182:
+/***/ 7046:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.chatState = exports.musicState = exports.darkModeState = exports.betaState = exports.userIdState = exports.usernameState = void 0;
+const state_1 = __webpack_require__(4782);
+exports.usernameState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
+    var _a;
+    return Promise.resolve(((_a = document.querySelector("#logged_in_username")) === null || _a === void 0 ? void 0 : _a.textContent) || undefined);
+}, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: "",
+});
+exports.userIdState = new state_1.CachedState(state_1.StorageKey.USERNAME, () => {
+    var _a;
+    const userIdRaw = (_a = document.querySelector("#logged_in_userid")) === null || _a === void 0 ? void 0 : _a.textContent;
+    return Promise.resolve(userIdRaw ? Number(userIdRaw) : undefined);
+}, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: -1,
+});
+exports.betaState = new state_1.CachedState(state_1.StorageKey.IS_BETA, () => { var _a; return Promise.resolve(((_a = document.querySelector("#is_beta")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: false,
+});
+exports.darkModeState = new state_1.CachedState(state_1.StorageKey.IS_DARK_MODE, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: false,
+});
+exports.musicState = new state_1.CachedState(state_1.StorageKey.IS_MUSIC_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#dark_mode")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: true,
+});
+exports.chatState = new state_1.CachedState(state_1.StorageKey.IS_CHAT_ENABLED, () => { var _a; return Promise.resolve(((_a = document.querySelector("#chat")) === null || _a === void 0 ? void 0 : _a.textContent) === "1"); }, {
+    timeout: Number.POSITIVE_INFINITY, // never expire
+    persist: false,
+    defaultState: true,
+});
+
+
+/***/ }),
+
+/***/ 202:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -631,11 +573,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.collectAll = exports.kitchenStatusState = exports.OvenStatus = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const page_1 = __webpack_require__(7952);
-const api_1 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
+const time_1 = __webpack_require__(4435);
 var OvenStatus;
 (function (OvenStatus) {
     OvenStatus["EMPTY"] = "empty";
@@ -686,7 +629,7 @@ const processKitchenPage = (root) => {
         if (!(statusText === null || statusText === void 0 ? void 0 : statusText.dataset.countdownTo)) {
             continue;
         }
-        const doneDate = (0, api_1.timestampToDate)(statusText.dataset.countdownTo);
+        const doneDate = (0, time_1.timestampToDate)(statusText.dataset.countdownTo);
         const now = new Date();
         if (doneDate < now) {
             status = OvenStatus.READY;
@@ -715,7 +658,7 @@ const processKitchenPage = (root) => {
 };
 const scheduledUpdates = {};
 exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.requestHTML)(page_1.Page.KITCHEN, new URLSearchParams());
+    const response = yield (0, requests_2.getHTML)(page_1.Page.KITCHEN, new URLSearchParams());
     return processKitchenPage(response.body);
 }), {
     timeout: 5,
@@ -728,16 +671,16 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
     interceptors: [
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 const kitchenStatus = root === null || root === void 0 ? void 0 : root.querySelector("a[href='kitchen.php'] .item-after span");
                 yield state.set(processKitchenStatus(kitchenStatus || undefined));
             }),
         },
         {
             match: [page_1.Page.KITCHEN, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 yield state.set(processKitchenPage(root.body));
             }),
         },
@@ -746,9 +689,9 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }),
             ],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c;
-                const root = yield (0, utils_1.getDocument)(response);
+                const root = yield (0, requests_1.getDocument)(response);
                 const successCount = (_c = (_b = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/success/g)) === null || _b === void 0 ? void 0 : _b.length) !== null && _c !== void 0 ? _c : 0;
                 if (successCount) {
                     (0, popup_1.showPopup)({
@@ -756,10 +699,7 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
                         contentHTML: `${successCount} meal${successCount === 1 ? "" : "s"} collected`,
                     });
                 }
-                yield state.set({
-                    status: OvenStatus.EMPTY,
-                    checkAt: Number.POSITIVE_INFINITY,
-                });
+                yield state.set(Object.assign(Object.assign({}, previous), { status: OvenStatus.EMPTY, checkAt: Number.POSITIVE_INFINITY }));
             }),
         },
         {
@@ -767,10 +707,9 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.SEASON_MEALS }),
             ],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b, _c;
-                state.fetch();
-                const root = yield (0, utils_1.getDocument)(response);
+                const root = yield (0, requests_1.getDocument)(response);
                 const successCount = (_c = (_b = (_a = root.body.textContent) === null || _a === void 0 ? void 0 : _a.match(/success/g)) === null || _b === void 0 ? void 0 : _b.length) !== null && _c !== void 0 ? _c : 0;
                 if (successCount) {
                     (0, popup_1.showPopup)({
@@ -778,19 +717,14 @@ exports.kitchenStatusState = new state_1.CachedState(state_1.StorageKey.KITHCEN_
                         contentHTML: `${successCount} meal${successCount === 1 ? "" : "s"} collected`,
                     });
                 }
-                yield state.set({
-                    status: OvenStatus.EMPTY,
-                    checkAt: Number.POSITIVE_INFINITY,
-                });
+                yield state.set(Object.assign(Object.assign({}, previous), { status: OvenStatus.EMPTY, checkAt: Number.POSITIVE_INFINITY }));
+                yield state.get();
             }),
         },
         {
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COOK_ALL })],
-            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set({
-                    status: OvenStatus.COOKING,
-                    checkAt: Date.now() + 60 * 1000,
-                });
+            callback: (state, previous) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(Object.assign(Object.assign({}, previous), { status: OvenStatus.COOKING, checkAt: Date.now() + 60 * 1000 }));
             }),
         },
     ],
@@ -815,14 +749,14 @@ exports.kitchenStatusState.onUpdate((state) => {
     scheduledUpdates[state.checkAt] = setTimeout(updateStatus, state.checkAt - Date.now());
 });
 const collectAll = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }));
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MEALS }));
 });
 exports.collectAll = collectAll;
 
 
 /***/ }),
 
-/***/ 1431:
+/***/ 8955:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -837,12 +771,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.collectMailbox = exports.mailboxState = exports.mergeContents = void 0;
-const state_1 = __webpack_require__(4619);
+const state_1 = __webpack_require__(4782);
 const page_1 = __webpack_require__(7952);
-const utils_1 = __webpack_require__(7683);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const api_1 = __webpack_require__(3413);
 const notifications_1 = __webpack_require__(6783);
-const api_2 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
 const mergeContents = (contents) => {
     const results = [];
@@ -877,9 +811,10 @@ const processPostoffice = (root) => {
     return { contents, size };
 };
 exports.mailboxState = new state_1.CachedState(state_1.StorageKey.MAILBOX, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_2.requestHTML)(page_1.Page.POST_OFFICE);
+    const response = yield (0, requests_2.getHTML)(page_1.Page.POST_OFFICE);
     return processPostoffice(response);
 }), {
+    persist: false,
     defaultState: {
         contents: [],
         size: 5,
@@ -887,8 +822,8 @@ exports.mailboxState = new state_1.CachedState(state_1.StorageKey.MAILBOX, () =>
     interceptors: [
         {
             match: [page_1.Page.POST_OFFICE, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set(processPostoffice(yield (0, utils_1.getDocument)(response)));
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(processPostoffice(yield (0, requests_1.getDocument)(response)));
             }),
         },
         {
@@ -896,8 +831,8 @@ exports.mailboxState = new state_1.CachedState(state_1.StorageKey.MAILBOX, () =>
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MAIL_ITEMS }),
             ],
-            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set({ contents: [] });
+            callback: (state, previous) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(Object.assign(Object.assign({}, previous), { contents: [] }));
             }),
         },
     ],
@@ -910,7 +845,7 @@ const collectMailbox = () => __awaiter(void 0, void 0, void 0, function* () {
     const mergedItems = (0, exports.mergeContents)(state.contents);
     const items = yield Promise.all(mergedItems.map((mail) => __awaiter(void 0, void 0, void 0, function* () {
         return ({
-            item: yield (0, api_1.getItemByName)(mail.item),
+            item: yield api_1.itemDataState.get({ query: mail.item }),
             count: mail.count,
         });
     })));
@@ -934,14 +869,14 @@ const collectMailbox = () => __awaiter(void 0, void 0, void 0, function* () {
             .join("&nbsp;")}
     `,
     });
-    yield (0, api_2.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MAIL_ITEMS }));
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_MAIL_ITEMS }));
 });
 exports.collectMailbox = collectMailbox;
 
 
 /***/ }),
 
-/***/ 5250:
+/***/ 2022:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -956,10 +891,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.mealsStatusState = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const page_1 = __webpack_require__(7952);
-const api_1 = __webpack_require__(126);
+const time_1 = __webpack_require__(4435);
 const scheduledUpdates = {};
 const processMealStatus = (root) => {
     var _a;
@@ -976,14 +912,14 @@ const processMealStatus = (root) => {
         const meal = mealName;
         const countdown = mealWrapper.querySelector("[data-countdown-to]");
         const finishedAt = (countdown === null || countdown === void 0 ? void 0 : countdown.dataset.countdownTo)
-            ? (0, api_1.timestampToDate)(countdown.dataset.countdownTo).getTime()
+            ? (0, time_1.timestampToDate)(countdown.dataset.countdownTo).getTime()
             : Date.now();
         meals.push({ meal, finishedAt });
     }
     return { meals };
 };
 exports.mealsStatusState = new state_1.CachedState(state_1.StorageKey.MEALS_STATUS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.requestHTML)(page_1.Page.HOME_PATH);
+    const response = yield (0, requests_2.getHTML)(page_1.Page.HOME_PATH);
     return processMealStatus(response.body);
 }), {
     defaultState: {
@@ -992,8 +928,8 @@ exports.mealsStatusState = new state_1.CachedState(state_1.StorageKey.MEALS_STAT
     interceptors: [
         {
             match: [page_1.Page.HOME_PATH, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const root = yield (0, utils_1.getDocument)(response);
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const root = yield (0, requests_1.getDocument)(response);
                 yield state.set(processMealStatus(root.body));
             }),
         },
@@ -1001,7 +937,7 @@ exports.mealsStatusState = new state_1.CachedState(state_1.StorageKey.MEALS_STAT
             match: [page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.USE_ITEM })],
             callback: () => __awaiter(void 0, void 0, void 0, function* () {
                 // request homepage to trigger meals state update
-                yield (0, api_1.requestHTML)(page_1.Page.HOME_PATH);
+                yield (0, requests_2.getHTML)(page_1.Page.HOME_PATH);
             }),
         },
     ],
@@ -1028,7 +964,7 @@ exports.mealsStatusState.onUpdate((state) => {
 
 /***/ }),
 
-/***/ 771:
+/***/ 5543:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1043,10 +979,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.activatePerkSet = exports.resetPerks = exports.isActivePerkSet = exports.getCurrentPerkSet = exports.getActivityPerksSet = exports.perksState = exports.PerkActivity = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const page_1 = __webpack_require__(7952);
-const api_1 = __webpack_require__(126);
 var PerkActivity;
 (function (PerkActivity) {
     PerkActivity["DEFAULT"] = "Default";
@@ -1079,7 +1015,7 @@ const processPerks = (root) => {
     return { perkSets, currentPerkSetId };
 };
 exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_1.requestHTML)(page_1.Page.PERKS);
+    const response = yield (0, requests_2.getHTML)(page_1.Page.PERKS);
     return processPerks(response);
 }), {
     timeout: 60 * 60 * 24, // 1 day
@@ -1090,8 +1026,8 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
     interceptors: [
         {
             match: [page_1.Page.PERKS, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set(processPerks(yield (0, utils_1.getDocument)(response)));
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(processPerks(yield (0, requests_1.getDocument)(response)));
             }),
         },
         {
@@ -1099,11 +1035,9 @@ exports.perksState = new state_1.CachedState(state_1.StorageKey.PERKS_SETS, () =
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.ACTIVATE_PERK_SET }),
             ],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                const [_, query] = (0, state_1.parseUrl)(response.url);
-                yield state.set({
-                    currentPerkSetId: Number(query.get("id")),
-                });
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const [_, query] = (0, requests_2.parseUrl)(response.url);
+                yield state.set(Object.assign(Object.assign({}, previous), { currentPerkSetId: Number(query.get("id")) }));
             }),
         },
     ],
@@ -1126,7 +1060,7 @@ exports.isActivePerkSet = isActivePerkSet;
 const resetPerks = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const state = yield exports.perksState.get();
-    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.RESET_PERKS }));
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.RESET_PERKS }));
     exports.perksState.set({
         perkSets: (_a = state === null || state === void 0 ? void 0 : state.perkSets) !== null && _a !== void 0 ? _a : [],
         currentPerkSetId: undefined,
@@ -1139,7 +1073,7 @@ const activatePerkSet = (set, options) => __awaiter(void 0, void 0, void 0, func
     }
     console.debug(`Activating ${set.name} Perks`);
     yield (0, exports.resetPerks)();
-    yield (0, api_1.requestHTML)(page_1.Page.WORKER, new URLSearchParams({
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({
         go: page_1.WorkerGo.ACTIVATE_PERK_SET,
         id: set.id.toString(),
     }));
@@ -1149,7 +1083,7 @@ exports.activatePerkSet = activatePerkSet;
 
 /***/ }),
 
-/***/ 5262:
+/***/ 2850:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1164,13 +1098,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.collectPets = exports.petState = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
-const api_1 = __webpack_require__(3413);
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
 const page_1 = __webpack_require__(7952);
-const mail_1 = __webpack_require__(1431);
+const api_1 = __webpack_require__(3413);
+const mail_1 = __webpack_require__(8955);
 const notifications_1 = __webpack_require__(6783);
-const api_2 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
 const processPets = (root) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
@@ -1189,15 +1123,16 @@ const processPets = (root) => {
     return contents;
 };
 exports.petState = new state_1.CachedState(state_1.StorageKey.PETS, () => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield (0, api_2.requestHTML)(page_1.Page.PETS);
+    const response = yield (0, requests_2.getHTML)(page_1.Page.PETS);
     return processPets(response);
 }), {
+    persist: false,
     defaultState: [],
     interceptors: [
         {
             match: [page_1.Page.PETS, new URLSearchParams()],
-            callback: (settings, state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
-                yield state.set(processPets(yield (0, utils_1.getDocument)(response)));
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                yield state.set(processPets(yield (0, requests_1.getDocument)(response)));
             }),
         },
         {
@@ -1205,7 +1140,7 @@ exports.petState = new state_1.CachedState(state_1.StorageKey.PETS, () => __awai
                 page_1.Page.WORKER,
                 new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_PET_ITEMS }),
             ],
-            callback: (settings, state) => __awaiter(void 0, void 0, void 0, function* () {
+            callback: (state) => __awaiter(void 0, void 0, void 0, function* () {
                 yield state.set([]);
             }),
         },
@@ -1219,7 +1154,7 @@ const collectPets = () => __awaiter(void 0, void 0, void 0, function* () {
     const mergedItems = (0, mail_1.mergeContents)(state);
     const items = yield Promise.all(mergedItems.map((mail) => __awaiter(void 0, void 0, void 0, function* () {
         return ({
-            item: yield (0, api_1.getItemByName)(mail.item),
+            item: yield api_1.itemDataState.get({ query: mail.item }),
             count: mail.count,
         });
     })));
@@ -1243,14 +1178,14 @@ const collectPets = () => __awaiter(void 0, void 0, void 0, function* () {
             .join("&nbsp;")}
     `,
     });
-    yield (0, api_2.requestHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_PET_ITEMS }));
+    yield (0, requests_2.getHTML)(page_1.Page.WORKER, new URLSearchParams({ go: page_1.WorkerGo.COLLECT_ALL_PET_ITEMS }));
 });
 exports.collectPets = collectPets;
 
 
 /***/ }),
 
-/***/ 1604:
+/***/ 4203:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1264,25 +1199,86 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.latestVersionState = exports.SCRIPT_URL = void 0;
-const state_1 = __webpack_require__(4619);
-const utils_1 = __webpack_require__(7683);
-exports.SCRIPT_URL = "https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand";
-exports.latestVersionState = new state_1.CachedState(state_1.StorageKey.LATEST_VERSION, () => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const response = yield (0, utils_1.corsFetch)(exports.SCRIPT_URL);
-    const htmlString = yield response.text();
-    const document = new DOMParser().parseFromString(htmlString, "text/html");
-    return (((_a = document.querySelector("dd.script-show-version")) === null || _a === void 0 ? void 0 : _a.textContent) || "1.0.0");
+exports.playerMailboxState = void 0;
+const state_1 = __webpack_require__(4782);
+const page_1 = __webpack_require__(7952);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
+const users_1 = __webpack_require__(5254);
+const processMailbox = (root) => {
+    var _a, _b, _c;
+    const idField = root.querySelector("#mb_to_id");
+    const id = idField === null || idField === void 0 ? void 0 : idField.value;
+    if (!id) {
+        return;
+    }
+    const profileLink = root.querySelector("a[href^='profile']");
+    if (!profileLink) {
+        return;
+    }
+    const [, queryString] = profileLink.href.split("?");
+    const linkQuery = new URLSearchParams(queryString);
+    const username = linkQuery.get("user_name");
+    if (!username) {
+        return;
+    }
+    const cards = root.querySelectorAll(".card");
+    let capacity = 5;
+    for (const card of cards) {
+        // This mailbox has 36 / 1,800 items in it currently.
+        const match = (_a = card.textContent) === null || _a === void 0 ? void 0 : _a.match(/This mailbox has [\d,]+ \/ ([\d,]+) items in it currently/);
+        if (!match) {
+            continue;
+        }
+        const [_, max] = match;
+        capacity = Number(max.replaceAll(",", ""));
+        break;
+    }
+    const lookingFor = (_c = (_b = (0, page_1.getCardByTitle)("Looking For", root.body)) === null || _b === void 0 ? void 0 : _b.textContent) !== null && _c !== void 0 ? _c : "";
+    const timestamp = Date.now();
+    return {
+        id,
+        username,
+        capacity,
+        lookingFor,
+        timestamp,
+    };
+};
+exports.playerMailboxState = new state_1.CachedState(state_1.StorageKey.PLAYER_MAILBOXES, (state, userName) => __awaiter(void 0, void 0, void 0, function* () {
+    const previous = state.read(userName);
+    if (previous) {
+        return previous;
+    }
+    if (!userName) {
+        return;
+    }
+    const user = yield users_1.userState.get({ query: userName });
+    if (!user) {
+        return;
+    }
+    const response = yield (0, requests_2.getHTML)(page_1.Page.MAILBOX, new URLSearchParams({ id: user.id }));
+    return processMailbox(response);
 }), {
-    timeout: 60 * 60 * 24, // 1 day
-    defaultState: "1.0.0",
+    persist: true,
+    timeout: 60 * 24 * 7, // 1 week
+    interceptors: [
+        {
+            match: [page_1.Page.MAILBOX, new URLSearchParams()],
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const mailbox = processMailbox(yield (0, requests_1.getDocument)(response));
+                if (!mailbox) {
+                    return;
+                }
+                yield state.set(mailbox, mailbox.username);
+            }),
+        },
+    ],
 });
 
 
 /***/ }),
 
-/***/ 4619:
+/***/ 5254:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1296,8 +1292,119 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CachedState = exports.watchQueries = exports.onFetchResponse = exports.queryInterceptors = exports.StorageKey = exports.toUrl = exports.urlMatches = exports.parseUrl = void 0;
-const object_1 = __webpack_require__(7968);
+exports.userState = void 0;
+const state_1 = __webpack_require__(4782);
+const page_1 = __webpack_require__(7952);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
+const processProfile = (root) => {
+    var _a, _b, _c, _d, _e, _f;
+    const id = (_a = root.querySelector(".addfriendbtn")) === null || _a === void 0 ? void 0 : _a.dataset.id;
+    if (!id) {
+        return;
+    }
+    const nameLink = root.querySelector(".sharelink");
+    if (!nameLink) {
+        return;
+    }
+    const username = nameLink.textContent;
+    if (!username) {
+        return;
+    }
+    const colorClass = (_c = (_b = nameLink.parentElement) === null || _b === void 0 ? void 0 : _b.className) !== null && _c !== void 0 ? _c : "";
+    const bioCard = (0, page_1.getCardByTitle)("Public Bio", root.body);
+    const bio = (_d = bioCard === null || bioCard === void 0 ? void 0 : bioCard.textContent) !== null && _d !== void 0 ? _d : "";
+    const image = root.querySelector("#img");
+    const emblem = (_f = (_e = image === null || image === void 0 ? void 0 : image.querySelector("img")) === null || _e === void 0 ? void 0 : _e.src) !== null && _f !== void 0 ? _f : "";
+    const timestamp = Date.now();
+    return {
+        id,
+        bio,
+        username,
+        colorClass,
+        emblem,
+        timestamp,
+    };
+};
+exports.userState = new state_1.CachedState(state_1.StorageKey.PLAYERS, (state, userName) => __awaiter(void 0, void 0, void 0, function* () {
+    const previous = state.read(userName);
+    if (previous) {
+        return previous;
+    }
+    if (!userName) {
+        return;
+    }
+    const response = yield (0, requests_2.getHTML)(page_1.Page.PROFILE, new URLSearchParams({ user_name: userName.replaceAll(" ", "+") }));
+    return yield processProfile(response);
+}), {
+    persist: true,
+    timeout: 60 * 24 * 7, // 1 week
+    interceptors: [
+        {
+            match: [page_1.Page.PROFILE, new URLSearchParams()],
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                const user = processProfile(yield (0, requests_1.getDocument)(response));
+                if (!user) {
+                    return;
+                }
+                yield state.set(user, user.username);
+            }),
+        },
+    ],
+});
+
+
+/***/ }),
+
+/***/ 3300:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.watchQueries = exports.onFetchResponse = exports.registerQueryInterceptor = exports.queryInterceptors = exports.toUrl = exports.urlMatches = exports.parseUrl = exports.getJSON = exports.postData = exports.getHTML = void 0;
+const requests_1 = __webpack_require__(3813);
+const getHTML = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield fetch((0, exports.toUrl)(page, query), {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+    });
+    return (0, requests_1.getDocument)(response);
+});
+exports.getHTML = getHTML;
+const postData = (page, data, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const body = new URLSearchParams(data).toString();
+    const response = yield fetch((0, exports.toUrl)(page, query), {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+        body,
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+    });
+    return (0, requests_1.getDocument)(response);
+});
+exports.postData = postData;
+const getJSON = (page, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield fetch((0, exports.toUrl)(page, query), {
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+    });
+    (0, exports.onFetchResponse)(response);
+    return yield response.json();
+});
+exports.getJSON = getJSON;
 const parseUrl = (url) => {
     // https://farmrpg.com/worker.php?cachebuster=271544&go=getchat&room=giveaways
     const truncatedUrl = url.replace("https://farmrpg.com/", "");
@@ -1326,43 +1433,20 @@ exports.urlMatches = urlMatches;
 const toUrl = (page, query) => {
     query = query !== null && query !== void 0 ? query : new URLSearchParams();
     query.set("cachebuster", Date.now().toString());
-    return `https://farmrpg.com/${page}.php?${query.toString()}`;
+    // don't actually use URLSearchParams.toString() because FarmRPG expects non-encoded "+" chars
+    const queryStringSegments = [];
+    for (const [key, value] of query.entries()) {
+        queryStringSegments.push(`${key}=${value}`);
+    }
+    return `https://farmrpg.com/${page}.php?${queryStringSegments.join("&")}`;
 };
 exports.toUrl = toUrl;
-var StorageKey;
-(function (StorageKey) {
-    StorageKey["CHAT_BANNERS"] = "chatBanners";
-    StorageKey["CURRENT_PERKS_SET_ID"] = "currentPerksSetId";
-    StorageKey["FARM_ID"] = "farmId";
-    StorageKey["FARM_STATE"] = "farmState";
-    StorageKey["FARM_STATUS"] = "farmStatus";
-    StorageKey["IS_BETA"] = "isBeta";
-    StorageKey["IS_CHAT_ENABLED"] = "isChatEnabled";
-    StorageKey["IS_DARK_MODE"] = "isDarkMode";
-    StorageKey["IS_MUSIC_ENABLED"] = "isMusicEnabled";
-    StorageKey["ITEM_DATA"] = "itemData";
-    StorageKey["KITHCEN_STATUS"] = "kitchenStatus";
-    StorageKey["LATEST_VERSION"] = "latestVersion";
-    StorageKey["MAILBOX"] = "mailbox";
-    StorageKey["MEALS_STATUS"] = "mealsStatus";
-    StorageKey["PAGE_DATA"] = "pageData";
-    StorageKey["PERKS_SETS"] = "perkSets";
-    StorageKey["PETS"] = "pets";
-    StorageKey["RECENT_UPDATE"] = "recentUpdate";
-    StorageKey["STATS"] = "stats";
-    StorageKey["USERNAME"] = "username";
-    StorageKey["USER_ID"] = "userId";
-})(StorageKey || (exports.StorageKey = StorageKey = {}));
-const generateEmptyRootState = () => {
-    const state = {};
-    for (const [_, value] of Object.entries(StorageKey)) {
-        state[value] = JSON.stringify(undefined);
-    }
-    return state;
-};
-const rootState = generateEmptyRootState();
 exports.queryInterceptors = [];
-const onFetchResponse = (settings, response) => __awaiter(void 0, void 0, void 0, function* () {
+const registerQueryInterceptor = (interceptor) => {
+    exports.queryInterceptors.push(interceptor);
+};
+exports.registerQueryInterceptor = registerQueryInterceptor;
+const onFetchResponse = (response) => __awaiter(void 0, void 0, void 0, function* () {
     // only check farmrpg URLs
     if (!response.url.startsWith("https://farmrpg.com")) {
         return;
@@ -1371,12 +1455,12 @@ const onFetchResponse = (settings, response) => __awaiter(void 0, void 0, void 0
         if ((0, exports.urlMatches)(response.url, ...interceptor.match)) {
             console.debug(`[STATE] fetch intercepted ${response.url}`, interceptor);
             const previous = yield state.get({ doNotFetch: true });
-            interceptor.callback(settings, state, previous, response);
+            interceptor.callback(state, previous, response);
         }
     }
 });
 exports.onFetchResponse = onFetchResponse;
-const watchQueries = (settings) => {
+const watchQueries = () => {
     (function (open) {
         XMLHttpRequest.prototype.open = function () {
             this.addEventListener("readystatechange", function () {
@@ -1392,7 +1476,7 @@ const watchQueries = (settings) => {
                         if ((0, exports.urlMatches)(this.responseURL, ...interceptor.match)) {
                             console.debug(`[STATE] XMLHttpRequest intercepted ${this.responseURL}`, interceptor);
                             const previous = yield state.get({ doNotFetch: true });
-                            interceptor.callback(settings, state, previous, {
+                            interceptor.callback(state, previous, {
                                 headers: new Headers(),
                                 ok: this.status >= 200 && this.status < 300,
                                 redirected: false,
@@ -1419,7 +1503,7 @@ const watchQueries = (settings) => {
         const response = yield originalFetch(input, init);
         if (!response.hasBeenIntercepted) {
             response.hasBeenIntercepted = true;
-            (0, exports.onFetchResponse)(settings, response.clone());
+            (0, exports.onFetchResponse)(response.clone());
         }
         return response;
     });
@@ -1428,119 +1512,30 @@ const watchQueries = (settings) => {
         const response = yield originalFetchWorker(action, parameters);
         if (!response.hasBeenIntercepted) {
             response.hasBeenIntercepted = true;
-            (0, exports.onFetchResponse)(settings, response.clone());
+            (0, exports.onFetchResponse)(response.clone());
         }
         return response;
     });
 };
 exports.watchQueries = watchQueries;
-class CachedState {
-    constructor(key, fetch, { defaultState, timeout, updatedAt, interceptors = [], persist = true, }) {
-        this.key = key;
-        this.defaultState = defaultState;
-        this.updatedAt = updatedAt !== null && updatedAt !== void 0 ? updatedAt : new Date(0);
-        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 60;
-        this.fetch = fetch;
-        this.updateListeners = [];
-        this.persist = persist;
-        for (const interceptor of interceptors) {
-            exports.queryInterceptors.push([this, interceptor]);
-        }
-        rootState[this.key] = JSON.stringify(defaultState || undefined);
-        this.load();
-    }
-    onUpdate(callback) {
-        this.updateListeners.push(callback);
-    }
-    get() {
-        return __awaiter(this, arguments, void 0, function* ({ ignoreCache, doNotFetch } = {}) {
-            if (this.getting) {
-                console.debug(`[STATE] Waiting for ${this.key} fetch`, this.getting);
-                return yield this.getting;
-            }
-            this.getting = new Promise((resolve) => {
-                if (!doNotFetch &&
-                    (!rootState[this.key] ||
-                        ignoreCache ||
-                        this.updatedAt.getTime() + this.timeout * 1000 < Date.now())) {
-                    console.debug(`[STATE] %cFetching ${this.key}`, {
-                        ignoreCache,
-                        updatedAt: this.updatedAt,
-                        timeout: this.timeout,
-                        previous: rootState[this.key],
-                    }, "background-color: red; color: white;");
-                    this.fetch().then((result) => {
-                        this.set(result);
-                        resolve(result);
-                    });
-                }
-                else {
-                    // console.debug(`[STATE] Returning cached ${this.key}`, {
-                    //   ignoreCache,
-                    //   updatedAt: this.updatedAt,
-                    //   timeout: this.timeout,
-                    //   previous: rootState[this.key],
-                    // });
-                    const raw = rootState[this.key];
-                    resolve(raw ? JSON.parse(raw) : undefined);
-                }
-            });
-            const result = yield this.getting;
-            this.getting = undefined;
-            return result;
-        });
-    }
-    set(input) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const previous = yield this.get({ doNotFetch: true });
-            const value = (0, object_1.isObject)(this.defaultState)
-                ? Object.assign(Object.assign(Object.assign({}, this.defaultState), previous), input) : ((_a = input !== null && input !== void 0 ? input : previous) !== null && _a !== void 0 ? _a : this.defaultState);
-            console.debug(`[STATE] Setting ${this.key}`, value);
-            const encoded = JSON.stringify(value);
-            this.updatedAt = value === undefined ? new Date(0) : new Date();
-            rootState[this.key] = encoded;
-            for (const listener of this.updateListeners) {
-                listener(value);
-            }
-            if (this.persist) {
-                yield GM.setValue(this.key, JSON.stringify([this.updatedAt.getTime(), encoded]));
-            }
-        });
-    }
-    load() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.persist) {
-                return;
-            }
-            const raw = (yield GM.getValue(this.key));
-            if (!raw) {
-                return;
-            }
-            const result = JSON.parse(raw);
-            if (!Array.isArray(result) ||
-                result.length !== 2 ||
-                typeof result[0] !== "number" ||
-                typeof result[1] !== "string") {
-                yield this.set(this.defaultState);
-                return;
-            }
-            const [timestamp, encoded] = result;
-            this.updatedAt = new Date(timestamp);
-            rootState[this.key] = encoded;
-        });
-    }
-    reset() {
-        return this.set(this.defaultState);
-    }
-}
-exports.CachedState = CachedState;
 
 
 /***/ }),
 
-/***/ 7683:
-/***/ (function(__unused_webpack_module, exports) {
+/***/ 4435:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.timestampToDate = void 0;
+const timestampToDate = (timestamp) => new Date(`${timestamp}-05:00`);
+exports.timestampToDate = timestampToDate;
+
+
+/***/ }),
+
+/***/ 1604:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -1553,35 +1548,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDocument = exports.corsFetch = void 0;
-const corsFetch = (url, options) => new Promise((resolve, reject) => {
+exports.latestVersionState = exports.SCRIPT_URL = void 0;
+const state_1 = __webpack_require__(4782);
+const requests_1 = __webpack_require__(3813);
+exports.SCRIPT_URL = "https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand";
+exports.latestVersionState = new state_1.CachedState(state_1.StorageKey.LATEST_VERSION, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    GM.xmlHttpRequest(Object.assign(Object.assign({}, options), { method: (_a = options === null || options === void 0 ? void 0 : options.method) !== null && _a !== void 0 ? _a : "GET", url, onload: (response) => {
-            resolve({
-                headers: new Headers(),
-                ok: response.status >= 200 && response.status < 300,
-                redirected: url !== response.finalUrl,
-                status: response.status,
-                statusText: response.statusText,
-                type: "default",
-                url: response.finalUrl,
-                text: () => Promise.resolve(response.responseText),
-                json: () => Promise.resolve(JSON.parse(response.responseText)),
-                formData: () => Promise.resolve(new FormData()),
-                arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-                blob: () => Promise.resolve(new Blob([response.responseText])),
-            });
-        }, onerror: reject, onabort: reject, ontimeout: reject }));
-});
-exports.corsFetch = corsFetch;
-const getDocument = (response) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!response.ok) {
-        throw new Error(response.statusText);
-    }
+    const response = yield (0, requests_1.corsFetch)(exports.SCRIPT_URL);
     const htmlString = yield response.text();
-    return new DOMParser().parseFromString(htmlString, "text/html");
+    const document = new DOMParser().parseFromString(htmlString, "text/html");
+    return (((_a = document.querySelector("dd.script-show-version")) === null || _a === void 0 ? void 0 : _a.textContent) || "1.0.0");
+}), {
+    timeout: 60 * 60 * 6, // 6 hours
+    defaultState: "1.0.0",
 });
-exports.getDocument = getDocument;
 
 
 /***/ }),
@@ -1591,21 +1571,22 @@ exports.getDocument = getDocument;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.autocompleteItems = exports.SETTING_AUTOCOMPLETE_ITEMS = void 0;
+exports.autocompleteItems = void 0;
 const api_1 = __webpack_require__(3413);
 const autocomplete_1 = __webpack_require__(4067);
-exports.SETTING_AUTOCOMPLETE_ITEMS = {
-    id: "autocompleteItems",
+const settings_1 = __webpack_require__(126);
+const SETTING_AUTOCOMPLETE_ITEMS = {
+    id: settings_1.SettingId.AUTOCOMPLETE_ITEMS,
     title: "Chat: Autocomplete ((items))",
     description: "Auto-complete item names in chat",
     type: "boolean",
     defaultValue: true,
 };
 exports.autocompleteItems = {
-    settings: [exports.SETTING_AUTOCOMPLETE_ITEMS],
+    settings: [SETTING_AUTOCOMPLETE_ITEMS],
     onInitialize: (settings) => {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_AUTOCOMPLETE_ITEMS.id].value) {
+        if (!settings[settings_1.SettingId.AUTOCOMPLETE_ITEMS]) {
             return;
         }
         (0, autocomplete_1.registerAutocomplete)({
@@ -1635,10 +1616,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.autocompleteUsers = exports.getUsers = exports.SETTING_AUTOCOMPLETE_USERS = void 0;
+exports.autocompleteUsers = void 0;
 const autocomplete_1 = __webpack_require__(4067);
-exports.SETTING_AUTOCOMPLETE_USERS = {
-    id: "autocompleteUsers",
+const settings_1 = __webpack_require__(126);
+const SETTING_AUTOCOMPLETE_USERS = {
+    id: settings_1.SettingId.AUTOCOMPLETE_USERS,
     title: "Chat: Autocomplete @Users:",
     description: "Auto-complete usernames in chat",
     type: "boolean",
@@ -1657,17 +1639,16 @@ const getUsers = () => {
     }
     return Object.values(users);
 };
-exports.getUsers = getUsers;
 exports.autocompleteUsers = {
-    settings: [exports.SETTING_AUTOCOMPLETE_USERS],
+    settings: [SETTING_AUTOCOMPLETE_USERS],
     onInitialize: (settings) => {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_AUTOCOMPLETE_USERS.id].value) {
+        if (!settings[settings_1.SettingId.AUTOCOMPLETE_USERS]) {
             return;
         }
         (0, autocomplete_1.registerAutocomplete)({
             trigger: /@([^]+)/,
-            getItems: () => __awaiter(void 0, void 0, void 0, function* () { return yield (0, exports.getUsers)(); }),
+            getItems: () => __awaiter(void 0, void 0, void 0, function* () { return yield getUsers(); }),
             prefix: "@",
             suffix: ":",
             bail: (text) => { var _a, _b; return ((_b = (_a = text.match(/(@|:)/g)) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) % 2 === 0; },
@@ -1692,14 +1673,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.banker = exports.SETTING_BANKER = void 0;
-const bank_1 = __webpack_require__(9022);
+exports.banker = void 0;
+const bank_1 = __webpack_require__(4938);
 const page_1 = __webpack_require__(7952);
+const settings_1 = __webpack_require__(126);
 const confirmation_1 = __webpack_require__(3906);
 const popup_1 = __webpack_require__(469);
 const theme_1 = __webpack_require__(1178);
-exports.SETTING_BANKER = {
-    id: "banker",
+const SETTING_BANKER = {
+    id: settings_1.SettingId.BANKER,
     title: "Bank: Banker",
     description: `
     * Automatically calculates your target balance (minimum balance required to maximize your daily interest)<br>
@@ -1710,11 +1692,11 @@ exports.SETTING_BANKER = {
     defaultValue: true,
 };
 exports.banker = {
-    settings: [exports.SETTING_BANKER],
+    settings: [SETTING_BANKER],
     onPageLoad: (settings, page) => {
         var _a, _b, _c, _d;
         // make sure the banker is enabled
-        if (!settings[exports.SETTING_BANKER.id].value) {
+        if (!settings[settings_1.SettingId.BANKER]) {
             return;
         }
         // make sure we are on the bank page
@@ -1852,22 +1834,23 @@ exports.banker = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.buddyFarm = exports.SETTING_BUDDY_FARM = void 0;
+exports.buddyFarm = void 0;
 const page_1 = __webpack_require__(7952);
-const state_1 = __webpack_require__(4456);
-exports.SETTING_BUDDY_FARM = {
-    id: "buddyFarm",
+const requests_1 = __webpack_require__(6747);
+const settings_1 = __webpack_require__(126);
+const SETTING_BUDDY_FARM = {
+    id: settings_1.SettingId.BUDDY_FARM,
     title: "Item: Buddy's Almanac",
     description: "Add shortcut to look up items and quests on buddy.farm",
     type: "boolean",
     defaultValue: true,
 };
 exports.buddyFarm = {
-    settings: [exports.SETTING_BUDDY_FARM],
+    settings: [SETTING_BUDDY_FARM],
     onPageLoad: (settings, page) => {
         var _a, _b, _c, _d, _e;
         // make sure setting is enabled
-        if (!settings[exports.SETTING_BUDDY_FARM.id].value) {
+        if (!settings[settings_1.SettingId.BUDDY_FARM]) {
             return;
         }
         // make sure page content has loaded
@@ -1885,7 +1868,7 @@ exports.buddyFarm = {
             }
             // get name and link for item
             const itemName = (_a = itemHeader.textContent) !== null && _a !== void 0 ? _a : "";
-            const itemLink = `https://buddy.farm/i/${(0, state_1.nameToSlug)(itemName)}`;
+            const itemLink = `https://buddy.farm/i/${(0, requests_1.nameToSlug)(itemName)}`;
             // use title to find item details section
             const titles = currentPage.querySelectorAll(".content-block-title");
             const itemDetailsTitle = [...titles].find((title) => title.textContent === "Item Details");
@@ -1940,7 +1923,7 @@ exports.buddyFarm = {
             }
             // get name and link for item
             const questName = (_c = questHeader.textContent) !== null && _c !== void 0 ? _c : "";
-            const questLink = `https://buddy.farm/q/${(0, state_1.nameToSlug)(questName)}`;
+            const questLink = `https://buddy.farm/q/${(0, requests_1.nameToSlug)(questName)}`;
             // find last card to insert
             const card = (_d = (0, page_1.getCardByTitle)("This Help Request is Visible")) !== null && _d !== void 0 ? _d : (0, page_1.getCardByTitle)("This Help Request is Hidden");
             if (!card) {
@@ -2123,10 +2106,11 @@ exports.chatNav = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.cleanupExplore = exports.SETTING_EXPLORE_RESULTS = void 0;
+exports.cleanupExplore = void 0;
 const page_1 = __webpack_require__(7952);
-exports.SETTING_EXPLORE_RESULTS = {
-    id: "",
+const settings_1 = __webpack_require__(126);
+const SETTING_EXPLORE_IMPROVED = {
+    id: settings_1.SettingId.EXPLORE_IMPROVED,
     title: "Explore: Improved Layout",
     description: "Larger icons and stable sort",
     type: "boolean",
@@ -2134,12 +2118,12 @@ exports.SETTING_EXPLORE_RESULTS = {
 };
 let maxHeight = 0;
 exports.cleanupExplore = {
-    settings: [exports.SETTING_EXPLORE_RESULTS],
+    settings: [SETTING_EXPLORE_IMPROVED],
     onPageLoad: (settings, page) => {
         if (!page || ![page_1.Page.AREA, page_1.Page.FISHING].includes(page)) {
             return;
         }
-        if (!settings[exports.SETTING_EXPLORE_RESULTS.id].value) {
+        if (!settings[settings_1.SettingId.EXPLORE_IMPROVED]) {
             return;
         }
         // get console
@@ -2199,31 +2183,32 @@ exports.cleanupExplore = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.cleanupHome = exports.SETTING_COMPRESS_SKILLS = exports.SETTING_HIDE_FOOTER = exports.SETTING_HIDE_THEME = exports.SETTING_HIDE_PLAYERS = void 0;
+exports.cleanupHome = void 0;
 const page_1 = __webpack_require__(7952);
-exports.SETTING_HIDE_PLAYERS = {
-    id: "homeHidePlayers",
+const settings_1 = __webpack_require__(126);
+const SETTING_HIDE_PLAYERS = {
+    id: settings_1.SettingId.HOME_HIDE_PLAYERS,
     title: "Home: Hide players",
     description: "Hide Online, new, find players options",
     type: "boolean",
     defaultValue: false,
 };
-exports.SETTING_HIDE_THEME = {
-    id: "homeHideTheme",
+const SETTING_HIDE_THEME = {
+    id: settings_1.SettingId.HOME_HIDE_THEME,
     title: "Home: Hide theme switcher",
     description: "Hide theme switcher on homepage",
     type: "boolean",
     defaultValue: false,
 };
-exports.SETTING_HIDE_FOOTER = {
-    id: "homeHideFooter",
+const SETTING_HIDE_FOOTER = {
+    id: settings_1.SettingId.HOME_HIDE_FOOTER,
     title: "Home: Hide footer",
     description: "Hide footer (Privacy, CoC, T&C, Support) ",
     type: "boolean",
     defaultValue: false,
 };
-exports.SETTING_COMPRESS_SKILLS = {
-    id: "homeCompressSkills",
+const SETTING_COMPRESS_SKILLS = {
+    id: settings_1.SettingId.HOME_COMPRESS_SKILLS,
     title: "Home: Compress Skills",
     description: "Hide Level 99 skills",
     type: "boolean",
@@ -2231,13 +2216,13 @@ exports.SETTING_COMPRESS_SKILLS = {
 };
 exports.cleanupHome = {
     settings: [
-        exports.SETTING_HIDE_PLAYERS,
-        exports.SETTING_HIDE_THEME,
-        exports.SETTING_HIDE_FOOTER,
-        exports.SETTING_COMPRESS_SKILLS,
+        SETTING_HIDE_PLAYERS,
+        SETTING_HIDE_THEME,
+        SETTING_HIDE_FOOTER,
+        SETTING_COMPRESS_SKILLS,
     ],
     onInitialize: (settings) => {
-        if (settings[exports.SETTING_HIDE_PLAYERS.id].value) {
+        if (settings[settings_1.SettingId.HOME_HIDE_PLAYERS]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Hide players card */
@@ -2248,7 +2233,7 @@ exports.cleanupHome = {
           <style>
         `);
         }
-        if (settings[exports.SETTING_HIDE_THEME.id].value) {
+        if (settings[settings_1.SettingId.HOME_HIDE_THEME]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Hide theme switcher */
@@ -2259,7 +2244,7 @@ exports.cleanupHome = {
           <style>
         `);
         }
-        if (settings[exports.SETTING_HIDE_FOOTER.id].value) {
+        if (settings[settings_1.SettingId.HOME_HIDE_FOOTER]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             [data-page="${page_1.Page.HOME_PAGE}"] .page-content > p:last-of-type,
@@ -2275,7 +2260,7 @@ exports.cleanupHome = {
         if (page !== page_1.Page.HOME_PAGE) {
             return;
         }
-        if (!settings[exports.SETTING_COMPRESS_SKILLS.id].value) {
+        if (!settings[settings_1.SettingId.HOME_COMPRESS_SKILLS]) {
             return;
         }
         // get wrappers
@@ -2326,19 +2311,20 @@ exports.cleanupHome = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.collapseItemImage = exports.SETTING_COLLAPSE_ITEM = void 0;
+exports.collapseItemImage = void 0;
 const page_1 = __webpack_require__(7952);
-exports.SETTING_COLLAPSE_ITEM = {
-    id: "collapseItem",
+const settings_1 = __webpack_require__(126);
+const SETTING_COLLAPSE_ITEM = {
+    id: settings_1.SettingId.COLLAPSE_ITEM,
     title: "Item: Collapse Item Image",
     description: "Move item image in header to save space",
     type: "boolean",
     defaultValue: false,
 };
 exports.collapseItemImage = {
-    settings: [exports.SETTING_COLLAPSE_ITEM],
+    settings: [SETTING_COLLAPSE_ITEM],
     onInitialize: (settings) => {
-        if (settings[exports.SETTING_COLLAPSE_ITEM.id].value) {
+        if (settings[settings_1.SettingId.COLLAPSE_ITEM]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Hide item image and description */
@@ -2386,19 +2372,21 @@ exports.collapseItemImage = {
 /***/ }),
 
 /***/ 8181:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.compactSilver = exports.SETTING_COMPACT_SILVER = void 0;
-exports.SETTING_COMPACT_SILVER = {
-    id: "compactSilver",
+exports.compactSilver = void 0;
+const settings_1 = __webpack_require__(126);
+const SETTING_COMPACT_SILVER = {
+    id: settings_1.SettingId.COMPACT_SILVER,
     title: "Wallet: Compact silver",
     description: "Display compact numbers for silver over 1M",
     type: "boolean",
     defaultValue: true,
 };
 exports.compactSilver = {
+    settings: [SETTING_COMPACT_SILVER],
     onQuestLoad: () => {
         var _a, _b, _c;
         for (const silver of document.querySelectorAll("#statszone span:first-child")) {
@@ -2431,17 +2419,18 @@ exports.compactSilver = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.compressChat = exports.SETTING_CHAT_COMPRESS = void 0;
+exports.compressChat = void 0;
 const theme_1 = __webpack_require__(1178);
-exports.SETTING_CHAT_COMPRESS = {
-    id: "compressChat",
+const settings_1 = __webpack_require__(126);
+const SETTING_CHAT_COMPRESS = {
+    id: settings_1.SettingId.CHAT_COMPRESS,
     title: "Chat: Compress messages",
     description: "Compress chat messages to make more visible at once",
     type: "boolean",
     defaultValue: true,
 };
 exports.compressChat = {
-    settings: [exports.SETTING_CHAT_COMPRESS],
+    settings: [SETTING_CHAT_COMPRESS],
     onInitialize: (settings) => {
         // move spacing from panel margin to message padding regardless of setting
         document.head.insertAdjacentHTML("beforeend", `
@@ -2469,7 +2458,7 @@ exports.compressChat = {
         <style>
       `);
         // make sure setting is enabled
-        if (!settings[exports.SETTING_CHAT_COMPRESS.id].value) {
+        if (!settings[settings_1.SettingId.CHAT_COMPRESS]) {
             return;
         }
         document.head.insertAdjacentHTML("beforeend", `
@@ -2494,34 +2483,35 @@ exports.compressChat = {
 /***/ }),
 
 /***/ 2827:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.navigationStyle = exports.SETTINGS_NAVIGATION_ADD_MENU = exports.SETTING_NAVIGATION_ALIGN_BOTTOM = exports.SETTING_NAVIGATION_HIDE_LOGO = exports.SETTING_NAVIGATION_COMPRESS = void 0;
-exports.SETTING_NAVIGATION_COMPRESS = {
-    id: "compressNav",
+exports.navigationStyle = void 0;
+const settings_1 = __webpack_require__(126);
+const SETTING_NAVIGATION_COMPRESS = {
+    id: settings_1.SettingId.NAV_COMPRESS,
     title: "Menu: Reduce Whitespace",
     description: `Reduces whitespace in navigation to make space for more items`,
     type: "boolean",
     defaultValue: false,
 };
-exports.SETTING_NAVIGATION_HIDE_LOGO = {
-    id: "noLogoNav",
+const SETTING_NAVIGATION_HIDE_LOGO = {
+    id: settings_1.SettingId.NAV_HIDE_LOGO,
     title: "Menu: Hide Logo",
     description: `Hides Farm RPG logo in Navigation`,
     type: "boolean",
     defaultValue: true,
 };
-exports.SETTING_NAVIGATION_ALIGN_BOTTOM = {
-    id: "alignBottomNav",
+const SETTING_NAVIGATION_ALIGN_BOTTOM = {
+    id: settings_1.SettingId.NAV_ALIGN_BOTTOM,
     title: "Menu: Align to Bottom",
     description: `Aligns Navigation menu to bottom of screen for easier reach on mobile`,
     type: "boolean",
     defaultValue: false,
 };
-exports.SETTINGS_NAVIGATION_ADD_MENU = {
-    id: "bottomMenu",
+const SETTINGS_NAVIGATION_ADD_MENU = {
+    id: settings_1.SettingId.NAV_ADD_MENU,
     title: "Menu: Add Shortcut to Bottom",
     description: `Adds navigation menu shortcut to bottom bar for easier reach on mobile`,
     type: "boolean",
@@ -2529,10 +2519,10 @@ exports.SETTINGS_NAVIGATION_ADD_MENU = {
 };
 exports.navigationStyle = {
     settings: [
-        exports.SETTING_NAVIGATION_COMPRESS,
-        exports.SETTING_NAVIGATION_HIDE_LOGO,
-        exports.SETTINGS_NAVIGATION_ADD_MENU,
-        exports.SETTING_NAVIGATION_ALIGN_BOTTOM,
+        SETTING_NAVIGATION_COMPRESS,
+        SETTING_NAVIGATION_HIDE_LOGO,
+        SETTINGS_NAVIGATION_ADD_MENU,
+        SETTING_NAVIGATION_ALIGN_BOTTOM,
     ],
     onInitialize: (settings) => {
         var _a;
@@ -2576,7 +2566,7 @@ exports.navigationStyle = {
           }
         <style>
       `);
-        if (settings[exports.SETTING_NAVIGATION_COMPRESS.id].value) {
+        if (settings[settings_1.SettingId.NAV_COMPRESS]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Reduce nav item spacing */
@@ -2591,7 +2581,7 @@ exports.navigationStyle = {
           <style>
         `);
         }
-        if (settings[exports.SETTING_NAVIGATION_HIDE_LOGO.id].value) {
+        if (settings[settings_1.SettingId.NAV_HIDE_LOGO]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Hide nav logo */
@@ -2607,7 +2597,7 @@ exports.navigationStyle = {
           <style>
         `);
         }
-        if (settings[exports.SETTING_NAVIGATION_ALIGN_BOTTOM.id].value) {
+        if (settings[settings_1.SettingId.NAV_ALIGN_BOTTOM]) {
             document.head.insertAdjacentHTML("beforeend", `
           <style>
             /* Align nav down */
@@ -2635,7 +2625,7 @@ exports.navigationStyle = {
           }
         <style>
       `);
-        if (settings[exports.SETTINGS_NAVIGATION_ADD_MENU.id].value) {
+        if (settings[SETTINGS_NAVIGATION_ADD_MENU.id]) {
             const homeButton = document.querySelector("#homebtn");
             if (!homeButton) {
                 console.error("Home button not found");
@@ -2696,12 +2686,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.customNavigation = exports.SETTING_CUSTOM_NAVIGATION = void 0;
+exports.customNavigation = void 0;
 const theme_1 = __webpack_require__(1178);
-const farmhandSettings_1 = __webpack_require__(8973);
+const settings_1 = __webpack_require__(126);
 const confirmation_1 = __webpack_require__(3906);
-exports.SETTING_CUSTOM_NAVIGATION = {
-    id: "customNav",
+const SETTING_CUSTOM_NAVIGATION = {
+    id: settings_1.SettingId.NAV_CUSTOM,
     title: "Customize Navigation",
     description: `
     Enables customization of the Navigation menu<br>
@@ -2709,7 +2699,6 @@ exports.SETTING_CUSTOM_NAVIGATION = {
   `,
     type: "boolean",
     defaultValue: true,
-    dataKey: "customNav_data",
 };
 const state = {
     isEditing: false,
@@ -2754,7 +2743,7 @@ const icons = (() => {
 })();
 const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (force = false) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-    const navigationData = yield (0, farmhandSettings_1.getData)(exports.SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
+    const { items } = yield (0, settings_1.getData)(SETTING_CUSTOM_NAVIGATION, { items: DEFAULT_NAVIGATION });
     const navigationList = document.querySelector(".panel-left ul");
     if (!navigationList) {
         console.error("Could not find navigation list");
@@ -2778,7 +2767,7 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
         resetButton.classList.add("fa-arrow-left-rotate");
         resetButton.addEventListener("click", () => {
             (0, confirmation_1.showConfirmation)("Reset Navigation?", () => __awaiter(void 0, void 0, void 0, function* () {
-                yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, DEFAULT_NAVIGATION);
+                yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items: DEFAULT_NAVIGATION });
                 state.isEditing = false;
                 renderNavigation(true);
             }));
@@ -2788,8 +2777,8 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
     navigationList.innerHTML = "";
     navigationList.dataset.isCustomized = "true";
     navigationList.dataset.isEditing = String(state.isEditing);
-    for (const item of navigationData) {
-        const currentIndex = navigationData.indexOf(item);
+    for (const item of items) {
+        const currentIndex = items.indexOf(item);
         const navigationItem = document.createElement("li");
         navigationItem.innerHTML = `
       <a
@@ -2913,7 +2902,7 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
                 return;
             }
             item.icon = (_a = event.target.dataset.icon) !== null && _a !== void 0 ? _a : "";
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
             renderNavigation(true);
         }));
         (_b = navigationItem
@@ -2926,7 +2915,7 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
             event.preventDefault();
             event.stopPropagation();
             item.text = event.target.value;
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
             renderNavigation(true);
         }));
         (_d = navigationItem
@@ -2949,7 +2938,7 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
             event.preventDefault();
             event.stopPropagation();
             item.path = event.target.value;
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
             renderNavigation(true);
         }));
         (_g = navigationItem
@@ -2959,23 +2948,23 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
             if (currentIndex === 0) {
                 return;
             }
-            navigationData.splice(currentIndex, 1);
-            navigationData.splice(currentIndex - 1, 0, item);
+            items.splice(currentIndex, 1);
+            items.splice(currentIndex - 1, 0, item);
             state.editingIndex = currentIndex - 1;
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
             renderNavigation(true);
         }));
         (_h = navigationItem
             .querySelector(".fh-down")) === null || _h === void 0 ? void 0 : _h.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
             event.preventDefault();
             event.stopPropagation();
-            if (currentIndex === navigationData.length - 1) {
+            if (currentIndex === items.length - 1) {
                 return;
             }
-            navigationData.splice(currentIndex, 1);
-            navigationData.splice(currentIndex + 1, 0, item);
+            items.splice(currentIndex, 1);
+            items.splice(currentIndex + 1, 0, item);
             state.editingIndex = currentIndex + 1;
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
             renderNavigation(true);
         }));
         (_j = navigationItem
@@ -2994,8 +2983,8 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
             .querySelector(".fh-delete")) === null || _k === void 0 ? void 0 : _k.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
             event.preventDefault();
             event.stopPropagation();
-            navigationData.splice(currentIndex, 1);
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
+            items.splice(currentIndex, 1);
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
             renderNavigation(true);
         }));
         navigationList.append(navigationItem);
@@ -3036,23 +3025,23 @@ const renderNavigation = (...args_1) => __awaiter(void 0, [...args_1], void 0, f
         addNavigationItem.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
             event.preventDefault();
             event.stopPropagation();
-            navigationData.push({
+            items.push({
                 icon: "sack-dollar",
                 text: "Tip anstosa",
                 path: "profile.php?user_name=anstosa",
             });
-            yield (0, farmhandSettings_1.setData)(exports.SETTING_CUSTOM_NAVIGATION, navigationData);
-            state.editingIndex = navigationData.length - 1;
+            yield (0, settings_1.setData)(SETTING_CUSTOM_NAVIGATION, { items });
+            state.editingIndex = items.length - 1;
             renderNavigation(true);
         }));
         navigationList.append(addNavigationItem);
     }
 });
 exports.customNavigation = {
-    settings: [exports.SETTING_CUSTOM_NAVIGATION],
+    settings: [SETTING_CUSTOM_NAVIGATION],
     onMenuLoad: (settings) => {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_CUSTOM_NAVIGATION.id].value) {
+        if (!settings[settings_1.SettingId.NAV_CUSTOM]) {
             return;
         }
         // add configuration icon
@@ -3102,11 +3091,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.dismissableChatBanners = exports.SETTING_CHAT_DISMISSABLE_BANNERS = void 0;
+exports.dismissableChatBanners = void 0;
+const settings_1 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
-const state_1 = __webpack_require__(4619);
-exports.SETTING_CHAT_DISMISSABLE_BANNERS = {
-    id: "dismissableChatBanners",
+const state_1 = __webpack_require__(4782);
+const SETTING_CHAT_DISMISSABLE_BANNERS = {
+    id: settings_1.SettingId.CHAT_DISMISSABLE_BANNERS,
     title: "Chat: Dismissable Banners",
     description: `
     Adds × in chat banners to dismiss them<br>
@@ -3144,17 +3134,20 @@ const hashBanner = (banner) => {
     return hash;
 };
 exports.dismissableChatBanners = {
-    settings: [exports.SETTING_CHAT_DISMISSABLE_BANNERS],
+    settings: [SETTING_CHAT_DISMISSABLE_BANNERS],
     onChatLoad: (settings) => __awaiter(void 0, void 0, void 0, function* () {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_CHAT_DISMISSABLE_BANNERS.id].value) {
+        if (!settings[settings_1.SettingId.CHAT_DISMISSABLE_BANNERS]) {
             return;
         }
-        const banners = document.querySelectorAll("#desktopchatpanel .card, #mobilechatpanel .card");
-        for (const banner of banners) {
-            const bannerKey = `${state_1.StorageKey.CHAT_BANNERS}_${hashBanner(banner)}`;
+        const bannerElements = document.querySelectorAll("#desktopchatpanel .card, #mobilechatpanel .card");
+        const { hiddenBanners } = yield (0, settings_1.getData)(settings_1.SettingId.CHAT_DISMISSABLE_BANNERS, {
+            hiddenBanners: [],
+        });
+        for (const banner of bannerElements) {
+            const bannerKey = hashBanner(banner).toString();
             // hide banner if dismissed
-            const isDismissed = yield GM.getValue(bannerKey, false);
+            const isDismissed = (hiddenBanners === null || hiddenBanners === void 0 ? void 0 : hiddenBanners.includes(bannerKey)) || false;
             if (isDismissed) {
                 banner.remove();
                 continue;
@@ -3173,7 +3166,9 @@ exports.dismissableChatBanners = {
             closeButton.style.cursor = "pointer";
             closeButton.addEventListener("click", () => {
                 banner.remove();
-                GM.setValue(bannerKey, true);
+                (0, settings_1.setData)(settings_1.SettingId.CHAT_DISMISSABLE_BANNERS, {
+                    hiddenBanners: [...hiddenBanners, bannerKey],
+                });
             });
             banner.append(closeButton);
         }
@@ -3188,10 +3183,11 @@ exports.dismissableChatBanners = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.exploreFirst = exports.SETTING_EXPLORE_FIRST = void 0;
+exports.exploreFirst = void 0;
 const page_1 = __webpack_require__(7952);
-exports.SETTING_EXPLORE_FIRST = {
-    id: "collapseItem",
+const settings_1 = __webpack_require__(126);
+const SETTING_EXPLORE_FIRST = {
+    id: settings_1.SettingId.EXPLORE_FIRST,
     title: "Item: Prioritize Explore",
     description: "Move Exploring, Fishing, and Mining above Crafting and Cooking",
     type: "boolean",
@@ -3216,14 +3212,14 @@ const moveSectionUp = (title) => {
     }
 };
 exports.exploreFirst = {
-    settings: [exports.SETTING_EXPLORE_FIRST],
+    settings: [SETTING_EXPLORE_FIRST],
     onPageLoad: (settings, page) => {
         // make sure we're on the item page
         if (page !== page_1.Page.ITEM) {
             return;
         }
         // make sure we're enabled
-        if (!settings[exports.SETTING_EXPLORE_FIRST.id].value) {
+        if (!settings[settings_1.SettingId.EXPLORE_FIRST]) {
             return;
         }
         moveSectionUp("Exploring");
@@ -3249,47 +3245,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.farmhandSettings = exports.SETTING_IMPORT = exports.SETTING_EXPORT = exports.setSetting = exports.setData = exports.getData = exports.getSetting = exports.getSettings = void 0;
+exports.farmhandSettings = void 0;
 const page_1 = __webpack_require__(7952);
+const settings_1 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
-const getSettings = (features) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const settings = {};
-    for (const feature of features) {
-        for (const setting of (_a = feature.settings) !== null && _a !== void 0 ? _a : []) {
-            setting.value = (yield GM.getValue(setting.id, setting.defaultValue));
-            settings[setting.id] = setting;
-        }
-    }
-    return settings;
-});
-exports.getSettings = getSettings;
-const getSetting = (setting) => __awaiter(void 0, void 0, void 0, function* () {
-    return (Object.assign(Object.assign({}, setting), { value: (yield GM.getValue(setting.id, setting.defaultValue)) }));
-});
-exports.getSetting = getSetting;
-const getData = (setting, defaultValue) => __awaiter(void 0, void 0, void 0, function* () {
-    const key = typeof setting === "string" ? setting : setting.dataKey;
-    if (!key) {
-        return defaultValue;
-    }
-    const rawData = yield GM.getValue(key, "");
-    if (!rawData) {
-        return defaultValue;
-    }
-    return JSON.parse(rawData);
-});
-exports.getData = getData;
-const setData = (setting, data) => __awaiter(void 0, void 0, void 0, function* () {
-    const key = typeof setting === "string" ? setting : setting.dataKey;
-    if (!key) {
-        return;
-    }
-    yield GM.setValue(key, JSON.stringify(data));
-});
-exports.setData = setData;
-const setSetting = (setting) => { var _a; return GM.setValue(setting.id, (_a = setting.value) !== null && _a !== void 0 ? _a : ""); };
-exports.setSetting = setSetting;
 const getWrapper = ({ id, type, value }, children) => {
     switch (type) {
         case "boolean": {
@@ -3403,17 +3362,17 @@ const getValue = ({ id, type }, currentPage) => {
         }
     }
 };
-exports.SETTING_EXPORT = {
-    id: "export",
+const SETTING_EXPORT = {
+    id: settings_1.SettingId.EXPORT,
     title: "Settings: Export",
     description: "Exports Farmhand Settings to sync to other device",
     type: "string",
     defaultValue: "",
     buttonText: "Export",
     buttonAction: (settings, settingWrapper) => __awaiter(void 0, void 0, void 0, function* () {
-        const exportedSettings = Object.values(settings);
+        const exportedSettings = Object.values((0, settings_1.getSettings)());
         for (const setting of exportedSettings) {
-            setting.data = yield (0, exports.getData)(setting, "");
+            setting.data = yield (0, settings_1.getData)(setting, "");
         }
         const exportString = JSON.stringify(exportedSettings);
         GM.setClipboard(exportString);
@@ -3427,8 +3386,8 @@ exports.SETTING_EXPORT = {
         }
     }),
 };
-exports.SETTING_IMPORT = {
-    id: "import",
+const SETTING_IMPORT = {
+    id: settings_1.SettingId.IMPORT,
     title: "Settings: Import",
     description: "Paste export into box and click Import",
     type: "string",
@@ -3440,9 +3399,9 @@ exports.SETTING_IMPORT = {
         const input = (_a = settingWrapper.querySelector(".fh-input")) === null || _a === void 0 ? void 0 : _a.value;
         const importedSettings = JSON.parse(input !== null && input !== void 0 ? input : "[]");
         for (const setting of importedSettings) {
-            yield (0, exports.setSetting)(setting);
+            yield (0, settings_1.setSetting)(setting);
             if (setting.data) {
-                yield (0, exports.setData)(setting, setting.data);
+                yield (0, settings_1.setData)(setting, setting.data);
             }
         }
         yield (0, popup_1.showPopup)({
@@ -3453,7 +3412,7 @@ exports.SETTING_IMPORT = {
     }),
 };
 exports.farmhandSettings = {
-    settings: [exports.SETTING_EXPORT, exports.SETTING_IMPORT],
+    settings: [SETTING_EXPORT, SETTING_IMPORT],
     onInitialize: () => {
         document.head.insertAdjacentHTML("beforeend", `
       <style>
@@ -3467,7 +3426,7 @@ exports.farmhandSettings = {
       <style>
     `);
     },
-    onPageLoad: (settings, page) => {
+    onPageLoad: (settingValues, page) => {
         var _a;
         // make sure we are on the settings page
         if (page !== page_1.Page.SETTINGS_OPTIONS) {
@@ -3497,7 +3456,8 @@ exports.farmhandSettings = {
         farmhandSettingsLi.textContent = "Farmhand Settings";
         settingsList.append(farmhandSettingsLi);
         // add settings
-        for (const setting of Object.values(settings)) {
+        for (const setting of (0, settings_1.getSettings)()) {
+            setting.value = settingValues[setting.id];
             const hasButton = setting.buttonText && setting.buttonAction;
             const settingLi = document.createElement("li");
             settingLi.innerHTML = `
@@ -3541,7 +3501,7 @@ exports.farmhandSettings = {
                 var _a;
                 event.preventDefault();
                 event.stopPropagation();
-                (_a = setting.buttonAction) === null || _a === void 0 ? void 0 : _a.call(setting, settings, settingLi);
+                (_a = setting.buttonAction) === null || _a === void 0 ? void 0 : _a.call(setting, settingValues, settingLi);
             });
             settingsList.append(settingLi);
         }
@@ -3551,13 +3511,14 @@ exports.farmhandSettings = {
             console.error("Save button not found");
             return;
         }
-        saveButton.addEventListener("click", () => {
-            for (const setting of Object.values(settings)) {
+        saveButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
+            saveButton.textContent = "Saving...";
+            for (const setting of Object.values((0, settings_1.getSettings)())) {
                 setting.value = getValue(setting, currentPage);
-                (0, exports.setSetting)(setting);
+                yield (0, settings_1.setSetting)(setting);
             }
             setTimeout(() => window.location.reload(), 1000);
-        });
+        }));
     },
 };
 
@@ -3565,23 +3526,24 @@ exports.farmhandSettings = {
 /***/ }),
 
 /***/ 2100:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fishinInBarrel = exports.SETTING_FISH_IN_BARREL = void 0;
-exports.SETTING_FISH_IN_BARREL = {
-    id: "fishInBarrel",
+exports.fishinInBarrel = void 0;
+const settings_1 = __webpack_require__(126);
+const SETTING_FISH_IN_BARREL = {
+    id: settings_1.SettingId.FISH_IN_BARREL,
     title: "Fishing: Barrel Mode",
     description: "Fish always appear in middle of pond",
     type: "boolean",
     defaultValue: true,
 };
 exports.fishinInBarrel = {
-    settings: [exports.SETTING_FISH_IN_BARREL],
+    settings: [SETTING_FISH_IN_BARREL],
     onInitialize: (settings) => {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_FISH_IN_BARREL.id].value) {
+        if (!settings[settings_1.SettingId.FISH_IN_BARREL]) {
             return;
         }
         document.head.insertAdjacentHTML("beforeend", `
@@ -3601,23 +3563,24 @@ exports.fishinInBarrel = {
 /***/ }),
 
 /***/ 9361:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fleaMarket = exports.SETTING_FLEA_MARKET = void 0;
-exports.SETTING_FLEA_MARKET = {
-    id: "fleaMarket",
+exports.fleaMarket = void 0;
+const settings_1 = __webpack_require__(126);
+const SETTING_FLEA_MARKET = {
+    id: settings_1.SettingId.FLEA_MARKET,
     title: "Flea Market: Disable",
     description: "Flea Market is disabled because it's a waste of gold",
     type: "boolean",
     defaultValue: true,
 };
 exports.fleaMarket = {
-    settings: [exports.SETTING_FLEA_MARKET],
+    settings: [SETTING_FLEA_MARKET],
     onInitialize: (settings) => {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_FLEA_MARKET.id].value) {
+        if (!settings[settings_1.SettingId.FLEA_MARKET]) {
             return;
         }
         document.head.insertAdjacentHTML("beforeend", `
@@ -3658,13 +3621,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fieldNotifications = exports.SETTING_HARVEST_POPUP = void 0;
-const farm_1 = __webpack_require__(9888);
+exports.fieldNotifications = void 0;
+const farm_1 = __webpack_require__(6228);
 const notifications_1 = __webpack_require__(6783);
 const page_1 = __webpack_require__(7952);
-const state_1 = __webpack_require__(4619);
+const settings_1 = __webpack_require__(126);
+const requests_1 = __webpack_require__(3300);
 const SETTING_HARVEST_NOTIFICATIONS = {
-    id: "harvestNotifications",
+    id: settings_1.SettingId.HARVEST_NOTIFICATIONS,
     title: "Farm: Harvest Notifications",
     description: `
     Show notification when crops are ready to harvest
@@ -3672,8 +3636,8 @@ const SETTING_HARVEST_NOTIFICATIONS = {
     type: "boolean",
     defaultValue: true,
 };
-exports.SETTING_HARVEST_POPUP = {
-    id: "harvestPopup",
+const SETTING_HARVEST_POPUP = {
+    id: settings_1.SettingId.HARVEST_POPUP,
     title: "Farm: Harvest Popup",
     description: `
     Show popup on Farm page when crops are harvested with the harvest results including bonuses</br>
@@ -3683,7 +3647,7 @@ exports.SETTING_HARVEST_POPUP = {
     defaultValue: true,
 };
 const SETTING_EMPTY_NOTIFICATIONS = {
-    id: "emptyNotifications",
+    id: settings_1.SettingId.FIELD_EMPTY_NOTIFICATIONS,
     title: "Farm: Empty Notifications",
     description: `
     Show notification when fields are empty
@@ -3698,18 +3662,18 @@ const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, func
         return;
     }
     if (state.status === farm_1.CropStatus.EMPTY &&
-        settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
+        settings[settings_1.SettingId.FIELD_EMPTY_NOTIFICATIONS]) {
         (0, notifications_1.sendNotification)({
             class: "btnorange",
             id: notifications_1.NotificationId.FIELD,
             text: "Fields are empty!",
-            href: (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) })),
+            href: (0, requests_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) })),
             excludePages: [page_1.Page.FARM],
         });
     }
     else if (state.status === farm_1.CropStatus.READY &&
-        settings[SETTING_HARVEST_NOTIFICATIONS.id].value) {
-        const farmUrl = (0, state_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) }));
+        settings[settings_1.SettingId.HARVEST_NOTIFICATIONS]) {
+        const farmUrl = (0, requests_1.toUrl)(page_1.Page.FARM, new URLSearchParams({ id: String(farmId) }));
         (0, notifications_1.sendNotification)({
             class: "btngreen",
             id: notifications_1.NotificationId.FIELD,
@@ -3732,7 +3696,7 @@ const renderFields = (settings, state) => __awaiter(void 0, void 0, void 0, func
 exports.fieldNotifications = {
     settings: [
         SETTING_HARVEST_NOTIFICATIONS,
-        exports.SETTING_HARVEST_POPUP,
+        SETTING_HARVEST_POPUP,
         SETTING_EMPTY_NOTIFICATIONS,
     ],
     onInitialize: (settings) => {
@@ -3757,25 +3721,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.highlightSelfInChat = exports.SETTING_CHAT_HIGHLIGHT_SELF = void 0;
+exports.highlightSelfInChat = void 0;
 const theme_1 = __webpack_require__(1178);
-const api_1 = __webpack_require__(126);
-exports.SETTING_CHAT_HIGHLIGHT_SELF = {
-    id: "highlightSelfInChat",
+const settings_1 = __webpack_require__(126);
+const apis_1 = __webpack_require__(7046);
+const SETTING_CHAT_HIGHLIGHT_SELF = {
+    id: settings_1.SettingId.CHAT_HIGHLIGHT_SELF,
     title: "Chat: Highlight self",
     description: "Highlight messages in chat where you are @mentioned",
     type: "boolean",
     defaultValue: true,
 };
 exports.highlightSelfInChat = {
-    settings: [exports.SETTING_CHAT_HIGHLIGHT_SELF],
+    settings: [SETTING_CHAT_HIGHLIGHT_SELF],
     onChatLoad: (settings) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         // make sure setting is enabled
-        if (!settings[exports.SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
+        if (!settings[settings_1.SettingId.CHAT_HIGHLIGHT_SELF]) {
             return;
         }
-        const username = yield api_1.usernameState.get();
+        const username = yield apis_1.usernameState.get();
         if (!username) {
             console.error("Could not find username");
             return;
@@ -3811,29 +3776,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.improvedInputs = exports.SETTING_IMPROVED_INPUTS = void 0;
+exports.improvedInputs = void 0;
 const theme_1 = __webpack_require__(1178);
-const page_1 = __webpack_require__(7952);
-const api_1 = __webpack_require__(3413);
 const dropdown_1 = __webpack_require__(9946);
-exports.SETTING_IMPROVED_INPUTS = {
-    id: "improvedInputs",
+const api_1 = __webpack_require__(3413);
+const page_1 = __webpack_require__(7952);
+const settings_1 = __webpack_require__(126);
+const SETTING_IMPROVED_INPUTS = {
+    id: settings_1.SettingId.IMPROVED_INPUTS,
     title: "UI: Improved Inputs",
     description: "Consistent button and field styling and improved item selector UI",
     type: "boolean",
     defaultValue: true,
 };
 exports.improvedInputs = {
-    settings: [exports.SETTING_IMPROVED_INPUTS],
+    settings: [SETTING_IMPROVED_INPUTS],
     onInitialize: (settings) => {
-        if (!settings[exports.SETTING_IMPROVED_INPUTS.id].value) {
+        if (!settings[settings_1.SettingId.IMPROVED_INPUTS]) {
             return;
         }
         document.head.insertAdjacentHTML("beforeend", `
         <style>
           .newinput,
+          .searchbar input[type="search"],
           input[type="number"]:not(#vaultcode),
-          input[type="text"]:not(#chat_txt_desktop) {
+          input[type="text"]:not(#chat_txt_desktop):not("chat_txt_mobile"), {
             ${(0, theme_1.toCSS)(theme_1.INPUT_STYLES)}
           }
 
@@ -3905,20 +3872,18 @@ exports.improvedInputs = {
         </style>
       `);
     },
-    onPageLoad: (settings) => {
+    onPageLoad: (settings) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        if (!settings[exports.SETTING_IMPROVED_INPUTS.id].value) {
+        if (!settings[settings_1.SettingId.IMPROVED_INPUTS]) {
             return;
         }
-        const selector = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector("select[class*='id']:not(.locide):not(.type_id)");
-        if (!selector) {
-            return;
-        }
-        (() => __awaiter(void 0, void 0, void 0, function* () {
+        (0, dropdown_1.clearDropdown)();
+        const selectors = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelectorAll("select[class*='id']:not(.locide):not(.type_id)");
+        for (const selector of selectors !== null && selectors !== void 0 ? selectors : []) {
             const options = yield Promise.all([...selector.options].map((option) => __awaiter(void 0, void 0, void 0, function* () {
                 var _a, _b;
                 if (option.dataset.name === "Shovel") {
-                    const shovel = yield (0, api_1.getItemByName)("Shovel");
+                    const shovel = yield (0, api_1.getAbridgedItem)("Shovel");
                     return {
                         name: "Dig Up",
                         quantity: Number(option.dataset.amt),
@@ -3929,11 +3894,15 @@ exports.improvedInputs = {
                 }
                 const match = (_b = option.textContent) === null || _b === void 0 ? void 0 : _b.match(/^(.*) \(([\d,]+)\)$/);
                 if (!match) {
+                    if (option.textContent === "--- select ---" ||
+                        option.textContent === "Nothing Selected") {
+                        return;
+                    }
                     console.error("Failed to parse option", option);
                     return;
                 }
                 const [, name, quantity] = match;
-                const item = yield (0, api_1.getItemByName)(name);
+                const item = yield (0, api_1.getAbridgedItem)(name);
                 if (!item) {
                     console.error("Failed to get item", name);
                     return;
@@ -3947,8 +3916,8 @@ exports.improvedInputs = {
                 };
             })));
             (0, dropdown_1.replaceSelect)(selector, options.filter((option) => option !== undefined));
-        }))();
-    },
+        }
+    }),
 };
 
 
@@ -3969,12 +3938,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.kitchenNotifications = void 0;
-const kitchen_1 = __webpack_require__(182);
+const kitchen_1 = __webpack_require__(202);
 const notifications_1 = __webpack_require__(6783);
 const page_1 = __webpack_require__(7952);
-const state_1 = __webpack_require__(4619);
+const settings_1 = __webpack_require__(126);
+const requests_1 = __webpack_require__(3300);
 const SETTING_COMPLETE_NOTIFICATIONS = {
-    id: "harvestNotifications",
+    id: settings_1.SettingId.KITCHEN_COMPLETE_NOTIFICATIONS,
     title: "Kitchen: Meals ready notification",
     description: `
     Show notification when meals are ready to collect
@@ -3983,7 +3953,7 @@ const SETTING_COMPLETE_NOTIFICATIONS = {
     defaultValue: true,
 };
 const SETTING_ATTENTION_NOTIFICATIONS = {
-    id: "attentionNotifications",
+    id: settings_1.SettingId.ATTENTION_NOTIFICATIONS,
     title: "Kitchen: Ovens attention notification",
     description: `
     Show notification when ovens need attention
@@ -3992,7 +3962,7 @@ const SETTING_ATTENTION_NOTIFICATIONS = {
     defaultValue: true,
 };
 const SETTING_ATTENTION_VERBOSE = {
-    id: "attentionNotificationsVerbose",
+    id: settings_1.SettingId.ATTENTION_NOTIFICATIONS_VERBOSE,
     title: "Kitchen: Ovens attention notification (all actions)",
     description: `
     Show notifications when any oven needs attention for any action
@@ -4002,7 +3972,7 @@ const SETTING_ATTENTION_VERBOSE = {
     defaultValue: false,
 };
 const SETTING_EMPTY_NOTIFICATIONS = {
-    id: "emptyNotifications",
+    id: settings_1.SettingId.KITCHEN_EMPTY_NOTIFICATIONS,
     title: "Kitchen: Ovens empty notification",
     description: `
     Show notification when ovens are empty
@@ -4016,24 +3986,24 @@ const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, funct
         return;
     }
     if (state.status === kitchen_1.OvenStatus.EMPTY &&
-        settings[SETTING_EMPTY_NOTIFICATIONS.id].value) {
+        settings[settings_1.SettingId.KITCHEN_EMPTY_NOTIFICATIONS]) {
         (0, notifications_1.sendNotification)({
             class: "btnorange",
             id: notifications_1.NotificationId.OVEN,
             text: "Ovens are empty!",
-            href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+            href: (0, requests_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
             excludePages: [page_1.Page.KITCHEN],
         });
     }
     else if (state.status === kitchen_1.OvenStatus.ATTENTION &&
-        settings[SETTING_ATTENTION_NOTIFICATIONS.id].value) {
+        settings[settings_1.SettingId.ATTENTION_NOTIFICATIONS]) {
         const state = yield kitchen_1.kitchenStatusState.get();
-        if (settings[SETTING_ATTENTION_VERBOSE.id].value || (state === null || state === void 0 ? void 0 : state.allReady)) {
+        if (settings[settings_1.SettingId.ATTENTION_NOTIFICATIONS] || (state === null || state === void 0 ? void 0 : state.allReady)) {
             (0, notifications_1.sendNotification)({
                 class: "btnorange",
                 id: notifications_1.NotificationId.OVEN,
                 text: "Ovens need attention",
-                href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+                href: (0, requests_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
                 excludePages: [page_1.Page.KITCHEN],
             });
         }
@@ -4042,14 +4012,14 @@ const renderOvens = (settings, state) => __awaiter(void 0, void 0, void 0, funct
         }
     }
     else if (state.status === kitchen_1.OvenStatus.READY &&
-        settings[SETTING_COMPLETE_NOTIFICATIONS.id].value) {
+        settings[settings_1.SettingId.KITCHEN_COMPLETE_NOTIFICATIONS]) {
         (0, notifications_1.sendNotification)({
             class: "btngreen",
             id: notifications_1.NotificationId.OVEN,
             text: "Meals are ready!",
-            href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
+            href: (0, requests_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()),
             actions: [
-                { text: "View", href: (0, state_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()) },
+                { text: "View", href: (0, requests_1.toUrl)(page_1.Page.KITCHEN, new URLSearchParams()) },
                 {
                     text: "Collect",
                     handler: notifications_1.Handler.COLLECT_MEALS,
@@ -4112,7 +4082,7 @@ exports.linkifyQuickCraft = {
         const missingIngredients = (_a = missingIngredientsWrapper.textContent) === null || _a === void 0 ? void 0 : _a.split(", ");
         missingIngredientsWrapper.textContent = "";
         for (const ingredient of missingIngredients !== null && missingIngredients !== void 0 ? missingIngredients : []) {
-            const data = yield (0, api_1.getItemByName)(ingredient);
+            const data = yield api_1.itemDataState.get({ query: ingredient });
             if (!data) {
                 console.error(`No data for ${ingredient}`);
                 continue;
@@ -4127,6 +4097,156 @@ exports.linkifyQuickCraft = {
             missingIngredientsWrapper.append(link);
         }
     }),
+};
+
+
+/***/ }),
+
+/***/ 8124:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.chatMailboxStats = void 0;
+const theme_1 = __webpack_require__(1178);
+const userMailboxes_1 = __webpack_require__(4203);
+const settings_1 = __webpack_require__(126);
+const users_1 = __webpack_require__(5254);
+const SETTING_CHAT_MAILBOX_STATS = {
+    id: settings_1.SettingId.CHAT_MAILBOX_STATS,
+    title: "Chat: Mailbox Size",
+    description: "Show mailbox Size next to usernames in chat",
+    type: "boolean",
+    defaultValue: true,
+};
+const openInfoPopup = (userElement) => __awaiter(void 0, void 0, void 0, function* () {
+    const formatter = new Intl.NumberFormat();
+    closeInfoPopups();
+    const username = userElement.textContent;
+    if (!username) {
+        return;
+    }
+    userElement.classList.add("fh-mailbox-info-loading");
+    const user = yield users_1.userState.get({ query: username });
+    const mailbox = yield userMailboxes_1.playerMailboxState.get({ query: username });
+    if (userElement.dataset.popup !== "open") {
+        userElement.classList.remove("fh-mailbox-info-loading");
+        return;
+    }
+    if (!user || !mailbox) {
+        userElement.classList.remove("fh-mailbox-info-loading");
+        return;
+    }
+    const wrapper = userElement.parentElement;
+    if (!wrapper) {
+        userElement.classList.remove("fh-mailbox-info-loading");
+        return;
+    }
+    wrapper.style.position = "relative";
+    const infoPopup = document.createElement("div");
+    infoPopup.classList.add("fh-mailbox-info");
+    infoPopup.style.display = "flex";
+    infoPopup.style.flexDirection = "column";
+    infoPopup.style.alignItems = "start";
+    infoPopup.style.gap = "5px";
+    infoPopup.style.padding = "5px";
+    infoPopup.style.position = "absolute";
+    infoPopup.style.backgroundColor = theme_1.BACKGROUND_DARK;
+    infoPopup.style.borderWidth = "1px";
+    infoPopup.style.borderStyle = "solid";
+    infoPopup.style.borderColor = theme_1.BORDER_GRAY;
+    infoPopup.style.top = "15px";
+    infoPopup.style.left = "0px";
+    infoPopup.style.zIndex = "9999";
+    infoPopup.style.width = "200px";
+    infoPopup.style.fontWeight = "normal";
+    infoPopup.style.whiteSpace = "normal";
+    infoPopup.style.pointerEvents = "none";
+    infoPopup.innerHTML = `
+    <div><strong>Mailbox:</strong> ${formatter.format(mailbox.capacity)}</div>
+    <div><strong>Looking For:</strong> ${mailbox.lookingFor}</div>
+    <div><strong>Bio:</strong> ${user.bio}</div>
+  `;
+    // eslint-disable-next-line require-atomic-updates
+    userElement.classList.remove("fh-mailbox-info-loading");
+    userElement.after(infoPopup);
+});
+const closeInfoPopups = () => {
+    for (const popup of document.querySelectorAll(".fh-mailbox-info")) {
+        popup.remove();
+    }
+};
+exports.chatMailboxStats = {
+    settings: [SETTING_CHAT_MAILBOX_STATS],
+    onInitialize: (settings) => {
+        if (!settings[settings_1.SettingId.CHAT_MAILBOX_STATS]) {
+            return;
+        }
+        document.head.insertAdjacentHTML("beforeend", `
+        <style>
+          .chip-label {
+            overflow: visible !important;
+          }
+          .fh-mailbox-info-loading::before {
+            content: "(loading...) ";
+            font-size: 10px;
+            color: white;
+          }
+        </style>
+      `);
+    },
+    onChatLoad: (settings) => {
+        // make sure setting is enabled
+        if (!settings[settings_1.SettingId.CHAT_MAILBOX_STATS]) {
+            return;
+        }
+        const users = document.querySelectorAll(`.chip a[href^='profile.php']`);
+        for (const userElement of users) {
+            if (userElement === null || userElement === void 0 ? void 0 : userElement.dataset.initialized) {
+                continue;
+            }
+            userElement.addEventListener("mouseover", () => {
+                userElement.dataset.popup = "open";
+                openInfoPopup(userElement);
+            });
+            let timer;
+            userElement.addEventListener("touchstart", () => {
+                userElement.dataset.popup = "open";
+                timer = setTimeout(() => {
+                    openInfoPopup(userElement);
+                    userElement.dataset.ignoreClick = "true";
+                }, 500);
+            });
+            userElement.addEventListener("touchend", () => {
+                clearTimeout(timer);
+            });
+            userElement.addEventListener("mouseout", () => {
+                userElement.dataset.popup = "closed";
+                closeInfoPopups();
+            });
+            userElement.addEventListener("click", (event) => {
+                if (userElement.dataset.ignoreClick) {
+                    event.preventDefault();
+                    delete userElement.dataset.ignoreClick;
+                }
+            });
+            userElement.addEventListener("contextmenu", (event) => {
+                if (userElement.dataset.ignoreClick) {
+                    event.preventDefault();
+                    delete userElement.dataset.ignoreClick;
+                }
+            });
+        }
+    },
 };
 
 
@@ -4147,10 +4267,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.mailboxNotifications = void 0;
-const mail_1 = __webpack_require__(1431);
+const mail_1 = __webpack_require__(8955);
 const notifications_1 = __webpack_require__(6783);
 const page_1 = __webpack_require__(7952);
-const state_1 = __webpack_require__(4619);
+const requests_1 = __webpack_require__(3300);
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_MAIL, mail_1.collectMailbox);
 const renderNotification = (state) => __awaiter(void 0, void 0, void 0, function* () {
     state = state !== null && state !== void 0 ? state : (yield mail_1.mailboxState.get());
@@ -4169,12 +4289,12 @@ const renderNotification = (state) => __awaiter(void 0, void 0, void 0, function
         class: "btnpurple",
         id: notifications_1.NotificationId.MAILBOX,
         text: `Mailbox is ready! (${mailboxCount} / ${state.size})`,
-        href: (0, state_1.toUrl)(page_1.Page.POST_OFFICE),
+        href: (0, requests_1.toUrl)(page_1.Page.POST_OFFICE),
         replacesHref: `${page_1.Page.POST_OFFICE}.php`,
         actions: [
             {
                 text: "View",
-                href: (0, state_1.toUrl)(page_1.Page.POST_OFFICE),
+                href: (0, requests_1.toUrl)(page_1.Page.POST_OFFICE),
             },
             {
                 text: "Collect",
@@ -4204,20 +4324,21 @@ exports.mailboxNotifications = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.maxContainers = exports.SETTING_MAX_CONTAINERS = void 0;
+exports.maxContainers = void 0;
 const debounce_1 = __webpack_require__(4276);
 const page_1 = __webpack_require__(7952);
-exports.SETTING_MAX_CONTAINERS = {
-    id: "maxContainers",
+const settings_1 = __webpack_require__(126);
+const SETTING_MAX_CONTAINERS = {
+    id: settings_1.SettingId.MAX_CONTAINERS,
     title: "Locksmith: Max containers",
     description: "Open max containers by default (instead of 1)",
     type: "boolean",
     defaultValue: true,
 };
 exports.maxContainers = {
-    settings: [exports.SETTING_MAX_CONTAINERS],
+    settings: [SETTING_MAX_CONTAINERS],
     onPageLoad: (settings, page) => {
-        if (!settings[exports.SETTING_MAX_CONTAINERS.id].value) {
+        if (!settings[settings_1.SettingId.MAX_CONTAINERS]) {
             return;
         }
         if (page !== page_1.Page.LOCKSMITH) {
@@ -4258,13 +4379,13 @@ exports.maxContainers = {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.maxCows = void 0;
 const page_1 = __webpack_require__(7952);
-const maxPigs_1 = __webpack_require__(2934);
+const settings_1 = __webpack_require__(126);
 exports.maxCows = {
     onPageLoad: (settings, page) => {
         if (page !== page_1.Page.PASTURE) {
             return;
         }
-        if (!settings[maxPigs_1.SETTING_MAX_ANIMALS.id].value) {
+        if (!settings[settings_1.SettingId.MAX_ANIMALS]) {
             return;
         }
         const currentPage = (0, page_1.getCurrentPage)();
@@ -4319,22 +4440,23 @@ exports.maxCows = {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.maxPigs = exports.SETTING_MAX_ANIMALS = void 0;
+exports.maxPigs = void 0;
 const page_1 = __webpack_require__(7952);
-exports.SETTING_MAX_ANIMALS = {
-    id: "maxAnimals",
+const settings_1 = __webpack_require__(126);
+const SETTING_MAX_ANIMALS = {
+    id: settings_1.SettingId.MAX_ANIMALS,
     title: "Farm: Buy Max Animals",
     description: "Buy max animals by default (instead of 1)",
     type: "boolean",
     defaultValue: true,
 };
 exports.maxPigs = {
-    settings: [exports.SETTING_MAX_ANIMALS],
+    settings: [SETTING_MAX_ANIMALS],
     onPageLoad: (settings, page) => {
         if (page !== page_1.Page.PIG_PEN) {
             return;
         }
-        if (!settings[exports.SETTING_MAX_ANIMALS.id].value) {
+        if (!settings[settings_1.SettingId.MAX_ANIMALS]) {
             return;
         }
         const currentPage = (0, page_1.getCurrentPage)();
@@ -4399,10 +4521,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.mealNotifications = void 0;
-const meals_1 = __webpack_require__(5250);
+const meals_1 = __webpack_require__(2022);
 const notifications_1 = __webpack_require__(6783);
+const settings_1 = __webpack_require__(126);
 const SETTING_MEAL_NOTIFICATIONS = {
-    id: "mealNotifications",
+    id: settings_1.SettingId.MEAL_NOTIFICATIONS,
     title: "Meal Notifications",
     description: `
     Show notification when meals are active with their countdowns
@@ -4447,7 +4570,7 @@ const renderMeals = () => __awaiter(void 0, void 0, void 0, function* () {
 exports.mealNotifications = {
     settings: [SETTING_MEAL_NOTIFICATIONS],
     onInitialize: (settings) => {
-        if (!settings[SETTING_MEAL_NOTIFICATIONS.id].value) {
+        if (!settings[settings_1.SettingId.MEAL_NOTIFICATIONS]) {
             return;
         }
         meals_1.mealsStatusState.onUpdate(renderMeals);
@@ -4465,22 +4588,23 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.miner = void 0;
 const theme_1 = __webpack_require__(1178);
 const page_1 = __webpack_require__(7952);
+const settings_1 = __webpack_require__(126);
 const SETTING_MINER = {
-    id: "miner",
+    id: settings_1.SettingId.MINER,
     title: "Mining: Auto Miner",
     description: "Adds button to take the next suggested action",
     type: "boolean",
     defaultValue: true,
 };
 const SETTING_MINER_EXPLOSIVES = {
-    id: "minerExplosives",
+    id: settings_1.SettingId.MINER_EXPLOSIVES,
     title: "Mining: Use Explosives",
     description: "Use explosives as suggested action",
     type: "boolean",
     defaultValue: true,
 };
 const SETTING_MINER_BOMBS = {
-    id: "minerBombs",
+    id: settings_1.SettingId.MINER_BOMBS,
     title: "Mining: Use Bombs",
     description: "Use bombs as suggested action",
     type: "boolean",
@@ -4629,7 +4753,7 @@ exports.miner = {
         if (page !== page_1.Page.MINING) {
             return;
         }
-        if (!settings[SETTING_MINER.id].value) {
+        if (!settings[settings_1.SettingId.MINER]) {
             return;
         }
         const currentPage = (0, page_1.getCurrentPage)();
@@ -4762,8 +4886,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.moveUpdateToTop = void 0;
 const page_1 = __webpack_require__(7952);
-const state_1 = __webpack_require__(4619);
+const settings_1 = __webpack_require__(126);
+const SETTING_UPDATE_AT_TOP = {
+    id: settings_1.SettingId.UPDATE_AT_TOP,
+    title: "Home: Move updates to top",
+    description: `
+    Move the most recent update to the top of the home page and make it hidable
+  `,
+    type: "boolean",
+    defaultValue: true,
+};
 exports.moveUpdateToTop = {
+    settings: [SETTING_UPDATE_AT_TOP],
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         // make sure we're on the home page
@@ -4782,7 +4916,9 @@ exports.moveUpdateToTop = {
             return;
         }
         // check if it's newer
-        const latestRead = yield GM.getValue(state_1.StorageKey.RECENT_UPDATE, "");
+        const { latestRead } = yield (0, settings_1.getData)(settings_1.SettingId.UPDATE_AT_TOP, {
+            latestRead: "",
+        });
         if (latestUpdate === latestRead) {
             return;
         }
@@ -4807,7 +4943,7 @@ exports.moveUpdateToTop = {
             hideButton.textContent = "Hide";
             hideButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
                 // mark current as read
-                yield GM.setValue(state_1.StorageKey.RECENT_UPDATE, latestUpdate);
+                yield (0, settings_1.setData)(settings_1.SettingId.UPDATE_AT_TOP, { latestRead: latestUpdate });
                 window.location.reload();
             }));
             recentUpdatesTitle.append(hideButton);
@@ -4832,13 +4968,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.perkManagment = exports.SETTING_PERK_MANAGER = void 0;
-const perks_1 = __webpack_require__(771);
+exports.perkManagment = void 0;
+const perks_1 = __webpack_require__(5543);
 const page_1 = __webpack_require__(7952);
 const notifications_1 = __webpack_require__(6783);
 const quickSellSafely_1 = __webpack_require__(8760);
-exports.SETTING_PERK_MANAGER = {
-    id: "perkManager",
+const settings_1 = __webpack_require__(126);
+const SETTING_PERK_MANAGER = {
+    id: settings_1.SettingId.PERK_MANAGER,
     title: "Perks: Auto manage",
     description: `
     1. Save your default perks set as "Default"<br>
@@ -4854,11 +4991,11 @@ const getNotification = (activity) => ({
     text: `${activity} perks activated`,
 });
 exports.perkManagment = {
-    settings: [exports.SETTING_PERK_MANAGER],
+    settings: [SETTING_PERK_MANAGER],
     onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b, _c, _d;
         // make sure the setting is enabled
-        if (!settings[exports.SETTING_PERK_MANAGER.id].value) {
+        if (!settings[settings_1.SettingId.PERK_MANAGER]) {
             return;
         }
         // don't change anything on perks page so you can edit
@@ -4992,10 +5129,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.petNotifications = void 0;
-const pets_1 = __webpack_require__(5262);
+const pets_1 = __webpack_require__(2850);
 const notifications_1 = __webpack_require__(6783);
 const page_1 = __webpack_require__(7952);
-const state_1 = __webpack_require__(4619);
+const requests_1 = __webpack_require__(3300);
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.COLLECT_PETS, pets_1.collectPets);
 const renderNotification = (state) => __awaiter(void 0, void 0, void 0, function* () {
     state = state !== null && state !== void 0 ? state : (yield pets_1.petState.get());
@@ -5014,14 +5151,14 @@ const renderNotification = (state) => __awaiter(void 0, void 0, void 0, function
         class: "btnorange",
         id: notifications_1.NotificationId.PETS,
         text: `Your pets have ${petCount} items ready!`,
-        href: (0, state_1.toUrl)(page_1.Page.PETS),
+        href: (0, requests_1.toUrl)(page_1.Page.PETS),
         replacesHref: `${page_1.Page.PETS}.php?${new URLSearchParams({
             from: "home",
         }).toString()}`,
         actions: [
             {
                 text: "View",
-                href: (0, state_1.toUrl)(page_1.Page.PETS),
+                href: (0, requests_1.toUrl)(page_1.Page.PETS),
             },
             {
                 text: "Collect",
@@ -5047,24 +5184,34 @@ exports.petNotifications = {
 /***/ }),
 
 /***/ 1768:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.questCollapse = exports.SETTING_QUEST_COLLAPSE = void 0;
+exports.questCollapse = void 0;
+const settings_1 = __webpack_require__(126);
 const page_1 = __webpack_require__(7952);
-exports.SETTING_QUEST_COLLAPSE = {
-    id: "questCollapse",
+const SETTING_QUEST_COLLAPSE = {
+    id: settings_1.SettingId.QUEST_COLLAPSE,
     title: "Quest: Global collapse status",
     description: "Remember the quest details collapse status globally instead of per-quest",
     type: "boolean",
     defaultValue: true,
 };
 exports.questCollapse = {
-    settings: [exports.SETTING_QUEST_COLLAPSE],
-    onPageLoad: (settings, page) => {
+    settings: [SETTING_QUEST_COLLAPSE],
+    onPageLoad: (settings, page) => __awaiter(void 0, void 0, void 0, function* () {
         // make sure setting is enabled
-        if (!settings[exports.SETTING_QUEST_COLLAPSE.id].value) {
+        if (!settings[settings_1.SettingId.QUEST_COLLAPSE]) {
             return;
         }
         // make sure we're on a quest page
@@ -5082,17 +5229,159 @@ exports.questCollapse = {
         if (!link) {
             return;
         }
+        const questCollapse = yield (0, settings_1.getData)(settings_1.SettingId.QUEST_COLLAPSE, {
+            questCollapse: true,
+        });
         link.addEventListener("click", () => {
             setTimeout(() => {
-                localStorage.questCollapse = !accordion.classList.contains("accordion-item-expanded");
+                (0, settings_1.setData)(settings_1.SettingId.QUEST_COLLAPSE, {
+                    questCollapse: !accordion.classList.contains("accordion-item-expanded"),
+                });
             }, 500);
         });
-        if (isCollapsed && localStorage.questCollapse === "false") {
+        if (isCollapsed && !questCollapse) {
             accordion.classList.add("accordion-item-expanded");
         }
-        if (!isCollapsed && localStorage.questCollapse === "true") {
+        if (!isCollapsed && questCollapse) {
             accordion.classList.remove("accordion-item-expanded");
         }
+    }),
+};
+
+
+/***/ }),
+
+/***/ 9524:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.questTagging = void 0;
+const settings_1 = __webpack_require__(126);
+const page_1 = __webpack_require__(7952);
+const theme_1 = __webpack_require__(1178);
+const SETTING_QUEST_TAGGING = {
+    id: settings_1.SettingId.QUEST_TAGGING,
+    title: "Quest: Tagging",
+    description: `Mark requests as high or low priority`,
+    type: "boolean",
+    defaultValue: true,
+};
+const renderQuests = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const { starred, low } = yield (0, settings_1.getData)(SETTING_QUEST_TAGGING, { starred: [], low: [] });
+    const list = (0, page_1.getListByTitle)(/Active Requests/);
+    if (!list) {
+        return;
+    }
+    const quests = [];
+    for (const element of list.querySelectorAll("li")) {
+        const id = (_b = (_a = element
+            .querySelector("a")) === null || _a === void 0 ? void 0 : _a.getAttribute("href")) === null || _b === void 0 ? void 0 : _b.split("?id=")[1];
+        if (!id) {
+            continue;
+        }
+        const title = ((_c = element.querySelector(".item-title strong")) === null || _c === void 0 ? void 0 : _c.textContent) || "";
+        const isLow = low.includes(id);
+        const isStarred = starred.includes(id);
+        quests.push({ element, id, isLow, isStarred, title });
+        const progress = element.querySelector(".progressbar span");
+        if (progress) {
+            progress.style.backgroundColor = isStarred ? "gold" : "#007aff";
+        }
+        (_d = element.querySelector(".item-media")) === null || _d === void 0 ? void 0 : _d.setAttribute("style", `
+        opacity: ${isLow ? 0.65 : 1};
+        filter: grayscale(${isLow ? 100 : 0}%)
+      `);
+        (_e = element.querySelector(".item-inner")) === null || _e === void 0 ? void 0 : _e.setAttribute("style", `
+        opacity: ${isLow ? 0.65 : 1};
+        filter: grayscale(${isLow ? 100 : 0}%)
+      `);
+        element.remove();
+        (_f = element.querySelector(".fh-quest-buttons")) === null || _f === void 0 ? void 0 : _f.remove();
+        const buttons = document.createElement("div");
+        buttons.className = "fh-quest-buttons";
+        buttons.style.height = "45px";
+        buttons.style.display = "flex";
+        buttons.style.flexDirection = "column";
+        buttons.style.alignItems = "center";
+        buttons.style.justifyContent = "space-between";
+        buttons.style.marginRight = "15px";
+        const starButton = document.createElement("i");
+        starButton.className = "fas fa-fw fa-star";
+        starButton.style.color = isStarred ? "gold" : theme_1.TEXT_GRAY;
+        starButton.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            if (starred.includes(id)) {
+                starred.splice(starred.indexOf(id), 1);
+            }
+            else {
+                starred.push(id);
+            }
+            yield (0, settings_1.setData)(SETTING_QUEST_TAGGING, { starred, low });
+            renderQuests();
+        }));
+        const lowButton = document.createElement("i");
+        lowButton.className = "fas fa-fw fa-chevron-down";
+        lowButton.style.color = isLow ? "#007aff" : theme_1.TEXT_GRAY;
+        lowButton.addEventListener("click", (event) => __awaiter(void 0, void 0, void 0, function* () {
+            event.preventDefault();
+            event.stopPropagation();
+            if (low.includes(id)) {
+                low.splice(low.indexOf(id), 1);
+            }
+            else {
+                low.push(id);
+            }
+            yield (0, settings_1.setData)(SETTING_QUEST_TAGGING, { starred, low });
+            renderQuests();
+        }));
+        buttons.append(starButton);
+        buttons.append(lowButton);
+        (_g = element.querySelector(".item-content")) === null || _g === void 0 ? void 0 : _g.prepend(buttons);
+    }
+    quests.sort((a, b) => {
+        if (a.isStarred && !b.isStarred) {
+            return -1;
+        }
+        if (!a.isStarred && b.isStarred) {
+            return 1;
+        }
+        if (a.isLow && !b.isLow) {
+            return 1;
+        }
+        if (!a.isLow && b.isLow) {
+            return -1;
+        }
+        return a.title.localeCompare(b.title);
+    });
+    for (const quest of quests) {
+        list.append(quest.element);
+    }
+});
+exports.questTagging = {
+    settings: [SETTING_QUEST_TAGGING],
+    onPageLoad: (settings, page) => {
+        // make sure setting is enabled
+        if (!settings[settings_1.SettingId.QUEST_TAGGING]) {
+            return;
+        }
+        // make sure we're on the quests page
+        if (page !== page_1.Page.QUESTS) {
+            return;
+        }
+        // load quests
+        renderQuests();
     },
 };
 
@@ -5178,10 +5467,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.quicksellSafely = exports.onQuicksellClick = exports.SETTING_QUICKSELL_SAFELY = void 0;
+exports.quicksellSafely = exports.onQuicksellClick = void 0;
 const page_1 = __webpack_require__(7952);
-exports.SETTING_QUICKSELL_SAFELY = {
-    id: "quicksellSafely",
+const settings_1 = __webpack_require__(126);
+const SETTING_QUICKSELL_SAFELY = {
+    id: settings_1.SettingId.QUICKSELL_SAFELY,
     title: "Item: Safe Quick Sell",
     description: "If item is locked, also lock the Quick Sell and Quick Give buttons",
     type: "boolean",
@@ -5195,14 +5485,14 @@ const onQuicksellClick = (callback) => {
 };
 exports.onQuicksellClick = onQuicksellClick;
 exports.quicksellSafely = {
-    settings: [exports.SETTING_QUICKSELL_SAFELY],
+    settings: [SETTING_QUICKSELL_SAFELY],
     onPageLoad: (settings, page) => {
         var _a, _b, _c, _d, _e, _f;
         // make sure we're on the right page
         if (page !== page_1.Page.ITEM) {
             return;
         }
-        const isSafetyOn = settings[exports.SETTING_QUICKSELL_SAFELY.id].value;
+        const isSafetyOn = settings[settings_1.SettingId.QUICKSELL_SAFELY];
         const lockButton = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelector(".lockbtn");
         const unlockButton = (_b = (0, page_1.getCurrentPage)()) === null || _b === void 0 ? void 0 : _b.querySelector(".unlockbtn");
         const isLocked = unlockButton && !lockButton;
@@ -5283,8 +5573,9 @@ exports.vaultSolver = void 0;
 const vault_1 = __webpack_require__(2279);
 const theme_1 = __webpack_require__(1178);
 const page_1 = __webpack_require__(7952);
+const settings_1 = __webpack_require__(126);
 const SETTING_VAULT_SOLVER = {
-    id: "vaultSolver",
+    id: settings_1.SettingId.VAULT_SOLVER,
     title: "Vault: Auto Solver",
     description: "Auto-fill solution suggestions in the vault input box",
     type: "boolean",
@@ -5367,7 +5658,7 @@ exports.vaultSolver = {
         if (page !== page_1.Page.VAULT) {
             return;
         }
-        if (!settings[SETTING_VAULT_SOLVER.id].value) {
+        if (!settings[settings_1.SettingId.VAULT_SOLVER]) {
             return;
         }
         const currentPage = (0, page_1.getCurrentPage)();
@@ -5462,7 +5753,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.versionManager = void 0;
-const utils_1 = __webpack_require__(7683);
+const requests_1 = __webpack_require__(3813);
 const notifications_1 = __webpack_require__(6783);
 const api_1 = __webpack_require__(1604);
 const popup_1 = __webpack_require__(469);
@@ -5478,11 +5769,11 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.28" !== void 0 ? "1.0.28" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.29" !== void 0 ? "1.0.29" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    const response = yield (0, utils_1.corsFetch)(README_URL);
+    const response = yield (0, requests_1.corsFetch)(README_URL);
     const htmlString = yield response.text();
     const document = new DOMParser().parseFromString(htmlString, "text/html");
     const body = document.querySelector(".markdown-body");
@@ -5551,13 +5842,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FEATURES = void 0;
 const autocomplete_1 = __webpack_require__(4067);
 const autocompleteItems_1 = __webpack_require__(8477);
 const autocompleteUsers_1 = __webpack_require__(5881);
 const banker_1 = __webpack_require__(8092);
 const buddyfarm_1 = __webpack_require__(2273);
+const mailboxInChat_1 = __webpack_require__(8124);
 const chatNav_1 = __webpack_require__(6922);
 const cleanupExplore_1 = __webpack_require__(2742);
 const cleanupHome_1 = __webpack_require__(5870);
@@ -5573,6 +5865,7 @@ const harvestNotifications_1 = __webpack_require__(4894);
 const fishInBarrel_1 = __webpack_require__(2100);
 const fleaMarket_1 = __webpack_require__(9361);
 const page_1 = __webpack_require__(7952);
+const settings_1 = __webpack_require__(126);
 const highlightSelfInChat_1 = __webpack_require__(5454);
 const improvedInputs_1 = __webpack_require__(1108);
 const kitchenNotifications_1 = __webpack_require__(9737);
@@ -5589,13 +5882,14 @@ const notifications_1 = __webpack_require__(6783);
 const perkManagement_1 = __webpack_require__(682);
 const petNotifications_1 = __webpack_require__(8278);
 const popup_1 = __webpack_require__(469);
-const state_1 = __webpack_require__(4619);
+const requests_1 = __webpack_require__(3300);
 const questCollapse_1 = __webpack_require__(1768);
 const quests_1 = __webpack_require__(3710);
+const questTagging_1 = __webpack_require__(9524);
 const quickSellSafely_1 = __webpack_require__(8760);
 const vaultSolver_1 = __webpack_require__(3026);
 const versionManager_1 = __webpack_require__(70);
-exports.FEATURES = [
+const FEATURES = [
     // internal
     notifications_1.notifications,
     confirmation_1.confirmations,
@@ -5625,6 +5919,7 @@ exports.FEATURES = [
     // quests
     quests_1.quests,
     questCollapse_1.questCollapse,
+    questTagging_1.questTagging,
     compactSilver_1.compactSilver,
     // bank
     banker_1.banker,
@@ -5650,12 +5945,16 @@ exports.FEATURES = [
     highlightSelfInChat_1.highlightSelfInChat,
     autocompleteItems_1.autocompleteItems,
     autocompleteUsers_1.autocompleteUsers,
+    mailboxInChat_1.chatMailboxStats,
     // nav
     compressNavigation_1.navigationStyle,
     customNavigation_1.customNavigation,
     // settings
     farmhandSettings_1.farmhandSettings,
 ];
+for (const feature of FEATURES) {
+    (0, settings_1.registerSettings)(...((_a = feature.settings) !== null && _a !== void 0 ? _a : []));
+}
 const watchSubtree = (selector, handler, filter) => {
     const target = document.querySelector(selector);
     if (!target) {
@@ -5664,10 +5963,10 @@ const watchSubtree = (selector, handler, filter) => {
     }
     const handle = () => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        const settings = yield (0, farmhandSettings_1.getSettings)(exports.FEATURES);
+        const settings = yield (0, settings_1.getSettingValues)();
         const [page, parameters] = (0, page_1.getPage)();
         // console.debug(`${selector} Load`, page, parameters);
-        for (const feature of exports.FEATURES) {
+        for (const feature of FEATURES) {
             (_a = feature[handler]) === null || _a === void 0 ? void 0 : _a.call(feature, settings, page, parameters);
         }
     });
@@ -5679,6 +5978,10 @@ const watchSubtree = (selector, handler, filter) => {
                 continue;
             }
             if (mutation.addedNodes.length === 0) {
+                continue;
+            }
+            const anyFirstPartyChanges = [...mutation.addedNodes].some((node) => { var _a; return (_a = node.className) === null || _a === void 0 ? void 0 : _a.includes("fh"); });
+            if (anyFirstPartyChanges) {
                 continue;
             }
             if (filter) {
@@ -5702,9 +6005,45 @@ const watchSubtree = (selector, handler, filter) => {
         // eslint-disable-next-line unicorn/prefer-module
         "use strict";
         console.info("STARTING Farmhand by Ansel Santosa");
+        console.info("Running migrations...");
+        const keys = yield GM.listValues();
+        for (const key of keys) {
+            const value = yield GM.getValue(key, null);
+            if (key.startsWith("chatBanners")) {
+                console.info(`Deleting legacy chat banners ${key}`, value);
+                yield GM.deleteValue(key);
+                continue;
+            }
+            if (key === "customNav_data" && typeof value === "string") {
+                console.info(`Migrating legacy custom nav ${key}`, value);
+                const items = JSON.parse(value);
+                yield GM.setValue(key, { items });
+                continue;
+            }
+            if (typeof value === "string") {
+                console.info(`Deleting setting ${key} with invalid data format`, value);
+                yield GM.deleteValue(key);
+                continue;
+            }
+            if (key.startsWith("state_") &&
+                (!Array.isArray(value) ||
+                    value.length !== 2 ||
+                    typeof value[0] !== "object" ||
+                    typeof value[1] !== "object")) {
+                console.info(`Deleting ${key} with invalid data format`, value);
+                yield GM.deleteValue(key);
+                continue;
+            }
+            if (key.endsWith("_data") && typeof value !== "object") {
+                console.info(`Deleting setting ${key} with invalid data format`, value);
+                yield GM.deleteValue(key);
+            }
+        }
+        console.info("Migrations complete");
         // initialize
-        const settings = yield (0, farmhandSettings_1.getSettings)(exports.FEATURES);
-        for (const { onInitialize } of exports.FEATURES) {
+        console.info("Running initializers...");
+        const settings = yield (0, settings_1.getSettingValues)();
+        for (const { onInitialize } of FEATURES) {
             if (onInitialize) {
                 onInitialize(settings);
             }
@@ -5712,11 +6051,12 @@ const watchSubtree = (selector, handler, filter) => {
         // run any interceptors for the first page
         const currentPage = (0, page_1.getCurrentPage)();
         if (currentPage) {
-            for (const [state, interceptor] of state_1.queryInterceptors) {
+            console.info(`Running interceptors for ${currentPage.dataset.page}...`);
+            for (const [state, interceptor] of requests_1.queryInterceptors) {
                 const url = window.location.href.replace("/index.php#!", "");
-                if ((0, state_1.urlMatches)(url, ...interceptor.match)) {
+                if ((0, requests_1.urlMatches)(url, ...interceptor.match)) {
                     const previous = yield state.get({ doNotFetch: true });
-                    interceptor.callback(settings, state, previous, {
+                    interceptor.callback(state, previous, {
                         headers: new Headers(),
                         ok: true,
                         redirected: false,
@@ -5733,7 +6073,12 @@ const watchSubtree = (selector, handler, filter) => {
                 }
             }
         }
-        yield (0, state_1.watchQueries)(settings);
+        else {
+            console.warn("Failed to find first page");
+        }
+        console.info("Registering query interceptors...");
+        yield (0, requests_1.watchQueries)();
+        console.info("Registering DOM watchers...");
         // double watches because the page and nav load at different times but
         // separating the handlers makes everything harder
         watchSubtree(".view-main .pages", "onPageLoad", ".page");
@@ -5746,6 +6091,7 @@ const watchSubtree = (selector, handler, filter) => {
         // watch desktop and mobile versions of chat
         watchSubtree("#mobilechatpanel", "onChatLoad");
         watchSubtree("#desktopchatpanel", "onChatLoad");
+        console.info("Farmhand running!");
     });
 })();
 
@@ -6042,12 +6388,12 @@ exports.debounce = debounce;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.replaceSelect = void 0;
+exports.clearDropdown = exports.replaceSelect = void 0;
 const theme_1 = __webpack_require__(1178);
 const replaceSelect = (proxySelect, options) => {
-    var _a, _b, _c;
-    (_b = (_a = proxySelect.parentElement) === null || _a === void 0 ? void 0 : _a.querySelector(".fh-item-selector")) === null || _b === void 0 ? void 0 : _b.remove();
-    (_c = document === null || document === void 0 ? void 0 : document.querySelector(".fh-item-selector-menu")) === null || _c === void 0 ? void 0 : _c.remove();
+    if (proxySelect.dataset.hasProxied === "true") {
+        return;
+    }
     const formatter = new Intl.NumberFormat();
     proxySelect.style.display = "none";
     const selector = document.createElement("div");
@@ -6057,6 +6403,7 @@ const replaceSelect = (proxySelect, options) => {
     selector.style.alignItems = "center";
     selector.style.justifyContent = "center";
     selector.style.gap = "4px";
+    selector.style.cursor = "pointer";
     const menu = document.createElement("div");
     menu.classList.add("fh-item-selector-menu");
     menu.style.padding = "10px 0";
@@ -6110,6 +6457,8 @@ const replaceSelect = (proxySelect, options) => {
     proxySelect.dataset.hasProxied = "true";
 };
 exports.replaceSelect = replaceSelect;
+const clearDropdown = () => { var _a; return (_a = document === null || document === void 0 ? void 0 : document.querySelector(".fh-item-selector-menu")) === null || _a === void 0 ? void 0 : _a.remove(); };
+exports.clearDropdown = clearDropdown;
 
 
 /***/ }),
@@ -6131,7 +6480,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = exports.Handler = exports.NotificationId = void 0;
 const page_1 = __webpack_require__(7952);
 const object_1 = __webpack_require__(7968);
-const farmhandSettings_1 = __webpack_require__(8973);
+const settings_1 = __webpack_require__(126);
 const KEY_NOTIFICATIONS = "notifications";
 var NotificationId;
 (function (NotificationId) {
@@ -6169,7 +6518,7 @@ const sendNotification = (notification) => __awaiter(void 0, void 0, void 0, fun
         ...state.notifications.filter(({ id }) => id !== notification.id),
         notification,
     ];
-    yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
+    yield (0, settings_1.setData)(KEY_NOTIFICATIONS, state);
     renderNotifications(true);
 });
 exports.sendNotification = sendNotification;
@@ -6178,7 +6527,7 @@ const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, f
         ? notification.id
         : notification;
     state.notifications = state.notifications.filter(({ id }) => id !== notificationId);
-    yield (0, farmhandSettings_1.setData)(KEY_NOTIFICATIONS, state.notifications);
+    yield (0, settings_1.setData)(KEY_NOTIFICATIONS, state);
     renderNotifications();
 });
 exports.removeNotification = removeNotification;
@@ -6277,13 +6626,6 @@ const renderNotifications = (force = false) => {
     }
 };
 exports.notifications = {
-    onInitialize: () => __awaiter(void 0, void 0, void 0, function* () {
-        // const savedNotifications = await getData<Notification<any>[]>(
-        //   KEY_NOTIFICATIONS,
-        //   []
-        // );
-        // state.notifications = savedNotifications;
-    }),
     onPageLoad: () => {
         setTimeout(renderNotifications, 500);
     },
@@ -6314,6 +6656,7 @@ var Page;
 (function (Page) {
     Page["AREA"] = "area";
     Page["BANK"] = "bank";
+    Page["BIO"] = "settings_bio";
     Page["FARM"] = "xfarm";
     Page["FARMERS_MARKET"] = "market";
     Page["FISHING"] = "fishing";
@@ -6330,7 +6673,9 @@ var Page;
     Page["PETS"] = "allpetitems";
     Page["PIG_PEN"] = "pigpen";
     Page["POST_OFFICE"] = "postoffice";
+    Page["PROFILE"] = "profile";
     Page["QUEST"] = "quest";
+    Page["QUESTS"] = "quests";
     Page["SETTINGS"] = "settings";
     Page["SETTINGS_OPTIONS"] = "settings_options";
     Page["TEMPLE"] = "mailitems";
@@ -6343,6 +6688,7 @@ var Page;
 var WorkerGo;
 (function (WorkerGo) {
     WorkerGo["ACTIVATE_PERK_SET"] = "activateperkset";
+    WorkerGo["SET_BIO"] = "settings_bio";
     WorkerGo["COLLECT_ALL_PET_ITEMS"] = "collectallpetitems";
     WorkerGo["COLLECT_ALL_MAIL_ITEMS"] = "collectallmailitems";
     WorkerGo["COLLECT_ALL_MEALS"] = "cookreadyall";
@@ -6351,6 +6697,7 @@ var WorkerGo;
     WorkerGo["FARM_STATUS"] = "farmstatus";
     WorkerGo["GET_STATS"] = "getstats";
     WorkerGo["HARVEST_ALL"] = "harvestall";
+    WorkerGo["NOTES"] = "notes";
     WorkerGo["PLANT_ALL"] = "plantall";
     WorkerGo["READY_COUNT"] = "readycount";
     WorkerGo["RESET_PERKS"] = "resetperks";
@@ -6540,6 +6887,384 @@ exports.popups = {
 
 /***/ }),
 
+/***/ 3813:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getDocument = exports.corsFetch = void 0;
+const corsFetch = (url, options) => new Promise((resolve, reject) => {
+    var _a;
+    GM.xmlHttpRequest(Object.assign(Object.assign({}, options), { method: (_a = options === null || options === void 0 ? void 0 : options.method) !== null && _a !== void 0 ? _a : "GET", url, onload: (response) => {
+            resolve({
+                headers: new Headers(),
+                ok: response.status >= 200 && response.status < 300,
+                redirected: url !== response.finalUrl,
+                status: response.status,
+                statusText: response.statusText,
+                type: "default",
+                url: response.finalUrl,
+                text: () => Promise.resolve(response.responseText),
+                json: () => Promise.resolve(JSON.parse(response.responseText)),
+                formData: () => Promise.resolve(new FormData()),
+                arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+                blob: () => Promise.resolve(new Blob([response.responseText])),
+            });
+        }, onerror: reject, onabort: reject, ontimeout: reject }));
+});
+exports.corsFetch = corsFetch;
+const getDocument = (response) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    }
+    const htmlString = yield response.text();
+    return new DOMParser().parseFromString(htmlString, "text/html");
+});
+exports.getDocument = getDocument;
+
+
+/***/ }),
+
+/***/ 126:
+/***/ (function(__unused_webpack_module, exports) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.registerExportToNotes = exports.encodeData = exports.eraseData = exports.FARMHAND_SUFFIX = exports.FARMHAND_PREFIX = exports.setSetting = exports.getSetting = exports.setData = exports.getData = exports.getSettingValues = exports.getDefaultSettings = exports.getSettings = exports.registerSettings = exports.SettingId = void 0;
+var SettingId;
+(function (SettingId) {
+    SettingId["ATTENTION_NOTIFICATIONS"] = "attentionNotifications";
+    SettingId["ATTENTION_NOTIFICATIONS_VERBOSE"] = "attentionNotificationsVerbose";
+    SettingId["AUTOCOMPLETE_ITEMS"] = "autocompleteItems";
+    SettingId["AUTOCOMPLETE_USERS"] = "autocompleteUsers";
+    SettingId["BANKER"] = "banker";
+    SettingId["BUDDY_FARM"] = "buddyFarm";
+    SettingId["CHAT_COMPRESS"] = "compressChat";
+    SettingId["CHAT_DISMISSABLE_BANNERS"] = "dismissableChatBanners";
+    SettingId["CHAT_HIGHLIGHT_SELF"] = "highlightSelfInChat";
+    SettingId["CHAT_MAILBOX_STATS"] = "chatMailboxStats";
+    SettingId["COLLAPSE_ITEM"] = "collapseItem";
+    SettingId["COMPACT_SILVER"] = "compactSilver";
+    SettingId["EXPLORE_FIRST"] = "exploreFirst";
+    SettingId["EXPLORE_IMPROVED"] = "exploreImproved";
+    SettingId["EXPORT"] = "export";
+    SettingId["FIELD_EMPTY_NOTIFICATIONS"] = "fieldEmptyNotifications";
+    SettingId["FISH_IN_BARREL"] = "fishInBarrel";
+    SettingId["FLEA_MARKET"] = "fleaMarket";
+    SettingId["HARVEST_NOTIFICATIONS"] = "harvestNotifications";
+    SettingId["HARVEST_POPUP"] = "harvestPopup";
+    SettingId["HOME_COMPRESS_SKILLS"] = "homeCompressSkills";
+    SettingId["HOME_HIDE_FOOTER"] = "homeHideFooter";
+    SettingId["HOME_HIDE_PLAYERS"] = "homeHidePlayers";
+    SettingId["HOME_HIDE_THEME"] = "homeHideTheme";
+    SettingId["IMPORT"] = "import";
+    SettingId["IMPROVED_INPUTS"] = "improvedInputs";
+    SettingId["KITCHEN_COMPLETE_NOTIFICATIONS"] = "readyNotifications";
+    SettingId["KITCHEN_EMPTY_NOTIFICATIONS"] = "kitchenEmptyNotifications";
+    SettingId["MAX_ANIMALS"] = "maxAnimals";
+    SettingId["MAX_CONTAINERS"] = "maxContainers";
+    SettingId["MEAL_NOTIFICATIONS"] = "mealNotifications";
+    SettingId["MINER"] = "miner";
+    SettingId["MINER_BOMBS"] = "minerBombs";
+    SettingId["MINER_EXPLOSIVES"] = "minerExplosives";
+    SettingId["NAV_ADD_MENU"] = "bottomMenu";
+    SettingId["NAV_ALIGN_BOTTOM"] = "alignBottomNav";
+    SettingId["NAV_COMPRESS"] = "compressNav";
+    SettingId["NAV_CUSTOM"] = "customNav";
+    SettingId["NAV_HIDE_LOGO"] = "noLogoNav";
+    SettingId["PERK_MANAGER"] = "perkManager";
+    SettingId["QUEST_COLLAPSE"] = "questCollapse";
+    SettingId["QUEST_TAGGING"] = "questTagging";
+    SettingId["QUICKSELL_SAFELY"] = "quicksellSafely";
+    SettingId["UPDATE_AT_TOP"] = "updateAtTop";
+    SettingId["VAULT_SOLVER"] = "vaultSolver";
+})(SettingId || (exports.SettingId = SettingId = {}));
+const settings = [];
+const registerSettings = (...newSettings) => {
+    settings.push(...newSettings);
+};
+exports.registerSettings = registerSettings;
+const getSettings = () => settings;
+exports.getSettings = getSettings;
+const getDefaultSettings = () => {
+    var _a;
+    const settings = {};
+    for (const setting of (0, exports.getSettings)()) {
+        settings[setting.id] = (_a = setting === null || setting === void 0 ? void 0 : setting.value) !== null && _a !== void 0 ? _a : setting.defaultValue;
+    }
+    return settings;
+};
+exports.getDefaultSettings = getDefaultSettings;
+const getSettingValues = () => __awaiter(void 0, void 0, void 0, function* () {
+    const settings = {};
+    for (const setting of (0, exports.getSettings)()) {
+        settings[setting.id] = yield GM.getValue(setting.id, setting.defaultValue);
+    }
+    return settings;
+});
+exports.getSettingValues = getSettingValues;
+const toDataKey = (setting) => typeof setting === "string" ? `${setting}_data` : `${setting.id}_data`;
+const getData = (setting, defaultValue) => __awaiter(void 0, void 0, void 0, function* () {
+    const key = toDataKey(setting);
+    if (!key) {
+        return defaultValue;
+    }
+    return yield GM.getValue(key, defaultValue);
+});
+exports.getData = getData;
+const setData = (setting, data) => __awaiter(void 0, void 0, void 0, function* () {
+    const key = toDataKey(setting);
+    if (!key) {
+        return false;
+    }
+    const previous = yield GM.getValue(key, "");
+    yield GM.setValue(key, data);
+    const encoded = JSON.stringify(data);
+    const changed = previous !== encoded;
+    if (changed) {
+        yield exportToNotes();
+    }
+    return changed;
+});
+exports.setData = setData;
+const getSetting = (setting) => __awaiter(void 0, void 0, void 0, function* () {
+    return (Object.assign(Object.assign({}, setting), { value: yield GM.getValue(setting.id, setting.defaultValue) }));
+});
+exports.getSetting = getSetting;
+const setSetting = (setting) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const previous = yield GM.getValue(setting.id, setting.defaultValue);
+    yield GM.setValue(setting.id, (_a = setting.value) !== null && _a !== void 0 ? _a : "");
+    const changed = previous !== setting.value;
+    if (changed) {
+        yield exportToNotes();
+    }
+    return changed;
+});
+exports.setSetting = setSetting;
+exports.FARMHAND_PREFIX = "\n==== START FARMHAND SETTINGS ====\n";
+exports.FARMHAND_SUFFIX = "\n==== END FARMHAND SETTINGS ====";
+const eraseData = (notes) => {
+    const start = notes.indexOf(exports.FARMHAND_PREFIX);
+    const end = notes.indexOf(exports.FARMHAND_SUFFIX);
+    if (start === -1 || end === -1) {
+        return notes;
+    }
+    return notes.slice(0, start) + notes.slice(end + exports.FARMHAND_SUFFIX.length);
+};
+exports.eraseData = eraseData;
+const encodeData = () => __awaiter(void 0, void 0, void 0, function* () {
+    const exportedSettings = Object.values((0, exports.getSettings)());
+    for (const setting of exportedSettings) {
+        setting.data = yield (0, exports.getData)(setting, {});
+    }
+    return `${exports.FARMHAND_PREFIX}${JSON.stringify(exportedSettings)}${exports.FARMHAND_SUFFIX}`;
+});
+exports.encodeData = encodeData;
+// hack to avoid circular dependency
+let _exportToNotes;
+const registerExportToNotes = (exporter) => {
+    _exportToNotes = exporter;
+};
+exports.registerExportToNotes = registerExportToNotes;
+const exportToNotes = () => { var _a; return (_a = _exportToNotes === null || _exportToNotes === void 0 ? void 0 : _exportToNotes()) !== null && _a !== void 0 ? _a : Promise.resolve(); };
+
+
+/***/ }),
+
+/***/ 4782:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CachedState = exports.StorageKey = void 0;
+const object_1 = __webpack_require__(7968);
+const requests_1 = __webpack_require__(3300);
+var StorageKey;
+(function (StorageKey) {
+    StorageKey["CHAT_BANNERS"] = "chatBanners";
+    StorageKey["CURRENT_PERKS_SET_ID"] = "currentPerksSetId";
+    StorageKey["FARM_ID"] = "farmId";
+    StorageKey["FARM_STATE"] = "farmState";
+    StorageKey["FARM_STATUS"] = "farmStatus";
+    StorageKey["IS_BETA"] = "isBeta";
+    StorageKey["IS_CHAT_ENABLED"] = "isChatEnabled";
+    StorageKey["IS_DARK_MODE"] = "isDarkMode";
+    StorageKey["IS_MUSIC_ENABLED"] = "isMusicEnabled";
+    StorageKey["ITEM_DATA"] = "items";
+    StorageKey["KITHCEN_STATUS"] = "kitchenStatus";
+    StorageKey["LATEST_VERSION"] = "latestVersion";
+    StorageKey["MAILBOX"] = "mailbox";
+    StorageKey["MEALS_STATUS"] = "mealsStatus";
+    StorageKey["NOTES"] = "notes";
+    StorageKey["PAGE_DATA"] = "pageData";
+    StorageKey["PERKS_SETS"] = "perkSets";
+    StorageKey["PETS"] = "pets";
+    StorageKey["PLAYER_MAILBOXES"] = "playerMailboxes";
+    StorageKey["PLAYERS"] = "players";
+    StorageKey["RECENT_UPDATE"] = "recentUpdate";
+    StorageKey["STATS"] = "stats";
+    StorageKey["USERNAME"] = "username";
+    StorageKey["USER_ID"] = "userId";
+})(StorageKey || (exports.StorageKey = StorageKey = {}));
+const QUERYLESS_KEY = "__QUERYLESS__";
+const toQueryKey = (query) => query !== null && query !== void 0 ? query : QUERYLESS_KEY;
+const lazyQueue = [];
+let isProcessingQueue = false;
+setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
+    if (isProcessingQueue) {
+        return;
+    }
+    isProcessingQueue = true;
+    while (lazyQueue.length > 0) {
+        const task = lazyQueue.shift();
+        if (task) {
+            yield task();
+        }
+    }
+    // eslint-disable-next-line require-atomic-updates
+    isProcessingQueue = false;
+}), 1000);
+class CachedState {
+    constructor(key, fetch, { defaultState, timeout, interceptors = [], persist = true, }) {
+        this.state = {};
+        this.defaultState = defaultState;
+        this.fetch = fetch;
+        this.gettingByQuery = {};
+        this.key = `state_${key}`;
+        this.persist = persist;
+        this.state = {};
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 60;
+        this.updateListeners = [];
+        this.updatedAtByQuery = {};
+        for (const interceptor of interceptors) {
+            (0, requests_1.registerQueryInterceptor)([this, interceptor]);
+        }
+        this.load();
+    }
+    onUpdate(callback) {
+        this.updateListeners.push(callback);
+    }
+    read(query) {
+        return this.state[toQueryKey(query)];
+    }
+    get() {
+        return __awaiter(this, arguments, void 0, function* ({ ignoreCache, doNotFetch, query, lazy, } = {}) {
+            const queryKey = toQueryKey(query);
+            const existingPromise = this.gettingByQuery[queryKey];
+            if (existingPromise) {
+                console.debug(`[STATE] Waiting for ${this.key} fetch`, existingPromise);
+                return yield existingPromise;
+            }
+            const newPromise = new Promise((resolve) => {
+                const queryKey = toQueryKey(query);
+                const previous = this.read(query);
+                const expires = this.updatedAtByQuery[queryKey] + this.timeout * 1000;
+                if (!doNotFetch && (!previous || ignoreCache || expires < Date.now())) {
+                    if (lazy) {
+                        resolve(previous);
+                        lazyQueue.push(() => this.fetch(this, query).then((result) => this.set(result, query)));
+                        return;
+                    }
+                    console.debug(`[STATE] Fetching ${this.key} (query: ${queryKey})`, {
+                        ignoreCache,
+                        updatedAt: this.updatedAtByQuery[queryKey],
+                        timeout: this.timeout,
+                        previous,
+                    });
+                    this.fetch(this, query).then((result) => resolve(this.set(result, query)));
+                }
+                else {
+                    console.debug(`[STATE] Returning cached ${this.key} (query: ${queryKey})`, {
+                        ignoreCache,
+                        updatedAt: this.updatedAtByQuery[queryKey],
+                        timeout: this.timeout,
+                        previous,
+                    });
+                    resolve(this.read(query));
+                }
+            });
+            this.gettingByQuery[queryKey] = newPromise;
+            const result = yield newPromise;
+            delete this.gettingByQuery[queryKey];
+            return result;
+        });
+    }
+    set(input, query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const queryKey = toQueryKey(query);
+            const previous = this.state[queryKey];
+            const value = (0, object_1.isObject)(this.defaultState)
+                ? Object.assign(Object.assign(Object.assign({}, this.defaultState), previous), input) : (_a = input !== null && input !== void 0 ? input : previous) !== null && _a !== void 0 ? _a : this.defaultState;
+            if (!value) {
+                delete this.state[queryKey];
+                console.debug(`[STATE] Deleting ${this.key}.${queryKey}`, undefined, this.state);
+                return;
+            }
+            console.debug(`[STATE] Setting ${this.key}.${queryKey}`, value, this.state);
+            this.state[queryKey] = value;
+            this.updatedAtByQuery[queryKey] = value === undefined ? 0 : Date.now();
+            for (const listener of this.updateListeners) {
+                listener(value);
+            }
+            yield this.save();
+            return value;
+        });
+    }
+    save() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.persist) {
+                return;
+            }
+            yield GM.setValue(this.key, [this.updatedAtByQuery, this.state]);
+        });
+    }
+    // reads the persisted tuples out of GM storage
+    // [updatedAtByQuery, state]
+    load() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.persist) {
+                return;
+            }
+            const [updatedAtByQuery, state] = yield GM.getValue(this.key, [{}, {}]);
+            this.updatedAtByQuery = updatedAtByQuery;
+            this.state = state;
+        });
+    }
+}
+exports.CachedState = CachedState;
+
+
+/***/ }),
+
 /***/ 1178:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -6591,6 +7316,7 @@ exports.INPUT_STYLES = {
     color: (0, exports.important)(exports.TEXT_WHITE),
     height: (0, exports.important)("36px"),
     padding: (0, exports.important)(exports.INPUT_PADDING),
+    minWidth: (0, exports.important)("100px"),
 };
 // buttons
 exports.BUTTON_GREEN_BACKGROUND = "#003300";

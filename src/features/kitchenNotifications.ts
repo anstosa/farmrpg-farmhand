@@ -3,8 +3,8 @@ import {
   KitchenStatus,
   kitchenStatusState,
   OvenStatus,
-} from "~/api/farmrpg/kitchen";
-import { Feature, FeatureSetting, Settings } from "./feature";
+} from "~/api/farmrpg/apis/kitchen";
+import { Feature, FeatureSetting, SettingValues } from "../utils/feature";
 import {
   Handler,
   NotificationId,
@@ -13,10 +13,11 @@ import {
   sendNotification,
 } from "~/utils/notifications";
 import { Page } from "~/utils/page";
-import { toUrl } from "~/api/state";
+import { SettingId } from "~/utils/settings";
+import { toUrl } from "~/api/farmrpg/utils/requests";
 
 const SETTING_COMPLETE_NOTIFICATIONS: FeatureSetting = {
-  id: "harvestNotifications",
+  id: SettingId.KITCHEN_COMPLETE_NOTIFICATIONS,
   title: "Kitchen: Meals ready notification",
   description: `
     Show notification when meals are ready to collect
@@ -26,7 +27,7 @@ const SETTING_COMPLETE_NOTIFICATIONS: FeatureSetting = {
 };
 
 const SETTING_ATTENTION_NOTIFICATIONS: FeatureSetting = {
-  id: "attentionNotifications",
+  id: SettingId.ATTENTION_NOTIFICATIONS,
   title: "Kitchen: Ovens attention notification",
   description: `
     Show notification when ovens need attention
@@ -36,7 +37,7 @@ const SETTING_ATTENTION_NOTIFICATIONS: FeatureSetting = {
 };
 
 const SETTING_ATTENTION_VERBOSE: FeatureSetting = {
-  id: "attentionNotificationsVerbose",
+  id: SettingId.ATTENTION_NOTIFICATIONS_VERBOSE,
   title: "Kitchen: Ovens attention notification (all actions)",
   description: `
     Show notifications when any oven needs attention for any action
@@ -47,7 +48,7 @@ const SETTING_ATTENTION_VERBOSE: FeatureSetting = {
 };
 
 const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
-  id: "emptyNotifications",
+  id: SettingId.KITCHEN_EMPTY_NOTIFICATIONS,
   title: "Kitchen: Ovens empty notification",
   description: `
     Show notification when ovens are empty
@@ -59,7 +60,7 @@ const SETTING_EMPTY_NOTIFICATIONS: FeatureSetting = {
 registerNotificationHandler(Handler.COLLECT_MEALS, collectAll);
 
 const renderOvens = async (
-  settings: Settings,
+  settings: SettingValues,
   state: KitchenStatus | undefined
 ): Promise<void> => {
   if (!state) {
@@ -67,7 +68,7 @@ const renderOvens = async (
   }
   if (
     state.status === OvenStatus.EMPTY &&
-    settings[SETTING_EMPTY_NOTIFICATIONS.id].value
+    settings[SettingId.KITCHEN_EMPTY_NOTIFICATIONS]
   ) {
     sendNotification({
       class: "btnorange",
@@ -78,10 +79,10 @@ const renderOvens = async (
     });
   } else if (
     state.status === OvenStatus.ATTENTION &&
-    settings[SETTING_ATTENTION_NOTIFICATIONS.id].value
+    settings[SettingId.ATTENTION_NOTIFICATIONS]
   ) {
     const state = await kitchenStatusState.get();
-    if (settings[SETTING_ATTENTION_VERBOSE.id].value || state?.allReady) {
+    if (settings[SettingId.ATTENTION_NOTIFICATIONS] || state?.allReady) {
       sendNotification({
         class: "btnorange",
         id: NotificationId.OVEN,
@@ -94,7 +95,7 @@ const renderOvens = async (
     }
   } else if (
     state.status === OvenStatus.READY &&
-    settings[SETTING_COMPLETE_NOTIFICATIONS.id].value
+    settings[SettingId.KITCHEN_COMPLETE_NOTIFICATIONS]
   ) {
     sendNotification({
       class: "btngreen",

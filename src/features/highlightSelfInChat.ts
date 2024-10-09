@@ -3,11 +3,12 @@ import {
   ALERT_YELLOW_BORDER,
   TEXT_WARNING,
 } from "~/utils/theme";
-import { Feature, FeatureSetting } from "./feature";
-import { usernameState } from "~/api/farmrpg/api";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { SettingId } from "~/utils/settings";
+import { usernameState } from "~/api/farmrpg/apis";
 
-export const SETTING_CHAT_HIGHLIGHT_SELF: FeatureSetting = {
-  id: "highlightSelfInChat",
+const SETTING_CHAT_HIGHLIGHT_SELF: FeatureSetting = {
+  id: SettingId.CHAT_HIGHLIGHT_SELF,
   title: "Chat: Highlight self",
   description: "Highlight messages in chat where you are @mentioned",
   type: "boolean",
@@ -18,7 +19,7 @@ export const highlightSelfInChat: Feature = {
   settings: [SETTING_CHAT_HIGHLIGHT_SELF],
   onChatLoad: async (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_CHAT_HIGHLIGHT_SELF.id].value) {
+    if (!settings[SettingId.CHAT_HIGHLIGHT_SELF]) {
       return;
     }
 

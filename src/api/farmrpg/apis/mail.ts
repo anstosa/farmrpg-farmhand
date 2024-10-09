@@ -1,15 +1,15 @@
-import { CachedState, StorageKey } from "../state";
+import { CachedState, StorageKey } from "../../../utils/state";
 import {
   getCardByTitle,
   getListByTitle,
   Page,
   WorkerGo,
-} from "../../utils/page";
-import { getDocument } from "../utils";
-import { getItemByName } from "../buddyfarm/api";
-import { Item } from "../buddyfarm/state";
+} from "../../../utils/page";
+import { getDocument } from "../../../utils/requests";
+import { getHTML } from "../utils/requests";
+import { Item } from "../../buddyfarm/types";
+import { itemDataState } from "~/api/buddyfarm/api";
 import { NotificationId, removeNotification } from "~/utils/notifications";
-import { requestHTML } from "./api";
 import { showPopup } from "~/utils/popup";
 
 export interface MailboxContent {
@@ -69,10 +69,11 @@ const processPostoffice = (root: Document): MailboxState => {
 export const mailboxState = new CachedState<MailboxState>(
   StorageKey.MAILBOX,
   async () => {
-    const response = await requestHTML(Page.POST_OFFICE);
+    const response = await getHTML(Page.POST_OFFICE);
     return processPostoffice(response);
   },
   {
+    persist: false,
     defaultState: {
       contents: [],
       size: 5,
@@ -80,7 +81,7 @@ export const mailboxState = new CachedState<MailboxState>(
     interceptors: [
       {
         match: [Page.POST_OFFICE, new URLSearchParams()],
-        callback: async (settings, state, previous, response) => {
+        callback: async (state, previous, response) => {
           await state.set(processPostoffice(await getDocument(response)));
         },
       },
@@ -89,8 +90,8 @@ export const mailboxState = new CachedState<MailboxState>(
           Page.WORKER,
           new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MAIL_ITEMS }),
         ],
-        callback: async (settings, state) => {
-          await state.set({ contents: [] });
+        callback: async (state, previous) => {
+          await state.set({ ...previous, contents: [] });
         },
       },
     ],
@@ -105,7 +106,7 @@ export const collectMailbox = async (): Promise<void> => {
   const mergedItems = mergeContents(state.contents);
   const items: { item: Item | undefined; count: number }[] = await Promise.all(
     mergedItems.map(async (mail) => ({
-      item: await getItemByName(mail.item),
+      item: await itemDataState.get({ query: mail.item }),
       count: mail.count,
     }))
   );
@@ -131,7 +132,7 @@ export const collectMailbox = async (): Promise<void> => {
         .join("&nbsp;")}
     `,
   });
-  await requestHTML(
+  await getHTML(
     Page.WORKER,
     new URLSearchParams({ go: WorkerGo.COLLECT_ALL_MAIL_ITEMS })
   );

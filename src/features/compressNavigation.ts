@@ -1,31 +1,32 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { SettingId } from "~/utils/settings";
 
-export const SETTING_NAVIGATION_COMPRESS: FeatureSetting = {
-  id: "compressNav",
+const SETTING_NAVIGATION_COMPRESS: FeatureSetting = {
+  id: SettingId.NAV_COMPRESS,
   title: "Menu: Reduce Whitespace",
   description: `Reduces whitespace in navigation to make space for more items`,
   type: "boolean",
   defaultValue: false,
 };
 
-export const SETTING_NAVIGATION_HIDE_LOGO: FeatureSetting = {
-  id: "noLogoNav",
+const SETTING_NAVIGATION_HIDE_LOGO: FeatureSetting = {
+  id: SettingId.NAV_HIDE_LOGO,
   title: "Menu: Hide Logo",
   description: `Hides Farm RPG logo in Navigation`,
   type: "boolean",
   defaultValue: true,
 };
 
-export const SETTING_NAVIGATION_ALIGN_BOTTOM: FeatureSetting = {
-  id: "alignBottomNav",
+const SETTING_NAVIGATION_ALIGN_BOTTOM: FeatureSetting = {
+  id: SettingId.NAV_ALIGN_BOTTOM,
   title: "Menu: Align to Bottom",
   description: `Aligns Navigation menu to bottom of screen for easier reach on mobile`,
   type: "boolean",
   defaultValue: false,
 };
 
-export const SETTINGS_NAVIGATION_ADD_MENU: FeatureSetting = {
-  id: "bottomMenu",
+const SETTINGS_NAVIGATION_ADD_MENU: FeatureSetting = {
+  id: SettingId.NAV_ADD_MENU,
   title: "Menu: Add Shortcut to Bottom",
   description: `Adds navigation menu shortcut to bottom bar for easier reach on mobile`,
   type: "boolean",
@@ -88,7 +89,7 @@ export const navigationStyle: Feature = {
       `
     );
 
-    if (settings[SETTING_NAVIGATION_COMPRESS.id].value) {
+    if (settings[SettingId.NAV_COMPRESS]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
@@ -107,7 +108,7 @@ export const navigationStyle: Feature = {
       );
     }
 
-    if (settings[SETTING_NAVIGATION_HIDE_LOGO.id].value) {
+    if (settings[SettingId.NAV_HIDE_LOGO]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
@@ -127,7 +128,7 @@ export const navigationStyle: Feature = {
       );
     }
 
-    if (settings[SETTING_NAVIGATION_ALIGN_BOTTOM.id].value) {
+    if (settings[SettingId.NAV_ALIGN_BOTTOM]) {
       document.head.insertAdjacentHTML(
         "beforeend",
         `
@@ -163,7 +164,7 @@ export const navigationStyle: Feature = {
       `
     );
 
-    if (settings[SETTINGS_NAVIGATION_ADD_MENU.id].value) {
+    if (settings[SETTINGS_NAVIGATION_ADD_MENU.id]) {
       const homeButton = document.querySelector("#homebtn");
       if (!homeButton) {
         console.error("Home button not found");

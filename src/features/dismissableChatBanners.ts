@@ -1,9 +1,14 @@
-import { Feature, FeatureSetting } from "./feature";
+import { Feature, FeatureSetting } from "../utils/feature";
+import { getData, setData, SettingId } from "~/utils/settings";
 import { showPopup } from "~/utils/popup";
-import { StorageKey } from "~/api/state";
+import { StorageKey } from "~/utils/state";
 
-export const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
-  id: "dismissableChatBanners",
+interface DismissableBannerData {
+  hiddenBanners: string[];
+}
+
+const SETTING_CHAT_DISMISSABLE_BANNERS: FeatureSetting = {
+  id: SettingId.CHAT_DISMISSABLE_BANNERS,
   title: "Chat: Dismissable Banners",
   description: `
     Adds × in chat banners to dismiss them<br>
@@ -45,17 +50,23 @@ export const dismissableChatBanners: Feature = {
   settings: [SETTING_CHAT_DISMISSABLE_BANNERS],
   onChatLoad: async (settings) => {
     // make sure setting is enabled
-    if (!settings[SETTING_CHAT_DISMISSABLE_BANNERS.id].value) {
+    if (!settings[SettingId.CHAT_DISMISSABLE_BANNERS]) {
       return;
     }
-    const banners = document.querySelectorAll(
+    const bannerElements = document.querySelectorAll(
       "#desktopchatpanel .card, #mobilechatpanel .card"
     );
-    for (const banner of banners) {
-      const bannerKey = `${StorageKey.CHAT_BANNERS}_${hashBanner(banner)}`;
+    const { hiddenBanners } = await getData<DismissableBannerData>(
+      SettingId.CHAT_DISMISSABLE_BANNERS,
+      {
+        hiddenBanners: [],
+      }
+    );
+    for (const banner of bannerElements) {
+      const bannerKey = hashBanner(banner).toString();
 
       // hide banner if dismissed
-      const isDismissed = await GM.getValue(bannerKey, false);
+      const isDismissed = hiddenBanners?.includes(bannerKey) || false;
       if (isDismissed) {
         banner.remove();
         continue;
@@ -76,7 +87,9 @@ export const dismissableChatBanners: Feature = {
       closeButton.style.cursor = "pointer";
       closeButton.addEventListener("click", () => {
         banner.remove();
-        GM.setValue(bannerKey, true);
+        setData(SettingId.CHAT_DISMISSABLE_BANNERS, {
+          hiddenBanners: [...hiddenBanners, bannerKey],
+        });
       });
       banner.append(closeButton);
     }

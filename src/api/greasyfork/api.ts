@@ -1,5 +1,5 @@
-import { CachedState, StorageKey } from "../state";
-import { corsFetch } from "../utils";
+import { CachedState, StorageKey } from "../../utils/state";
+import { corsFetch } from "../../utils/requests";
 
 export const SCRIPT_URL =
   "https://greasyfork.org/en/scripts/497660-farm-rpg-farmhand";
@@ -15,7 +15,7 @@ export const latestVersionState = new CachedState<string>(
     );
   },
   {
-    timeout: 60 * 60 * 24, // 1 day
+    timeout: 60 * 60 * 6, // 6 hours
     defaultState: "1.0.0",
   }
 );

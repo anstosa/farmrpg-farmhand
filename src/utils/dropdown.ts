@@ -18,8 +18,9 @@ export const replaceSelect = (
   proxySelect: HTMLSelectElement,
   options: ItemOption[]
 ): void => {
-  proxySelect.parentElement?.querySelector(".fh-item-selector")?.remove();
-  document?.querySelector(".fh-item-selector-menu")?.remove();
+  if (proxySelect.dataset.hasProxied === "true") {
+    return;
+  }
   const formatter = new Intl.NumberFormat();
   proxySelect.style.display = "none";
   const selector = document.createElement("div");
@@ -29,6 +30,7 @@ export const replaceSelect = (
   selector.style.alignItems = "center";
   selector.style.justifyContent = "center";
   selector.style.gap = "4px";
+  selector.style.cursor = "pointer";
   const menu = document.createElement("div");
   menu.classList.add("fh-item-selector-menu");
   menu.style.padding = "10px 0";
@@ -89,3 +91,6 @@ export const replaceSelect = (
   document.body.append(menu);
   proxySelect.dataset.hasProxied = "true";
 };
+
+export const clearDropdown = (): void =>
+  document?.querySelector(".fh-item-selector-menu")?.remove();

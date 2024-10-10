@@ -38,7 +38,7 @@ export interface NotesState {
   hasNotes: boolean;
 }
 
-const processHome = async (root: Document): Promise<NotesState> => {
+const processHome = (root: Document): NotesState => {
   const notesField = root.querySelector<HTMLTextAreaElement>(".player_notes");
   if (!notesField) {
     return { notes: "", hasNotes: false };
@@ -52,22 +52,24 @@ const processHome = async (root: Document): Promise<NotesState> => {
   }
   const settingsString = rawNotes.slice(start + FARMHAND_PREFIX.length, end);
   const settings = JSON.parse(settingsString);
-  let hasChanged = false;
-  for (const setting of settings) {
-    const settingChanged = await setSetting(setting);
-    const dataChanged = await setData(setting, setting.data);
-    if (!hasChanged && (settingChanged || dataChanged)) {
-      hasChanged = true;
+  (async () => {
+    let hasChanged = false;
+    for (const setting of settings) {
+      const settingChanged = await setSetting(setting);
+      const dataChanged = await setData(setting, setting.data);
+      if (!hasChanged && (settingChanged || dataChanged)) {
+        hasChanged = true;
+      }
     }
-  }
-  console.debug(`[SYNC] Imported settings from notes`, settings);
-  if (hasChanged) {
-    await showPopup({
-      title: "Farmhand Settings Synced!",
-      contentHTML: "Page will reload to apply",
-    });
-    location.reload();
-  }
+    console.debug(`[SYNC] Imported settings from notes`, settings);
+    if (hasChanged) {
+      await showPopup({
+        title: "Farmhand Settings Synced!",
+        contentHTML: "Page will reload to apply",
+      });
+      location.reload();
+    }
+  })();
   return { notes: eraseData(rawNotes), hasNotes: true };
 };
 
@@ -82,7 +84,7 @@ export const notesState = new CachedState<NotesState>(
       {
         match: [Page.HOME_PATH, new URLSearchParams()],
         callback: async (state, previous, response) => {
-          state.set(await processHome(await getDocument(response)));
+          state.set(processHome(await getDocument(response)));
         },
       },
     ],

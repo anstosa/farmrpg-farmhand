@@ -1,6 +1,6 @@
 {
   "name": "farmrpg-farmhand",
-  "version": "1.0.29",
+  "version": "1.0.30",
   "description": "Your helper around the RPG Farm",
   "main": "index.js",
   "repository": "git@github.com:anstosa/farmrpg-farmhand.git",

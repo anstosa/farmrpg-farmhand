@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.29
+// @version 1.0.30
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -960,6 +960,122 @@ exports.mealsStatusState.onUpdate((state) => {
         scheduledUpdates[finishedAt] = setTimeout(removeFinishedMeals, finishedAt - Date.now());
     }
 });
+
+
+/***/ }),
+
+/***/ 4735:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.exportToNotes = exports.setNotes = exports.notesState = exports.encodeData = exports.eraseData = exports.FARMHAND_SUFFIX = exports.FARMHAND_PREFIX = void 0;
+const state_1 = __webpack_require__(4782);
+const settings_1 = __webpack_require__(126);
+const requests_1 = __webpack_require__(3813);
+const requests_2 = __webpack_require__(3300);
+const page_1 = __webpack_require__(7952);
+const popup_1 = __webpack_require__(469);
+exports.FARMHAND_PREFIX = "\n==== START FARMHAND SETTINGS ====\n";
+exports.FARMHAND_SUFFIX = "\n==== END FARMHAND SETTINGS ====";
+const eraseData = (notes) => {
+    const start = notes.indexOf(exports.FARMHAND_PREFIX);
+    const end = notes.indexOf(exports.FARMHAND_SUFFIX);
+    if (start === -1 || end === -1) {
+        return notes;
+    }
+    return notes.slice(0, start) + notes.slice(end + exports.FARMHAND_SUFFIX.length);
+};
+exports.eraseData = eraseData;
+const encodeData = () => __awaiter(void 0, void 0, void 0, function* () {
+    const exportedSettings = Object.values((0, settings_1.getSettings)());
+    for (const setting of exportedSettings) {
+        setting.data = yield (0, settings_1.getData)(setting, "");
+    }
+    return `${exports.FARMHAND_PREFIX}${JSON.stringify(exportedSettings)}${exports.FARMHAND_SUFFIX}`;
+});
+exports.encodeData = encodeData;
+const processHome = (root) => {
+    const notesField = root.querySelector(".player_notes");
+    if (!notesField) {
+        return { notes: "", hasNotes: false };
+    }
+    const rawNotes = notesField.value;
+    const start = rawNotes.indexOf(exports.FARMHAND_PREFIX);
+    const end = rawNotes.indexOf(exports.FARMHAND_SUFFIX);
+    if (start === -1 || end === -1) {
+        console.debug(`[SYNC] No settings found in notes`);
+        return { notes: rawNotes, hasNotes: false };
+    }
+    const settingsString = rawNotes.slice(start + exports.FARMHAND_PREFIX.length, end);
+    const settings = JSON.parse(settingsString);
+    (() => __awaiter(void 0, void 0, void 0, function* () {
+        let hasChanged = false;
+        for (const setting of settings) {
+            const settingChanged = yield (0, settings_1.setSetting)(setting);
+            const dataChanged = yield (0, settings_1.setData)(setting, setting.data);
+            if (!hasChanged && (settingChanged || dataChanged)) {
+                hasChanged = true;
+            }
+        }
+        console.debug(`[SYNC] Imported settings from notes`, settings);
+        if (hasChanged) {
+            yield (0, popup_1.showPopup)({
+                title: "Farmhand Settings Synced!",
+                contentHTML: "Page will reload to apply",
+            });
+            location.reload();
+        }
+    }))();
+    return { notes: (0, exports.eraseData)(rawNotes), hasNotes: true };
+};
+exports.notesState = new state_1.CachedState(state_1.StorageKey.NOTES, () => __awaiter(void 0, void 0, void 0, function* () {
+    const response = yield (0, requests_2.getHTML)(page_1.Page.HOME_PATH);
+    return processHome(response);
+}), {
+    interceptors: [
+        {
+            match: [page_1.Page.HOME_PATH, new URLSearchParams()],
+            callback: (state, previous, response) => __awaiter(void 0, void 0, void 0, function* () {
+                state.set(processHome(yield (0, requests_1.getDocument)(response)));
+            }),
+        },
+    ],
+    defaultState: {
+        notes: "",
+        hasNotes: false,
+    },
+});
+const setNotes = (notes) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, requests_2.postData)(page_1.Page.WORKER, {
+        content: `${(0, exports.eraseData)(notes)}${yield (0, exports.encodeData)()}`,
+    }, new URLSearchParams({ go: page_1.WorkerGo.NOTES }));
+});
+exports.setNotes = setNotes;
+const exportToNotes = () => __awaiter(void 0, void 0, void 0, function* () {
+    const state = yield exports.notesState.get();
+    if (!state) {
+        console.error("Sync failed");
+        return;
+    }
+    if (!state.hasNotes) {
+        console.warn(`[SYNC] Notes disabled or not available, skipping sync`);
+        return;
+    }
+    yield (0, exports.setNotes)(state.notes);
+    console.debug(`[SYNC] Exported settings to notes`);
+});
+exports.exportToNotes = exportToNotes;
+(0, settings_1.registerExportToNotes)(exports.exportToNotes);
 
 
 /***/ }),
@@ -3246,6 +3362,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.farmhandSettings = void 0;
+const notes_1 = __webpack_require__(4735);
 const page_1 = __webpack_require__(7952);
 const settings_1 = __webpack_require__(126);
 const popup_1 = __webpack_require__(469);
@@ -3395,9 +3512,9 @@ const SETTING_IMPORT = {
     placeholder: "Paste Here",
     buttonText: "Import",
     buttonAction: (settings, settingWrapper) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a;
+        var _a, _b, _c;
         const input = (_a = settingWrapper.querySelector(".fh-input")) === null || _a === void 0 ? void 0 : _a.value;
-        const importedSettings = JSON.parse(input !== null && input !== void 0 ? input : "[]");
+        const importedSettings = JSON.parse((_c = (_b = input === null || input === void 0 ? void 0 : input.replace(notes_1.FARMHAND_PREFIX, "")) === null || _b === void 0 ? void 0 : _b.replace(notes_1.FARMHAND_SUFFIX, "")) !== null && _c !== void 0 ? _c : "[]");
         for (const setting of importedSettings) {
             yield (0, settings_1.setSetting)(setting);
             if (setting.data) {
@@ -5769,7 +5886,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.29" !== void 0 ? "1.0.29" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.30" !== void 0 ? "1.0.30" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -6480,7 +6597,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.notifications = exports.removeNotification = exports.sendNotification = exports.registerNotificationHandler = exports.Handler = exports.NotificationId = void 0;
 const page_1 = __webpack_require__(7952);
 const object_1 = __webpack_require__(7968);
-const settings_1 = __webpack_require__(126);
 const KEY_NOTIFICATIONS = "notifications";
 var NotificationId;
 (function (NotificationId) {
@@ -6513,23 +6629,21 @@ const registerNotificationHandler = (handlerName, handler) => {
     notificationHandlers.set(handlerName, handler);
 };
 exports.registerNotificationHandler = registerNotificationHandler;
-const sendNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
+const sendNotification = (notification) => {
     state.notifications = [
         ...state.notifications.filter(({ id }) => id !== notification.id),
         notification,
     ];
-    yield (0, settings_1.setData)(KEY_NOTIFICATIONS, state);
     renderNotifications(true);
-});
+};
 exports.sendNotification = sendNotification;
-const removeNotification = (notification) => __awaiter(void 0, void 0, void 0, function* () {
+const removeNotification = (notification) => {
     const notificationId = (0, object_1.isObject)(notification)
         ? notification.id
         : notification;
     state.notifications = state.notifications.filter(({ id }) => id !== notificationId);
-    yield (0, settings_1.setData)(KEY_NOTIFICATIONS, state);
     renderNotifications();
-});
+};
 exports.removeNotification = removeNotification;
 const renderNotifications = (force = false) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
@@ -6948,7 +7062,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.registerExportToNotes = exports.encodeData = exports.eraseData = exports.FARMHAND_SUFFIX = exports.FARMHAND_PREFIX = exports.setSetting = exports.getSetting = exports.setData = exports.getData = exports.getSettingValues = exports.getDefaultSettings = exports.getSettings = exports.registerSettings = exports.SettingId = void 0;
+exports.registerExportToNotes = exports.setSetting = exports.getSetting = exports.setData = exports.getData = exports.getSettingValues = exports.getDefaultSettings = exports.getSettings = exports.registerSettings = exports.SettingId = void 0;
 var SettingId;
 (function (SettingId) {
     SettingId["ATTENTION_NOTIFICATIONS"] = "attentionNotifications";
@@ -7027,7 +7141,11 @@ const getData = (setting, defaultValue) => __awaiter(void 0, void 0, void 0, fun
     if (!key) {
         return defaultValue;
     }
-    return yield GM.getValue(key, defaultValue);
+    const value = yield GM.getValue(key, defaultValue);
+    if (typeof value !== "object") {
+        return defaultValue;
+    }
+    return value;
 });
 exports.getData = getData;
 const setData = (setting, data) => __awaiter(void 0, void 0, void 0, function* () {
@@ -7035,10 +7153,12 @@ const setData = (setting, data) => __awaiter(void 0, void 0, void 0, function* (
     if (!key) {
         return false;
     }
-    const previous = yield GM.getValue(key, "");
+    if (typeof data !== "object") {
+        return false;
+    }
+    const previous = yield GM.getValue(key, null);
     yield GM.setValue(key, data);
-    const encoded = JSON.stringify(data);
-    const changed = previous !== encoded;
+    const changed = JSON.stringify(previous) !== JSON.stringify(data);
     if (changed) {
         yield exportToNotes();
     }
@@ -7052,33 +7172,15 @@ exports.getSetting = getSetting;
 const setSetting = (setting) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const previous = yield GM.getValue(setting.id, setting.defaultValue);
-    yield GM.setValue(setting.id, (_a = setting.value) !== null && _a !== void 0 ? _a : "");
-    const changed = previous !== setting.value;
+    const value = (_a = setting.value) !== null && _a !== void 0 ? _a : setting.defaultValue;
+    yield GM.setValue(setting.id, value);
+    const changed = previous !== value;
     if (changed) {
         yield exportToNotes();
     }
     return changed;
 });
 exports.setSetting = setSetting;
-exports.FARMHAND_PREFIX = "\n==== START FARMHAND SETTINGS ====\n";
-exports.FARMHAND_SUFFIX = "\n==== END FARMHAND SETTINGS ====";
-const eraseData = (notes) => {
-    const start = notes.indexOf(exports.FARMHAND_PREFIX);
-    const end = notes.indexOf(exports.FARMHAND_SUFFIX);
-    if (start === -1 || end === -1) {
-        return notes;
-    }
-    return notes.slice(0, start) + notes.slice(end + exports.FARMHAND_SUFFIX.length);
-};
-exports.eraseData = eraseData;
-const encodeData = () => __awaiter(void 0, void 0, void 0, function* () {
-    const exportedSettings = Object.values((0, exports.getSettings)());
-    for (const setting of exportedSettings) {
-        setting.data = yield (0, exports.getData)(setting, {});
-    }
-    return `${exports.FARMHAND_PREFIX}${JSON.stringify(exportedSettings)}${exports.FARMHAND_SUFFIX}`;
-});
-exports.encodeData = encodeData;
 // hack to avoid circular dependency
 let _exportToNotes;
 const registerExportToNotes = (exporter) => {

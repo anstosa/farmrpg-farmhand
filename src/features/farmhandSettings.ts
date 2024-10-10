@@ -1,3 +1,4 @@
+import { FARMHAND_PREFIX, FARMHAND_SUFFIX } from "~/api/farmrpg/apis/notes";
 import { Feature, FeatureSetting } from "../utils/feature";
 import { getCurrentPage, Page } from "~/utils/page";
 import {
@@ -169,7 +170,9 @@ const SETTING_IMPORT: FeatureSetting = {
   buttonAction: async (settings, settingWrapper) => {
     const input =
       settingWrapper.querySelector<HTMLInputElement>(".fh-input")?.value;
-    const importedSettings = JSON.parse(input ?? "[]") as FeatureSetting[];
+    const importedSettings = JSON.parse(
+      input?.replace(FARMHAND_PREFIX, "")?.replace(FARMHAND_SUFFIX, "") ?? "[]"
+    ) as FeatureSetting[];
     for (const setting of importedSettings) {
       await setSetting(setting);
       if (setting.data) {

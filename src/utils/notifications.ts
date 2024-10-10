@@ -1,7 +1,6 @@
 import { Feature } from "./feature";
 import { getCurrentPage } from "~/utils/page";
 import { isObject } from "./object";
-import { setData } from "./settings";
 
 const KEY_NOTIFICATIONS = "notifications";
 
@@ -93,27 +92,23 @@ export const registerNotificationHandler = (
   notificationHandlers.set(handlerName, handler);
 };
 
-export const sendNotification = async <T>(
-  notification: Notification<T>
-): Promise<void> => {
+export const sendNotification = <T>(notification: Notification<T>): void => {
   state.notifications = [
     ...state.notifications.filter(({ id }) => id !== notification.id),
     notification,
   ];
-  await setData(KEY_NOTIFICATIONS, state);
   renderNotifications(true);
 };
 
-export const removeNotification = async (
+export const removeNotification = (
   notification: Notification<any> | Notification<any>["id"]
-): Promise<void> => {
+): void => {
   const notificationId = isObject(notification)
     ? notification.id
     : notification;
   state.notifications = state.notifications.filter(
     ({ id }) => id !== notificationId
   );
-  await setData(KEY_NOTIFICATIONS, state);
   renderNotifications();
 };
 

@@ -181,6 +181,10 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.30
+
+* Fixed: Notes sync not working
+
 ### 1.0.29
 
 * Added: Cross device sync using the notes field if you are an alpha supporter

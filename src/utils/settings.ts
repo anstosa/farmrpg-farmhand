@@ -83,7 +83,11 @@ export const getData = async <T>(
   if (!key) {
     return defaultValue;
   }
-  return await GM.getValue<T>(key, defaultValue);
+  const value = await GM.getValue<T>(key, defaultValue);
+  if (typeof value !== "object") {
+    return defaultValue;
+  }
+  return value;
 };
 
 export const setData = async <T>(
@@ -94,10 +98,12 @@ export const setData = async <T>(
   if (!key) {
     return false;
   }
-  const previous = await GM.getValue<string>(key, "");
+  if (typeof data !== "object") {
+    return false;
+  }
+  const previous = await GM.getValue<T>(key, null as any);
   await GM.setValue(key, data as any);
-  const encoded = JSON.stringify(data);
-  const changed = previous !== encoded;
+  const changed = JSON.stringify(previous) !== JSON.stringify(data);
   if (changed) {
     await exportToNotes();
   }
@@ -114,34 +120,13 @@ export const getSetting = async (
 
 export const setSetting = async (setting: FeatureSetting): Promise<boolean> => {
   const previous = await GM.getValue(setting.id, setting.defaultValue);
-  await GM.setValue(setting.id, setting.value ?? "");
-  const changed = previous !== setting.value;
+  const value = setting.value ?? setting.defaultValue;
+  await GM.setValue(setting.id, value);
+  const changed = previous !== value;
   if (changed) {
     await exportToNotes();
   }
   return changed;
-};
-
-export const FARMHAND_PREFIX = "\n==== START FARMHAND SETTINGS ====\n";
-export const FARMHAND_SUFFIX = "\n==== END FARMHAND SETTINGS ====";
-
-export const eraseData = (notes: string): string => {
-  const start = notes.indexOf(FARMHAND_PREFIX);
-  const end = notes.indexOf(FARMHAND_SUFFIX);
-  if (start === -1 || end === -1) {
-    return notes;
-  }
-  return notes.slice(0, start) + notes.slice(end + FARMHAND_SUFFIX.length);
-};
-
-export const encodeData = async (): Promise<string> => {
-  const exportedSettings = Object.values(getSettings());
-  for (const setting of exportedSettings) {
-    setting.data = await getData(setting, {});
-  }
-  return `${FARMHAND_PREFIX}${JSON.stringify(
-    exportedSettings
-  )}${FARMHAND_SUFFIX}`;
 };
 
 // hack to avoid circular dependency

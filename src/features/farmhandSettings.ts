@@ -304,10 +304,12 @@ export const farmhandSettings: Feature = {
 
     saveButton.addEventListener("click", async () => {
       saveButton.textContent = "Saving...";
-      for (const setting of Object.values(getSettings())) {
-        setting.value = getValue(setting, currentPage);
-        await setSetting(setting);
-      }
+      await Promise.all(
+        Object.values(getSettings()).map((setting) => {
+          setting.value = getValue(setting, currentPage);
+          return setSetting(setting);
+        })
+      );
       setTimeout(() => window.location.reload(), 1000);
     });
   },

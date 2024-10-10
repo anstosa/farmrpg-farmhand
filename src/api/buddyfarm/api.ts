@@ -6,7 +6,7 @@ import {
   BuddyFarmPageData as PageData,
 } from "./types";
 import { CachedState, StorageKey } from "../../utils/state";
-import { nameToSlug } from "./requests";
+import { NAME_OVERRIDES, nameToSlug } from "./requests";
 
 interface PageDataResponse {
   componentChunkName: string;
@@ -78,6 +78,12 @@ export const getAbridgedItem = async (
 export const getBasicItems = async (): Promise<BasicEntity[]> => {
   const { items } = (await pageDataState.get()) ?? {};
   return items?.map(({ name, image }) => ({ name, image })) ?? [];
+};
+
+export const isItem = async (name: string): Promise<boolean> => {
+  const items = await getBasicItems();
+  const searchName = NAME_OVERRIDES[name] ?? name;
+  return items.some((item) => item.name === searchName);
 };
 
 export const pageDataState = new CachedState<PageData>(

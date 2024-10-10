@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name Farm RPG Farmhand
 // @description Your helper around the RPG Farm
-// @version 1.0.30
+// @version 1.0.31
 // @author Ansel Santosa <568242+anstosa@users.noreply.github.com>
 // @match https://farmrpg.com/*
 // @match https://alpha.farmrpg.com/*
@@ -36,7 +36,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.pageDataState = exports.getBasicItems = exports.getAbridgedItem = exports.itemDataState = void 0;
+exports.pageDataState = exports.isItem = exports.getBasicItems = exports.getAbridgedItem = exports.itemDataState = void 0;
 const state_1 = __webpack_require__(4782);
 const requests_1 = __webpack_require__(6747);
 exports.itemDataState = new state_1.CachedState(state_1.StorageKey.ITEM_DATA, (state, itemName) => __awaiter(void 0, void 0, void 0, function* () {
@@ -85,6 +85,13 @@ const getBasicItems = () => __awaiter(void 0, void 0, void 0, function* () {
     return (_b = items === null || items === void 0 ? void 0 : items.map(({ name, image }) => ({ name, image }))) !== null && _b !== void 0 ? _b : [];
 });
 exports.getBasicItems = getBasicItems;
+const isItem = (name) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const items = yield (0, exports.getBasicItems)();
+    const searchName = (_a = requests_1.NAME_OVERRIDES[name]) !== null && _a !== void 0 ? _a : name;
+    return items.some((item) => item.name === searchName);
+});
+exports.isItem = isItem;
 exports.pageDataState = new state_1.CachedState(state_1.StorageKey.PAGE_DATA, () => __awaiter(void 0, void 0, void 0, function* () {
     const pages = {
         townsfolk: [],
@@ -138,8 +145,8 @@ exports.pageDataState = new state_1.CachedState(state_1.StorageKey.PAGE_DATA, ()
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.nameToSlug = void 0;
-const NAME_OVERRIDES = {
+exports.nameToSlug = exports.NAME_OVERRIDES = void 0;
+exports.NAME_OVERRIDES = {
     "Gold Pea": "Gold Peas",
     "Gold Pepper": "Gold Peppers",
     "Mega Beet": "Mega Beet Seeds",
@@ -151,7 +158,7 @@ const NAME_OVERRIDES = {
 };
 const nameToSlug = (name) => {
     var _a;
-    let slug = (_a = NAME_OVERRIDES[name]) !== null && _a !== void 0 ? _a : name;
+    let slug = (_a = exports.NAME_OVERRIDES[name]) !== null && _a !== void 0 ? _a : name;
     // delete item markings
     slug = slug.replaceAll("*", "");
     // trim whitespace
@@ -3630,10 +3637,10 @@ exports.farmhandSettings = {
         }
         saveButton.addEventListener("click", () => __awaiter(void 0, void 0, void 0, function* () {
             saveButton.textContent = "Saving...";
-            for (const setting of Object.values((0, settings_1.getSettings)())) {
+            yield Promise.all(Object.values((0, settings_1.getSettings)()).map((setting) => {
                 setting.value = getValue(setting, currentPage);
-                yield (0, settings_1.setSetting)(setting);
-            }
+                return (0, settings_1.setSetting)(setting);
+            }));
             setTimeout(() => window.location.reload(), 1000);
         }));
     },
@@ -3917,8 +3924,12 @@ exports.improvedInputs = {
           .newinput,
           .searchbar input[type="search"],
           input[type="number"]:not(#vaultcode),
-          input[type="text"]:not(#chat_txt_desktop):not("chat_txt_mobile"), {
+          input[type="text"]:not(#chat_txt_desktop, #chat_txt_mobile) {
             ${(0, theme_1.toCSS)(theme_1.INPUT_STYLES)}
+          }
+
+          .searchbar .searchbar-input {
+            height: auto;
           }
 
           .modal {
@@ -3995,10 +4006,10 @@ exports.improvedInputs = {
             return;
         }
         (0, dropdown_1.clearDropdown)();
-        const selectors = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelectorAll("select[class*='id']:not(.locide):not(.type_id)");
+        const selectors = (_a = (0, page_1.getCurrentPage)()) === null || _a === void 0 ? void 0 : _a.querySelectorAll("select");
         for (const selector of selectors !== null && selectors !== void 0 ? selectors : []) {
             const options = yield Promise.all([...selector.options].map((option) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a, _b;
+                var _a, _b, _c, _d;
                 if (option.dataset.name === "Shovel") {
                     const shovel = yield (0, api_1.getAbridgedItem)("Shovel");
                     return {
@@ -4016,14 +4027,22 @@ exports.improvedInputs = {
                         return;
                     }
                     console.error("Failed to parse option", option);
-                    return;
+                    return {
+                        name: (_c = option.textContent) !== null && _c !== void 0 ? _c : "",
+                        value: option.value,
+                        proxyOption: option,
+                    };
                 }
                 const [, name, quantity] = match;
-                const item = yield (0, api_1.getAbridgedItem)(name);
-                if (!item) {
-                    console.error("Failed to get item", name);
-                    return;
+                if (!(yield (0, api_1.isItem)(name))) {
+                    console.error("Not an item", name);
+                    return {
+                        name: (_d = option.textContent) !== null && _d !== void 0 ? _d : "",
+                        value: option.value,
+                        proxyOption: option,
+                    };
                 }
+                const item = yield (0, api_1.getAbridgedItem)(name);
                 return {
                     name,
                     quantity: Number(quantity.replaceAll(",", "")),
@@ -5886,7 +5905,7 @@ const isVersionHigher = (test, current) => {
     }
     return false;
 };
-const currentVersion = normalizeVersion( true && "1.0.30" !== void 0 ? "1.0.30" : "1.0.0");
+const currentVersion = normalizeVersion( true && "1.0.31" !== void 0 ? "1.0.31" : "1.0.0");
 const README_URL = "https://github.com/anstosa/farmrpg-farmhand/blob/main/README.md";
 (0, notifications_1.registerNotificationHandler)(notifications_1.Handler.CHANGES, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -6507,11 +6526,17 @@ exports.debounce = debounce;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.clearDropdown = exports.replaceSelect = void 0;
 const theme_1 = __webpack_require__(1178);
+const getOptionName = ({ name, quantity }) => {
+    if (quantity === undefined) {
+        return name;
+    }
+    const formatter = new Intl.NumberFormat();
+    return `${name} (${formatter.format(quantity)})`;
+};
 const replaceSelect = (proxySelect, options) => {
     if (proxySelect.dataset.hasProxied === "true") {
         return;
     }
-    const formatter = new Intl.NumberFormat();
     proxySelect.style.display = "none";
     const selector = document.createElement("div");
     selector.classList.add("fh-item-selector");
@@ -6536,12 +6561,10 @@ const replaceSelect = (proxySelect, options) => {
     menu.style.marginTop = "-2px";
     const selectedOption = options.find((option) => option.value === proxySelect.value);
     selector.innerHTML = `
-    ${selectedOption
+    ${(selectedOption === null || selectedOption === void 0 ? void 0 : selectedOption.icon)
         ? `<img src="${selectedOption === null || selectedOption === void 0 ? void 0 : selectedOption.icon}" style="width:16px; "/>`
         : ""}
-    ${selectedOption
-        ? `${selectedOption.name} (${formatter.format(selectedOption.quantity)})`
-        : "Select an item"}
+    ${selectedOption ? getOptionName(selectedOption) : "Select an item"}
   `;
     selector.addEventListener("click", () => {
         const offset = selector.getBoundingClientRect();
@@ -6559,12 +6582,15 @@ const replaceSelect = (proxySelect, options) => {
         optionElement.style.gap = "4px";
         optionElement.style.cursor = "pointer";
         optionElement.innerHTML = `
-      <img src="${option.icon}" style="width:16px;"/>
-      ${option.name} (${formatter.format(option.quantity)})
+      ${option.icon ? `<img src="${option.icon}" style="width:16px;" />` : ""}
+      ${getOptionName(option)}
     `;
         optionElement.addEventListener("click", () => {
             proxySelect.value = option.value;
             proxySelect.dispatchEvent(new Event("change"));
+            proxySelect.dataset.hasProxied = "false";
+            menu.remove();
+            selector.remove();
             (0, exports.replaceSelect)(proxySelect, options);
         });
         menu.append(optionElement);

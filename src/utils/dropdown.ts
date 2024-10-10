@@ -8,11 +8,19 @@ import {
 
 export interface ItemOption {
   name: string;
-  quantity: number;
-  icon: string;
+  quantity?: number;
+  icon?: string;
   value: string;
   proxyOption: HTMLOptionElement;
 }
+
+const getOptionName = ({ name, quantity }: ItemOption): string => {
+  if (quantity === undefined) {
+    return name;
+  }
+  const formatter = new Intl.NumberFormat();
+  return `${name} (${formatter.format(quantity)})`;
+};
 
 export const replaceSelect = (
   proxySelect: HTMLSelectElement,
@@ -21,7 +29,6 @@ export const replaceSelect = (
   if (proxySelect.dataset.hasProxied === "true") {
     return;
   }
-  const formatter = new Intl.NumberFormat();
   proxySelect.style.display = "none";
   const selector = document.createElement("div");
   selector.classList.add("fh-item-selector");
@@ -49,17 +56,11 @@ export const replaceSelect = (
   );
   selector.innerHTML = `
     ${
-      selectedOption
+      selectedOption?.icon
         ? `<img src="${selectedOption?.icon}" style="width:16px; "/>`
         : ""
     }
-    ${
-      selectedOption
-        ? `${selectedOption.name} (${formatter.format(
-            selectedOption.quantity
-          )})`
-        : "Select an item"
-    }
+    ${selectedOption ? getOptionName(selectedOption) : "Select an item"}
   `;
   selector.addEventListener("click", () => {
     const offset = selector.getBoundingClientRect();
@@ -77,12 +78,15 @@ export const replaceSelect = (
     optionElement.style.gap = "4px";
     optionElement.style.cursor = "pointer";
     optionElement.innerHTML = `
-      <img src="${option.icon}" style="width:16px;"/>
-      ${option.name} (${formatter.format(option.quantity)})
+      ${option.icon ? `<img src="${option.icon}" style="width:16px;" />` : ""}
+      ${getOptionName(option)}
     `;
     optionElement.addEventListener("click", () => {
       proxySelect.value = option.value;
       proxySelect.dispatchEvent(new Event("change"));
+      proxySelect.dataset.hasProxied = "false";
+      menu.remove();
+      selector.remove();
       replaceSelect(proxySelect, options);
     });
     menu.append(optionElement);

@@ -11,7 +11,7 @@ import {
 } from "~/utils/theme";
 import { clearDropdown, ItemOption, replaceSelect } from "~/utils/dropdown";
 import { Feature, FeatureSetting } from "../utils/feature";
-import { getAbridgedItem } from "~/api/buddyfarm/api";
+import { getAbridgedItem, isItem } from "~/api/buddyfarm/api";
 import { getCurrentPage } from "~/utils/page";
 import { SettingId } from "~/utils/settings";
 
@@ -37,8 +37,12 @@ export const improvedInputs: Feature = {
           .newinput,
           .searchbar input[type="search"],
           input[type="number"]:not(#vaultcode),
-          input[type="text"]:not(#chat_txt_desktop):not("chat_txt_mobile"), {
+          input[type="text"]:not(#chat_txt_desktop, #chat_txt_mobile) {
             ${toCSS(INPUT_STYLES)}
+          }
+
+          .searchbar .searchbar-input {
+            height: auto;
           }
 
           .modal {
@@ -115,9 +119,8 @@ export const improvedInputs: Feature = {
       return;
     }
     clearDropdown();
-    const selectors = getCurrentPage()?.querySelectorAll<HTMLSelectElement>(
-      "select[class*='id']:not(.locide):not(.type_id)"
-    );
+    const selectors =
+      getCurrentPage()?.querySelectorAll<HTMLSelectElement>("select");
     for (const selector of selectors ?? []) {
       const options: Array<ItemOption | undefined> = await Promise.all(
         [...selector.options].map(async (option) => {
@@ -140,14 +143,22 @@ export const improvedInputs: Feature = {
               return;
             }
             console.error("Failed to parse option", option);
-            return;
+            return {
+              name: option.textContent ?? "",
+              value: option.value,
+              proxyOption: option,
+            };
           }
           const [, name, quantity] = match;
-          const item = await getAbridgedItem(name);
-          if (!item) {
-            console.error("Failed to get item", name);
-            return;
+          if (!(await isItem(name))) {
+            console.error("Not an item", name);
+            return {
+              name: option.textContent ?? "",
+              value: option.value,
+              proxyOption: option,
+            };
           }
+          const item = await getAbridgedItem(name);
           return {
             name,
             quantity: Number(quantity.replaceAll(",", "")),

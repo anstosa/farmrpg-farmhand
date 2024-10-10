@@ -181,6 +181,12 @@ Do you like Farmhand? Tip me at [@anstosa in-game](https://farmrpg.com/#!/profil
 
 ## Changelog
 
+### 1.0.31
+
+* Fixed: settings sync bug
+* Fixed: dropdowns bugs
+* Fixed: some number inputs not styled correctly
+
 ### 1.0.30
 
 * Fixed: Notes sync not working

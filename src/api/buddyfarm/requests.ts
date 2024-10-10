@@ -1,4 +1,4 @@
-const NAME_OVERRIDES: Record<string, string> = {
+export const NAME_OVERRIDES: Record<string, string> = {
   "Gold Pea": "Gold Peas",
   "Gold Pepper": "Gold Peppers",
   "Mega Beet": "Mega Beet Seeds",
